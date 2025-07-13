@@ -10,48 +10,69 @@ function Navbar() {
   }
 
   return (
-    <nav style={{
-      background: '#4299e1',
-      padding: '12px 24px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: 32,
-      color: '#fff',
-      borderRadius: 8
-    }}>
-      <div>
-        <Link to="/" style={{ color: '#fff', fontWeight: 'bold', textDecoration: 'none', marginRight: 24 }}>
-          DogMatch
-        </Link>
-        {token && (
-          <>
-            <Link to="/pets" style={{ color: '#fff', marginRight: 16, textDecoration: 'none' }}>Meus Pets</Link>
-            <Link to="/swipe" style={{ color: '#fff', marginRight: 16, textDecoration: 'none' }}>Swipe</Link>
-            <Link to="/matches" style={{ color: '#fff', marginRight: 16, textDecoration: 'none' }}>Matches</Link>
-            {/* Adicione mais links aqui se quiser */}
-          </>
-        )}
-      </div>
-      <div>
-        {token ? (
-          <button onClick={handleLogout} style={{
-            background: '#fff',
-            color: '#4299e1',
-            border: 'none',
-            borderRadius: 6,
-            padding: '6px 16px',
-            fontWeight: 'bold',
-            cursor: 'pointer'
-          }}>
-            Sair
-          </button>
-        ) : (
-          <>
-            <Link to="/login" style={{ color: '#fff', marginRight: 16, textDecoration: 'none' }}>Login</Link>
-            <Link to="/register" style={{ color: '#fff', textDecoration: 'none' }}>Cadastro</Link>
-          </>
-        )}
+    <nav className="bg-gradient-to-r from-blue-500 to-purple-600 shadow-lg">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo e Links */}
+          <div className="flex items-center space-x-8">
+            <Link 
+              to="/" 
+              className="text-white font-bold text-xl hover:text-blue-100 transition-colors duration-200"
+            >
+              🐕 DogMatch
+            </Link>
+            
+            {token && (
+              <div className="hidden md:flex items-center space-x-6">
+                <Link 
+                  to="/pets" 
+                  className="text-white hover:text-blue-100 transition-colors duration-200 font-medium"
+                >
+                  Meus Pets
+                </Link>
+                <Link 
+                  to="/swipe" 
+                  className="text-white hover:text-blue-100 transition-colors duration-200 font-medium"
+                >
+                  Swipe
+                </Link>
+                <Link 
+                  to="/matches" 
+                  className="text-white hover:text-blue-100 transition-colors duration-200 font-medium"
+                >
+                  Matches
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Botões de Ação */}
+          <div className="flex items-center space-x-4">
+            {token ? (
+              <button 
+                onClick={handleLogout}
+                className="bg-white text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg font-semibold transition-colors duration-200 shadow-md hover:shadow-lg"
+              >
+                Sair
+              </button>
+            ) : (
+              <div className="flex items-center space-x-4">
+                <Link 
+                  to="/login" 
+                  className="text-white hover:text-blue-100 transition-colors duration-200 font-medium"
+                >
+                  Login
+                </Link>
+                <Link 
+                  to="/register" 
+                  className="bg-white text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg font-semibold transition-colors duration-200 shadow-md hover:shadow-lg"
+                >
+                  Cadastro
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </nav>
   );

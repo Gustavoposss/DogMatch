@@ -93,55 +93,53 @@ function Swipe() {
 
   if (isLoading) {
     return (
-      <div style={{ textAlign: 'center', padding: 40 }}>
-        <h2>Carregando pets...</h2>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <span className="text-lg text-gray-500 animate-pulse">Carregando pets...</span>
       </div>
     );
   }
 
   if (!currentPet) {
     return (
-      <div style={{ maxWidth: 600, margin: '40px auto', textAlign: 'center' }}>
+      <div className="max-w-2xl mx-auto py-12 px-4 text-center">
         <FilterPanel
           filters={filters}
           onFiltersChange={setFilters}
           onApplyFilters={handleApplyFilters}
           onClearFilters={handleClearFilters}
         />
-        <h2>Não há mais pets para avaliar!</h2>
-        <p>Volte mais tarde para novos matches ou tente ajustar os filtros.</p>
+        <h2 className="text-2xl font-bold text-gray-700 mt-8 mb-2">Não há mais pets para avaliar!</h2>
+        <p className="text-gray-500">Volte mais tarde para novos matches ou tente ajustar os filtros.</p>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: 600, margin: '40px auto', textAlign: 'center' }}>
-      <h2>Swipe para encontrar matches!</h2>
-      
+    <div className="min-h-[100vh] flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 py-8 px-2">
+      <h2 className="text-3xl font-bold text-blue-700 mb-4">Swipe para encontrar matches!</h2>
       {/* Painel de Filtros */}
-      <FilterPanel
-        filters={filters}
-        onFiltersChange={setFilters}
-        onApplyFilters={handleApplyFilters}
-        onClearFilters={handleClearFilters}
-      />
-
-      {/* Filtros Ativos */}
-      <ActiveFilters
-        filters={filters}
-        onRemoveFilter={handleRemoveFilter}
-      />
-      
+      <div className="w-full max-w-2xl mb-4">
+        <FilterPanel
+          filters={filters}
+          onFiltersChange={setFilters}
+          onApplyFilters={handleApplyFilters}
+          onClearFilters={handleClearFilters}
+        />
+        <ActiveFilters
+          filters={filters}
+          onRemoveFilter={handleRemoveFilter}
+        />
+      </div>
       {/* Seleção do pet do usuário */}
-      <div style={{ marginBottom: 20 }}>
-        <h3>Selecione seu pet:</h3>
-        <select 
-          value={selectedPet?.id || ''} 
+      <div className="w-full max-w-2xl mb-6 flex flex-col items-center">
+        <h3 className="text-lg font-semibold text-gray-700 mb-2">Selecione seu pet:</h3>
+        <select
+          value={selectedPet?.id || ''}
           onChange={(e) => {
             const pet = userPets.find(p => p.id === e.target.value);
             setSelectedPet(pet);
           }}
-          style={{ padding: 8, marginBottom: 10 }}
+          className="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-2"
         >
           <option value="">Escolha seu pet</option>
           {userPets.map(pet => (
@@ -149,62 +147,44 @@ function Swipe() {
           ))}
         </select>
       </div>
-
       {/* Card do pet para avaliar */}
       {selectedPet && (
-        <div style={{
-          background: '#fff',
-          borderRadius: 12,
-          boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
-          overflow: 'hidden',
-          marginBottom: 20
-        }}>
+        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden mb-6 w-full max-w-xl animate-fade-in">
           <img
             src={currentPet.photoUrl}
             alt={currentPet.name}
-            style={{ width: '100%', height: 300, objectFit: 'cover' }}
+            className="w-full h-72 object-cover"
           />
-          <div style={{ padding: 20 }}>
-            <h3>{currentPet.name}, {currentPet.age} anos</h3>
-            <p><strong>Raça:</strong> {currentPet.breed}</p>
-            <p><strong>Tamanho:</strong> {currentPet.size}</p>
-            <p><strong>Gênero:</strong> {currentPet.gender === 'M' ? 'Macho' : 'Fêmea'}</p>
-            <p><strong>Objetivo:</strong> {currentPet.objective}</p>
-            <p><strong>Castrado:</strong> {currentPet.isNeutered ? 'Sim' : 'Não'}</p>
-            {currentPet.owner && (
-              <p><strong>Localização:</strong> {currentPet.owner.city}</p>
-            )}
-            <p>{currentPet.description || 'Sem descrição'}</p>
+          <div className="p-6 text-left">
+            <h3 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+              {currentPet.name}, <span className="text-blue-600">{currentPet.age} anos</span>
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 mb-2">
+              <p><span className="font-semibold text-gray-700">Raça:</span> {currentPet.breed}</p>
+              <p><span className="font-semibold text-gray-700">Tamanho:</span> {currentPet.size}</p>
+              <p><span className="font-semibold text-gray-700">Gênero:</span> {currentPet.gender === 'M' ? 'Macho' : 'Fêmea'}</p>
+              <p><span className="font-semibold text-gray-700">Objetivo:</span> {currentPet.objective}</p>
+              <p><span className="font-semibold text-gray-700">Castrado:</span> {currentPet.isNeutered ? 'Sim' : 'Não'}</p>
+              {currentPet.owner && (
+                <p><span className="font-semibold text-gray-700">Localização:</span> {currentPet.owner.city}</p>
+              )}
+            </div>
+            <p className="text-gray-600 mt-2">{currentPet.description || 'Sem descrição'}</p>
           </div>
         </div>
       )}
-
       {/* Botões de like/dislike */}
       {selectedPet && (
-        <div style={{ display: 'flex', gap: 20, justifyContent: 'center' }}>
+        <div className="flex gap-8 justify-center mt-2">
           <button
             onClick={handleDislike}
-            style={{
-              padding: '12px 24px',
-              background: '#ff4757',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 8,
-              cursor: 'pointer'
-            }}
+            className="px-8 py-3 bg-red-500 hover:bg-red-600 text-white text-xl font-bold rounded-full shadow-lg transition-all duration-200 focus:ring-2 focus:ring-red-300 focus:outline-none"
           >
             ❌ Não
           </button>
           <button
             onClick={handleLike}
-            style={{
-              padding: '12px 24px',
-              background: '#2ed573',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 8,
-              cursor: 'pointer'
-            }}
+            className="px-8 py-3 bg-green-500 hover:bg-green-600 text-white text-xl font-bold rounded-full shadow-lg transition-all duration-200 focus:ring-2 focus:ring-green-300 focus:outline-none"
           >
             ❤️ Sim
           </button>

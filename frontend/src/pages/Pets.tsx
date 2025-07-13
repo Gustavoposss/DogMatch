@@ -24,11 +24,9 @@ function Pets() {
     if (userId && token) {
       getPetsByUser(userId, token)
         .then((data) => {
-          console.log('Pets recebidos:', data);
           setPets(data);
         })
         .catch((err) => {
-          console.error('Erro ao buscar pets:', err);
           setPets([]);
         });
     }
@@ -95,96 +93,95 @@ function Pets() {
   };
 
   return (
-    <div style={{ maxWidth: 600, margin: '40px auto', background: '#fff', padding: 24, borderRadius: 12, boxShadow: '0 4px 24px rgba(0,0,0,0.1)' }}>
-      <h2>Meus Pets</h2>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
-        {pets.map((pet) => (
-          <div key={pet.id} style={{
-            background: '#f9f9f9',
-            borderRadius: 8,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-            padding: 16,
-            width: 180,
-            textAlign: 'center'
-          }}>
-            <img
-              src={pet.photoUrl}
-              alt={pet.name}
-              style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8, marginBottom: 8 }}
-              onError={e => (e.currentTarget.src = 'https://via.placeholder.com/120')}
-            />
-            <div><strong>{pet.name}</strong></div>
-            <div>{pet.breed}</div>
-            <div>{pet.age} anos</div>
-            <button onClick={() => handleEdit(pet)}>Editar</button>
-            <button onClick={() => handleDelete(pet.id)}>Remover</button>
+    <div className="min-h-[100vh] flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 py-8 px-2">
+      <div className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl p-8 mb-8">
+        <h2 className="text-3xl font-bold text-blue-700 mb-6 text-center">Meus Pets</h2>
+        <div className="flex flex-wrap gap-6 justify-center mb-8">
+          {pets.map((pet) => (
+            <div key={pet.id} className="bg-blue-50 rounded-2xl shadow-md p-4 w-56 flex flex-col items-center">
+              <img
+                src={pet.photoUrl}
+                alt={pet.name}
+                className="w-28 h-28 object-cover rounded-xl mb-3 border-2 border-blue-200 shadow"
+                onError={e => (e.currentTarget.src = 'https://via.placeholder.com/120')}
+              />
+              <div className="font-bold text-lg text-gray-800 mb-1">{pet.name}</div>
+              <div className="text-gray-600 mb-1">{pet.breed}</div>
+              <div className="text-gray-500 mb-2">{pet.age} anos</div>
+              <div className="flex gap-2 mt-2">
+                <button onClick={() => handleEdit(pet)} className="px-3 py-1 bg-yellow-400 hover:bg-yellow-500 text-white rounded-lg font-semibold text-sm shadow transition-all">Editar</button>
+                <button onClick={() => handleDelete(pet.id)} className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold text-sm shadow transition-all">Remover</button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">{editingPet ? 'Editar pet' : 'Cadastrar novo pet'}</h3>
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input
+            type="text"
+            placeholder="Nome"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            required
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <input
+            type="text"
+            placeholder="Raça"
+            value={breed}
+            onChange={e => setBreed(e.target.value)}
+            required
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <input
+            type="number"
+            placeholder="Idade"
+            value={age}
+            onChange={e => setAge(e.target.value)}
+            required
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <select value={gender} onChange={e => setGender(e.target.value)} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <option value="">Selecione o gênero</option>
+            <option value="M">Macho</option>
+            <option value="F">Fêmea</option>
+          </select>
+          <select value={size} onChange={e => setSize(e.target.value)} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <option value="">Selecione o porte</option>
+            <option value="pequeno">Pequeno</option>
+            <option value="médio">Médio</option>
+            <option value="grande">Grande</option>
+          </select>
+          <label className="flex items-center gap-2 text-gray-700 font-medium">
+            <input type="checkbox" checked={isNeutered} onChange={e => setIsNeutered(e.target.checked)} className="form-checkbox h-5 w-5 text-blue-600" />
+            Castrado?
+          </label>
+          <select value={objective} onChange={e => setObjective(e.target.value)} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <option value="">Selecione o objetivo</option>
+            <option value="amizade">Amizade</option>
+            <option value="cruzamento">Cruzamento</option>
+            <option value="adoção">Adoção</option>
+          </select>
+          <input
+            type="text"
+            placeholder="URL da foto"
+            value={photoUrl}
+            onChange={e => setPhotoUrl(e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row gap-4 mt-2">
+            <button type="submit" className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all">
+              {editingPet ? 'Salvar Alterações' : 'Cadastrar Pet'}
+            </button>
+            {editingPet && (
+              <button type="button" onClick={() => setEditingPet(null)} className="w-full md:w-auto px-8 py-3 bg-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-400 transition-all">
+                Cancelar
+              </button>
+            )}
           </div>
-        ))}
+          {error && <p className="col-span-1 md:col-span-2 text-red-600 mt-2">{error}</p>}
+        </form>
       </div>
-      <h3>Cadastrar novo pet</h3>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Nome"
-          value={name}
-          onChange={e => setName(e.target.value)}
-          required
-          style={{ width: '100%', marginBottom: 8, padding: 8 }}
-        />
-        <input
-          type="text"
-          placeholder="Raça"
-          value={breed}
-          onChange={e => setBreed(e.target.value)}
-          required
-          style={{ width: '100%', marginBottom: 8, padding: 8 }}
-        />
-        <input
-          type="number"
-          placeholder="Idade"
-          value={age}
-          onChange={e => setAge(e.target.value)}
-          required
-          style={{ width: '100%', marginBottom: 8, padding: 8 }}
-        />
-        <select value={gender} onChange={e => setGender(e.target.value)} required>
-          <option value="">Selecione o gênero</option>
-          <option value="M">Macho</option>
-          <option value="F">Fêmea</option>
-        </select>
-        <select value={size} onChange={e => setSize(e.target.value)} required>
-          <option value="">Selecione o porte</option>
-          <option value="pequeno">Pequeno</option>
-          <option value="médio">Médio</option>
-          <option value="grande">Grande</option>
-        </select>
-        <label>
-          Castrado?
-          <input type="checkbox" checked={isNeutered} onChange={e => setIsNeutered(e.target.checked)} />
-        </label>
-        <select value={objective} onChange={e => setObjective(e.target.value)} required>
-          <option value="">Selecione o objetivo</option>
-          <option value="amizade">Amizade</option>
-          <option value="cruzamento">Cruzamento</option>
-          <option value="adoção">Adoção</option>
-        </select>
-        <input
-          type="text"
-          placeholder="URL da foto"
-          value={photoUrl}
-          onChange={e => setPhotoUrl(e.target.value)}
-          style={{ width: '100%', marginBottom: 8, padding: 8 }}
-        />
-        <button type="submit" style={{ width: '100%', padding: 10, background: '#4299e1', color: '#fff', border: 'none', borderRadius: 6 }}>
-          {editingPet ? 'Salvar Alterações' : 'Cadastrar Pet'}
-        </button>
-        {editingPet && (
-          <button type="button" onClick={() => setEditingPet(null)} style={{ marginLeft: 8 }}>
-            Cancelar
-          </button>
-        )}
-        {error && <p style={{ color: 'red', marginTop: 8 }}>{error}</p>}
-      </form>
     </div>
   );
 }
