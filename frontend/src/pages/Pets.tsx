@@ -26,7 +26,7 @@ function Pets() {
         .then((data) => {
           setPets(data);
         })
-        .catch((err) => {
+        .catch(() => {
           setPets([]);
         });
     }

@@ -5,7 +5,6 @@ function PaymentSuccess() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const paymentId = searchParams.get('payment_id');
-  const preferenceId = searchParams.get('preference_id');
 
   useEffect(() => {
     // Auto redirect após 5 segundos

@@ -22,7 +22,7 @@ function Matches() {
         .then(data => {
           setMatches(data);
         })
-        .catch((err) => {
+        .catch(() => {
           setMatches([]);
         });
     }
