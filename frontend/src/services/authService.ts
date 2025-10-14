@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3000'; // URL do seu backend
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export async function login(email: string, password: string) {
   const response = await axios.post(`${API_URL}/auth/login`, { email, password });
