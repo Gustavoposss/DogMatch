@@ -42,15 +42,12 @@ export class PaymentService {
     // CPF é obrigatório para criar cobranças
     let cpfToUse = user.cpf;
     
-    // Se não tiver CPF cadastrado, usar CPF de teste apenas no ambiente sandbox
+    // CPF é obrigatório para criar cobranças
     if (!cpfToUse) {
-      if (process.env.ASAAS_ENVIRONMENT === 'sandbox') {
-        cpfToUse = '24971563792'; // CPF de teste para sandbox
-        console.warn('⚠️ Usando CPF de teste. Configure CPF real para produção!');
-      } else {
-        throw new Error('CPF do usuário é obrigatório para criar pagamentos em produção');
-      }
+      throw new Error('CPF do usuário é obrigatório para criar pagamentos. Por favor, atualize seu cadastro com um CPF válido.');
     }
+    
+    console.log('CPF configurado para o cliente');
     
     const asaasCustomer = await asaasClient.createCustomer({
       name: user.name,

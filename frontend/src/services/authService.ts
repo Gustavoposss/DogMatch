@@ -7,8 +7,22 @@ export async function login(email: string, password: string) {
   return response.data; // deve retornar { token, user }
 }
 
-export async function register(name: string, email: string, password: string, city: string) {
-  const response = await axios.post(`${API_URL}/auth/register`, { name, email, password, city });
+export async function register(
+  name: string, 
+  email: string, 
+  password: string, 
+  city: string,
+  cpf: string,
+  phone?: string
+) {
+  const response = await axios.post(`${API_URL}/auth/register`, { 
+    name, 
+    email, 
+    password, 
+    city,
+    cpf,
+    phone
+  });
   return response.data; // deve retornar { token, user }
 }
 

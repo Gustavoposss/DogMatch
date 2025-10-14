@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { register } from '../services/authService';
+import { isValidCPF, formatCPF, formatPhone, cleanCPF } from '../utils/validators';
 
 function Register() {
   const [name, setName] = useState('');
   const [city, setCity] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [cpf, setCpf] = useState('');
+  const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -14,16 +17,36 @@ function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    
+    // Validar CPF
+    if (!isValidCPF(cpf)) {
+      setError('CPF inválido. Por favor, insira um CPF válido.');
+      return;
+    }
+    
     setIsLoading(true);
     try {
-      const data = await register(name, email, password, city);
+      const cleanedCpf = cleanCPF(cpf);
+      const cleanedPhone = phone ? phone.replace(/\D/g, '') : undefined;
+      
+      const data = await register(name, email, password, city, cleanedCpf, cleanedPhone);
       localStorage.setItem('token', data.token);
       navigate('/');
-    } catch (err) {
-      setError('Erro ao cadastrar. Tente outro e-mail.');
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Erro ao cadastrar. Tente outro e-mail.');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCPF(e.target.value);
+    setCpf(formatted);
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhone(e.target.value);
+    setPhone(formatted);
   };
 
   return (
@@ -67,6 +90,35 @@ function Register() {
                 value={city}
                 onChange={e => setCity(e.target.value)}
                 required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+              />
+            </div>
+            <div>
+              <label htmlFor="cpf" className="block text-sm font-medium text-gray-700 mb-2">
+                CPF
+              </label>
+              <input
+                id="cpf"
+                type="text"
+                placeholder="000.000.000-00"
+                value={cpf}
+                onChange={handleCpfChange}
+                maxLength={14}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+              />
+            </div>
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                Telefone (opcional)
+              </label>
+              <input
+                id="phone"
+                type="text"
+                placeholder="(00) 00000-0000"
+                value={phone}
+                onChange={handlePhoneChange}
+                maxLength={15}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
               />
             </div>
