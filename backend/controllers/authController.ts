@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import prisma from '../prismaClient';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { SubscriptionService } from '../services/subscriptionService';
+import { isValidCPF, cleanCPF, isValidEmail } from '../utils/validators';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'segredo_supersecreto';
 
@@ -38,7 +40,24 @@ export const login = async (req: Request, res: Response) => {
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { name, email, password, city } = req.body;
+    const { name, email, password, city, cpf, phone } = req.body;
+
+    // Validações básicas
+    if (!name || !email || !password || !city) {
+      return res.status(400).json({ error: 'Nome, e-mail, senha e cidade são obrigatórios.' });
+    }
+
+    // Valida email
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ error: 'E-mail inválido.' });
+    }
+
+    // Valida CPF se fornecido (obrigatório para pagamentos futuros)
+    if (cpf) {
+      if (!isValidCPF(cpf)) {
+        return res.status(400).json({ error: 'CPF inválido.' });
+      }
+    }
 
     // Verifica se o usuário já existe
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -56,14 +75,28 @@ export const register = async (req: Request, res: Response) => {
         email,
         password: hashedPassword,
         city,
+        cpf: cpf ? cleanCPF(cpf) : null,
+        phone: phone || null,
       },
     });
 
-    // Gera o token JWT
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'segredo', { expiresIn: '7d' });
+    // CRIAR ASSINATURA GRATUITA AUTOMATICAMENTE
+    await SubscriptionService.createFreeSubscription(user.id);
 
-    res.status(201).json({ token, user });
+    // Gera o token JWT
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
+
+    res.status(201).json({ 
+      token, 
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        city: user.city
+      }
+    });
   } catch (error) {
+    console.error('Erro ao cadastrar usuário:', error);
     res.status(500).json({ error: 'Erro ao cadastrar usuário.' });
   }
 };

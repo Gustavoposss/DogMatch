@@ -1,51 +1,25 @@
 import { Request, Response } from 'express';
 import prisma from '../prismaClient';
+import { UsageLimitService } from '../services/usageLimitService';
 
 interface AuthRequest extends Request {
   userId?: string;
 }
 
-/**
- * @swagger
- * /swipe/like:
- *   post:
- *     summary: Curtir um pet
- *     tags: [Swipe]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - toPetId
- *             properties:
- *               toPetId:
- *                 type: string
- *                 description: ID do pet que está sendo curtido
- *     responses:
- *       201:
- *         description: Like registrado com sucesso
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *       404:
- *         description: Pet não encontrado
- *       409:
- *         description: Pet já foi curtido
- *       500:
- *         description: Erro interno do servidor
- */
 export const likePet = async (req: AuthRequest, res: Response) => {
   try {
     const { toPetId } = req.body;
     const userId = req.userId;
+
+    // VERIFICAR LIMITE DE SWIPES
+    const swipeCheck = await UsageLimitService.canSwipe(userId!);
+    if (!swipeCheck.canSwipe) {
+      return res.status(403).json({ 
+        error: swipeCheck.reason,
+        limitReached: true,
+        upgradeRequired: true
+      });
+    }
 
     // Buscar o pet do usuário autenticado
     const fromPet = await prisma.pet.findFirst({
@@ -76,6 +50,9 @@ export const likePet = async (req: AuthRequest, res: Response) => {
       }
     });
 
+    // INCREMENTAR CONTADOR DE SWIPES
+    await UsageLimitService.incrementSwipeCount(userId!);
+
     // Verificar se houve match (o outro pet já curtiu o seu)
     const reciprocalLike = await prisma.like.findFirst({
       where: {
@@ -94,87 +71,23 @@ export const likePet = async (req: AuthRequest, res: Response) => {
           userBId: (await prisma.pet.findUnique({ where: { id: toPetId } }))?.ownerId || ''
         }
       });
-      return res.status(201).json({ message: 'Match realizado!' });
+      return res.status(201).json({ message: 'Match realizado!', isMatch: true });
     }
 
-    res.status(201).json({ message: 'Like registrado!' });
+    // Retornar swipes restantes
+    const updatedCheck = await UsageLimitService.canSwipe(userId!);
+
+    res.status(201).json({ 
+      message: 'Like registrado!',
+      isMatch: false,
+      swipesRemaining: updatedCheck.remaining 
+    });
   } catch (error) {
     console.error('Erro ao curtir pet:', error);
     res.status(500).json({ error: 'Erro interno do servidor.' });
   }
 };
 
-/**
- * @swagger
- * /swipe/available:
- *   get:
- *     summary: Buscar pets disponíveis para swipe com filtros
- *     tags: [Swipe]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: city
- *         schema:
- *           type: string
- *         description: Filtrar por cidade
- *       - in: query
- *         name: size
- *         schema:
- *           type: string
- *           enum: [pequeno, médio, grande]
- *         description: Filtrar por tamanho
- *       - in: query
- *         name: gender
- *         schema:
- *           type: string
- *           enum: [M, F]
- *         description: Filtrar por gênero
- *       - in: query
- *         name: objective
- *         schema:
- *           type: string
- *           enum: [amizade, cruzamento, adoção]
- *         description: Filtrar por objetivo
- *       - in: query
- *         name: breed
- *         schema:
- *           type: string
- *         description: Filtrar por raça (busca parcial)
- *       - in: query
- *         name: minAge
- *         schema:
- *           type: integer
- *           minimum: 1
- *           maximum: 20
- *         description: Idade mínima
- *       - in: query
- *         name: maxAge
- *         schema:
- *           type: integer
- *           minimum: 1
- *           maximum: 20
- *         description: Idade máxima
- *       - in: query
- *         name: isNeutered
- *         schema:
- *           type: boolean
- *         description: Filtrar por castração
- *     responses:
- *       200:
- *         description: Lista de pets disponíveis
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 pets:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Pet'
- *       500:
- *         description: Erro interno do servidor
- */
 export const getAvailablePets = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId;
@@ -293,47 +206,6 @@ export const like = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * @swagger
- * /swipe/filters:
- *   get:
- *     summary: Buscar opções de filtros disponíveis
- *     tags: [Swipe]
- *     responses:
- *       200:
- *         description: Opções de filtros
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 cities:
- *                   type: array
- *                   items:
- *                     type: string
- *                 breeds:
- *                   type: array
- *                   items:
- *                     type: string
- *                 sizes:
- *                   type: array
- *                   items:
- *                     type: string
- *                 genders:
- *                   type: array
- *                   items:
- *                     type: string
- *                 objectives:
- *                   type: array
- *                   items:
- *                     type: string
- *                 ages:
- *                   type: array
- *                   items:
- *                     type: integer
- *       500:
- *         description: Erro interno do servidor
- */
 export const getFilterOptions = async (req: Request, res: Response) => {
   try {
     // Buscar cidades únicas

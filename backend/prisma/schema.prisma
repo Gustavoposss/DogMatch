@@ -7,17 +7,43 @@ datasource db {
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
-        
+
+// Enums
+enum PlanType {
+  FREE
+  PREMIUM
+  VIP
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  EXPIRED
+  PENDING
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
 model User { 
-  id        String   @id @default(uuid()) 
-  email     String   @unique 
-  password  String 
-  name      String 
-  city      String 
-  createdAt DateTime @default(now()) 
-  pets      Pet[] 
-  matchesA  Match[]  @relation("UserMatchesA")
-  matchesB  Match[]  @relation("UserMatchesB")
+  id              String         @id @default(uuid()) 
+  email           String         @unique 
+  password        String 
+  name            String 
+  city            String 
+  cpf             String?        // CPF do usuário (obrigatório para pagamentos)
+  phone           String?        // Telefone do usuário
+  asaasCustomerId String?        @unique  // ID do cliente no Asaas
+  createdAt       DateTime       @default(now()) 
+  pets            Pet[] 
+  matchesA        Match[]        @relation("UserMatchesA")
+  matchesB        Match[]        @relation("UserMatchesB")
+  subscription    Subscription?
+  boosts          Boost[]
 }
 
 model Pet { 
@@ -25,50 +51,53 @@ model Pet {
   name         String 
   breed        String 
   age          Int 
-  gender       String // "M" ou "F" 
-  size         String // "pequeno", "médio", "grande" 
+  gender       String
+  size         String
   isNeutered   Boolean 
-  objective    String // "amizade", "cruzamento", "adoção" 
+  objective    String
   description  String? 
   photoUrl     String 
   ownerId      String 
-  owner        User     @relation(fields: [ownerId], references: [id]) 
+  owner        User     @relation(fields: [ownerId], references: [id], onDelete: Cascade) 
   likes        Like[]   @relation("PetLikes") 
   likedBy      Like[]   @relation("PetLikedBy") 
   createdAt    DateTime @default(now()) 
   matchesA     Match[]  @relation("MatchPetA")
   matchesB     Match[]  @relation("MatchPetB")
-} 
+  boosts       Boost[]
+}
 
 model Like { 
   id         String   @id @default(uuid()) 
   fromPetId  String 
   toPetId    String 
-  fromPet    Pet      @relation("PetLikes", fields: [fromPetId], references: [id]) 
-  toPet      Pet      @relation("PetLikedBy", fields: [toPetId], references: [id]) 
+  fromPet    Pet      @relation("PetLikes", fields: [fromPetId], references: [id], onDelete: Cascade) 
+  toPet      Pet      @relation("PetLikedBy", fields: [toPetId], references: [id], onDelete: Cascade) 
   createdAt  DateTime @default(now()) 
-} 
+  
+  @@unique([fromPetId, toPetId])
+}
 
 model Match { 
   id        String   @id @default(uuid()) 
   petAId    String
   petBId    String
-  petA      Pet      @relation("MatchPetA", fields: [petAId], references: [id]) 
-  petB      Pet      @relation("MatchPetB", fields: [petBId], references: [id]) 
+  petA      Pet      @relation("MatchPetA", fields: [petAId], references: [id], onDelete: Cascade) 
+  petB      Pet      @relation("MatchPetB", fields: [petBId], references: [id], onDelete: Cascade) 
   userAId   String
   userBId   String
-  userA     User     @relation("UserMatchesA", fields: [userAId], references: [id])
-  userB     User     @relation("UserMatchesB", fields: [userBId], references: [id])
+  userA     User     @relation("UserMatchesA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB     User     @relation("UserMatchesB", fields: [userBId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now()) 
   chat      Chat? 
-} 
+}
 
 model Chat { 
-  id        String   @id @default(uuid()) 
-  matchId   String   @unique 
+  id        String    @id @default(uuid()) 
+  matchId   String    @unique 
   messages  Message[] 
-  match     Match    @relation(fields: [matchId], references: [id]) 
-} 
+  match     Match     @relation(fields: [matchId], references: [id], onDelete: Cascade) 
+}
 
 model Message { 
   id        String   @id @default(uuid()) 
@@ -76,5 +105,66 @@ model Message {
   senderId  String 
   content   String 
   createdAt DateTime @default(now()) 
-  chat      Chat     @relation(fields: [chatId], references: [id]) 
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade) 
+}
+
+// ===== NOVOS MODELS PARA MONETIZAÇÃO =====
+
+model Subscription {
+  id                  String              @id @default(uuid())
+  userId              String              @unique
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planType            PlanType            @default(FREE)
+  status              SubscriptionStatus  @default(ACTIVE)
+  startDate           DateTime            @default(now())
+  endDate             DateTime?
+  autoRenew           Boolean             @default(false)
+  asaasSubscriptionId String?             @unique // ID da assinatura recorrente no Asaas
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  payments            Payment[]
+  usageLimits         UsageLimit?
+}
+
+model Payment {
+  id             String        @id @default(uuid())
+  subscriptionId String
+  subscription   Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  amount         Float
+  currency       String        @default("BRL")
+  status         PaymentStatus @default(PENDING)
+  paymentMethod  String        // "credit_card", "pix", "boleto", "debit_card"
+  transactionId  String?       @unique // ID da cobrança/pagamento no Asaas
+  asaasPaymentId String?       @unique // ID do payment no Asaas
+  invoiceUrl     String?       // URL da fatura gerada pelo Asaas
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model UsageLimit {
+  id              String       @id @default(uuid())
+  subscriptionId  String       @unique
+  subscription    Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  swipesToday     Int          @default(0)
+  lastSwipeReset  DateTime     @default(now())
+  maxPets         Int          @default(1)       // FREE: 1, PREMIUM: 5, VIP: -1 (ilimitado)
+  maxSwipesPerDay Int          @default(5)       // FREE: 5, PREMIUM/VIP: -1 (ilimitado)
+  canSeeWhoLiked  Boolean      @default(false)  // Apenas PREMIUM e VIP
+  canBoost        Boolean      @default(false)  // Apenas PREMIUM e VIP
+  canUndoSwipe    Boolean      @default(false)  // Apenas VIP
+  boostsRemaining Int          @default(0)       // PREMIUM: 1/mês, VIP: 3/mês
+  updatedAt       DateTime     @updatedAt
+}
+
+model Boost {
+  id              String       @id @default(uuid())
+  userId          String
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  petId           String
+  pet             Pet          @relation(fields: [petId], references: [id], onDelete: Cascade)
+  startTime       DateTime     @default(now())
+  endTime         DateTime
+  type            String       // "regular" (1h), "super" (3h)
+  isActive        Boolean      @default(true)
+  createdAt       DateTime     @default(now())
 }

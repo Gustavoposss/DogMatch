@@ -22,9 +22,8 @@ export interface SwipeFilters {
   isNeutered?: boolean;
 }
 
-export async function likePet(fromPetId: string, toPetId: string, token: string) {
+export async function likePet(toPetId: string, token: string) {
   const response = await axios.post(`${API_URL}/swipe/like`, {
-    fromPetId,
     toPetId
   }, {
     headers: { Authorization: `Bearer ${token}` }
@@ -39,7 +38,7 @@ export async function getMatchesByUser(userId: string, token: string) {
   return response.data;
 }
 
-export async function getPetsToSwipe(userId: string, token: string, filters?: SwipeFilters) {
+export async function getPetsToSwipe(token: string, filters?: SwipeFilters) {
   const params = new URLSearchParams();
   
   if (filters) {

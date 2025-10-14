@@ -42,6 +42,18 @@ function Navbar() {
                 >
                   Matches
                 </Link>
+                <Link 
+                  to="/subscription" 
+                  className="text-white hover:text-blue-100 transition-colors duration-200 font-medium flex items-center"
+                >
+                  💎 Assinatura
+                </Link>
+                <Link 
+                  to="/plans" 
+                  className="bg-yellow-400 text-gray-900 hover:bg-yellow-300 px-4 py-2 rounded-lg font-bold transition-colors duration-200 shadow-md hover:shadow-lg"
+                >
+                  ⬆️ Upgrade
+                </Link>
               </div>
             )}
           </div>

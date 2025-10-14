@@ -14,9 +14,9 @@ function Swipe() {
   const [petsToSwipe, setPetsToSwipe] = useState<any[]>([]);
   const [currentPetIndex, setCurrentPetIndex] = useState(0);
   const [userPets, setUserPets] = useState<any[]>([]);
-  const [selectedPet, setSelectedPet] = useState<any>(null);
   const [filters, setFilters] = useState<SwipeFilters>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [hasPet, setHasPet] = useState(true);
   const token = localStorage.getItem('token');
   let userId = '';
 
@@ -26,10 +26,10 @@ function Swipe() {
   }
 
   const loadPetsToSwipe = async () => {
-    if (userId && token) {
+    if (token) {
       setIsLoading(true);
       try {
-        const pets = await getPetsToSwipe(userId, token, filters);
+        const pets = await getPetsToSwipe(token, filters);
         setPetsToSwipe(pets);
         setCurrentPetIndex(0);
       } catch (error) {
@@ -47,22 +47,35 @@ function Swipe() {
 
   useEffect(() => {
     if (userId && token) {
-      // Carregar pets do usuário para seleção
+      // Verificar se o usuário tem pets cadastrados
       getPetsByUser(userId, token)
-        .then(setUserPets)
-        .catch(() => setUserPets([]));
+        .then(pets => {
+          setUserPets(pets);
+          setHasPet(pets.length > 0);
+        })
+        .catch(() => {
+          setUserPets([]);
+          setHasPet(false);
+        });
     }
   }, [userId, token]);
 
   const handleLike = async () => {
-    if (selectedPet && currentPetIndex < petsToSwipe.length) {
+    if (currentPetIndex < petsToSwipe.length) {
       const currentPet = petsToSwipe[currentPetIndex];
       try {
-        await likePet(selectedPet.id, currentPet.id, token!);
-        // Verificar se houve match
-        alert('Like enviado!');
-      } catch (error) {
-        alert('Erro ao enviar like');
+        const result = await likePet(currentPet.id, token!);
+        if (result.isMatch) {
+          alert('🎉 É um Match! Vocês se curtiram!');
+        } else {
+          alert('❤️ Like enviado!');
+        }
+      } catch (error: any) {
+        if (error.response?.data?.limitReached) {
+          alert('⚠️ ' + error.response.data.error);
+        } else {
+          alert('❌ Erro ao enviar like');
+        }
       }
     }
     setCurrentPetIndex(currentPetIndex + 1);
@@ -99,6 +112,23 @@ function Swipe() {
     );
   }
 
+  if (!hasPet) {
+    return (
+      <div className="max-w-2xl mx-auto py-12 px-4 text-center">
+        <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-6">
+          <h2 className="text-2xl font-bold text-gray-700 mb-2">⚠️ Você precisa cadastrar um pet primeiro!</h2>
+          <p className="text-gray-600 mb-4">Para dar likes e encontrar matches, cadastre pelo menos um pet.</p>
+          <a 
+            href="/pets" 
+            className="inline-block px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg transition-all"
+          >
+            Cadastrar Meu Pet
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   if (!currentPet) {
     return (
       <div className="max-w-2xl mx-auto py-12 px-4 text-center">
@@ -130,26 +160,18 @@ function Swipe() {
           onRemoveFilter={handleRemoveFilter}
         />
       </div>
-      {/* Seleção do pet do usuário */}
-      <div className="w-full max-w-2xl mb-6 flex flex-col items-center">
-        <h3 className="text-lg font-semibold text-gray-700 mb-2">Selecione seu pet:</h3>
-        <select
-          value={selectedPet?.id || ''}
-          onChange={(e) => {
-            const pet = userPets.find(p => p.id === e.target.value);
-            setSelectedPet(pet);
-          }}
-          className="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-2"
-        >
-          <option value="">Escolha seu pet</option>
-          {userPets.map(pet => (
-            <option key={pet.id} value={pet.id}>{pet.name}</option>
-          ))}
-        </select>
-      </div>
+      {/* Informação sobre qual pet está dando like */}
+      {userPets.length > 0 && (
+        <div className="w-full max-w-2xl mb-4 flex justify-center">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2">
+            <p className="text-sm text-gray-700">
+              <span className="font-semibold">Dando like como:</span> {userPets[0].name} 🐕
+            </p>
+          </div>
+        </div>
+      )}
       {/* Card do pet para avaliar */}
-      {selectedPet && (
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden mb-6 w-full max-w-xl animate-fade-in">
+      <div className="bg-white rounded-3xl shadow-2xl overflow-hidden mb-6 w-full max-w-xl animate-fade-in">
           <img
             src={currentPet.photoUrl}
             alt={currentPet.name}
@@ -172,10 +194,8 @@ function Swipe() {
             <p className="text-gray-600 mt-2">{currentPet.description || 'Sem descrição'}</p>
           </div>
         </div>
-      )}
       {/* Botões de like/dislike */}
-      {selectedPet && (
-        <div className="flex gap-8 justify-center mt-2">
+      <div className="flex gap-8 justify-center mt-2">
           <button
             onClick={handleDislike}
             className="px-8 py-3 bg-red-500 hover:bg-red-600 text-white text-xl font-bold rounded-full shadow-lg transition-all duration-200 focus:ring-2 focus:ring-red-300 focus:outline-none"
@@ -189,7 +209,6 @@ function Swipe() {
             ❤️ Sim
           </button>
         </div>
-      )}
     </div>
   );
 }

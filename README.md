@@ -168,7 +168,22 @@ O projeto usa PostgreSQL com Prisma. Certifique-se de:
 3. Configurar as variáveis de ambiente corretamente
 
 ### Upload de Imagens
-O sistema suporta upload de imagens para os pets. As imagens são armazenadas como URLs.
+O sistema suporta upload de imagens para os pets via Supabase Storage.
+
+### Sistema de Pagamentos
+O projeto utiliza **Asaas** como gateway de pagamentos, suportando:
+- **PIX** - Pagamento instantâneo com QR Code
+- **Boleto Bancário** - Pagamento tradicional
+- **Cartão de Crédito** - Pagamento parcelado
+
+**Configuração do Asaas:**
+1. Crie uma conta em [https://www.asaas.com/](https://www.asaas.com/)
+2. Para testes, use [https://sandbox.asaas.com/](https://sandbox.asaas.com/)
+3. Obtenha sua API Key em: **Integrações → API Key**
+4. Configure no `.env`: `ASAAS_API_KEY` e `ASAAS_ENVIRONMENT`
+5. Configure webhooks em: **Integrações → Webhooks**
+   - URL: `https://seu-dominio.com/payments/webhook`
+   - Eventos: PAYMENT_CONFIRMED, PAYMENT_RECEIVED, etc.
 
 ### CORS
 O backend está configurado para aceitar requisições dos seguintes domínios:
@@ -187,7 +202,7 @@ http://localhost:3000/api-docs
 ### Principais Endpoints
 
 #### Autenticação
-- `POST /auth/register` - Registrar usuário
+- `POST /auth/register` - Registrar usuário (agora aceita CPF e telefone)
 - `POST /auth/login` - Login
 
 #### Pets
@@ -203,6 +218,19 @@ http://localhost:3000/api-docs
 
 #### Matches
 - `GET /matches/user/:userId` - Matches do usuário
+
+#### Pagamentos (Asaas)
+- `GET /payments/test` - Testar conexão com Asaas
+- `POST /payments/create-plan-payment` - Criar pagamento de plano
+- `POST /payments/create-recurring-subscription` - Criar assinatura recorrente
+- `POST /payments/webhook` - Receber webhooks do Asaas
+- `GET /payments/status/:paymentId` - Verificar status de pagamento
+- `DELETE /payments/cancel/:paymentId` - Cancelar pagamento
+
+#### Assinaturas
+- `GET /subscriptions/plans` - Listar planos disponíveis
+- `GET /subscriptions/my-subscription` - Minha assinatura
+- `POST /subscriptions/cancel` - Cancelar assinatura
 
 ## 🎯 Como Usar
 
@@ -243,14 +271,18 @@ http://localhost:3000/api-docs
 
 ## 🚧 Próximas Funcionalidades
 
-- [ ] Sistema de chat entre matches
+- [x] Sistema de monetização (FREE, PREMIUM, VIP)
+- [x] Gateway de pagamentos (Asaas)
+- [x] Pagamento via PIX com QR Code
+- [x] Validação de CPF
+- [ ] Sistema de chat em tempo real
 - [ ] Notificações push
 - [ ] Geolocalização avançada
 - [ ] Sistema de denúncias
 - [ ] Verificação de perfis
 - [ ] App mobile (React Native)
-- [ ] Sistema de premium
 - [ ] Analytics e métricas
+- [ ] Assinaturas recorrentes automáticas
 
 ## 📄 Licença
 

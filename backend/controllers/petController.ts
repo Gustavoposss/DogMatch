@@ -1,11 +1,12 @@
 import { Request, Response } from 'express';
 import prisma from '../prismaClient';
+import { UsageLimitService } from '../services/usageLimitService';
 
 interface AuthRequest extends Request {
   userId?: string;
 }
 
-// Cadastrar um novo pet
+// Cadastrar um novo pet (COM VERIFICAÇÃO DE LIMITE)
 export const createPet = async (req: AuthRequest, res: Response) => {
   try {
     const { name, breed, age, gender, size, isNeutered, objective, description, photoUrl } = req.body;
@@ -15,6 +16,16 @@ export const createPet = async (req: AuthRequest, res: Response) => {
     if (!ownerId || !name || !breed || !age || !gender || !size || !objective || !photoUrl) {
       return res.status(400).json({ 
         error: 'Preencha todos os campos obrigatórios: name, breed, age, gender, size, objective, photoUrl e esteja autenticado.' 
+      });
+    }
+
+    // VERIFICAR LIMITE DE PETS
+    const limitCheck = await UsageLimitService.canCreatePet(ownerId);
+    if (!limitCheck.canCreate) {
+      return res.status(403).json({ 
+        error: limitCheck.reason,
+        limitReached: true,
+        upgradeRequired: true
       });
     }
 
