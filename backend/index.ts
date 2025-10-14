@@ -16,15 +16,26 @@ import swaggerJsdoc from 'swagger-jsdoc';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuração do CORS
+// Configuração do CORS - Permitir frontend Vercel
 app.use(cors({
-  origin: [
-    'http://localhost:3000', 
-    'http://localhost:3001', 
-    'http://localhost:5173', 
-    'http://localhost:4173',
-    'https://dog-match-five.vercel.app'  // Frontend Vercel
-  ],
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:5173',
+      'http://localhost:4173',
+      'https://dog-match-five.vercel.app'
+    ];
+    
+    // Permitir requisições sem origin (mobile apps, Postman, etc)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
