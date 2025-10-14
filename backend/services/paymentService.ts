@@ -12,11 +12,21 @@ export class PaymentService {
    * Criar ou obter cliente no Asaas
    */
   static async getOrCreateAsaasCustomer(userId: string) {
+    console.log('🔍 Buscando usuário:', userId);
     const user = await prisma.user.findUnique({ where: { id: userId } });
     
     if (!user) {
       throw new Error('Usuário não encontrado');
     }
+
+    console.log('✅ Usuário encontrado:', {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      cpf: user.cpf ? `${user.cpf.substring(0, 3)}***` : 'NÃO CADASTRADO',
+      phone: user.phone || 'NÃO CADASTRADO',
+      asaasCustomerId: user.asaasCustomerId || 'NÃO CRIADO'
+    });
 
     // Se já tem ID do Asaas, verificar e atualizar se necessário
     if (user.asaasCustomerId) {
@@ -44,18 +54,34 @@ export class PaymentService {
     
     // CPF é obrigatório para criar cobranças
     if (!cpfToUse) {
+      console.error('❌ CPF não encontrado no usuário!');
       throw new Error('CPF do usuário é obrigatório para criar pagamentos. Por favor, atualize seu cadastro com um CPF válido.');
     }
     
-    console.log('CPF configurado para o cliente');
-    
-    const asaasCustomer = await asaasClient.createCustomer({
+    console.log('✅ CPF configurado para o cliente');
+    console.log('📤 Criando cliente no Asaas com os dados:', {
       name: user.name,
       email: user.email,
-      cpfCnpj: cpfToUse,
-      phone: user.phone || undefined,
-      // Adicionar mais campos conforme necessário (endereço, etc)
+      cpfCnpj: `${cpfToUse.substring(0, 3)}***`,
+      phone: user.phone || 'não informado'
     });
+    
+    let asaasCustomer;
+    try {
+      asaasCustomer = await asaasClient.createCustomer({
+        name: user.name,
+        email: user.email,
+        cpfCnpj: cpfToUse,
+        phone: user.phone || undefined,
+        // Adicionar mais campos conforme necessário (endereço, etc)
+      });
+      
+      console.log('✅ Cliente criado no Asaas:', asaasCustomer.id);
+    } catch (error: any) {
+      console.error('❌ Erro ao criar cliente no Asaas:', error.message);
+      console.error('Detalhes do erro:', error.response?.data || error);
+      throw error;
+    }
 
     // Salvar ID do Asaas no banco
     await prisma.user.update({
@@ -87,8 +113,15 @@ export class PaymentService {
     }
 
     // Criar ou obter cliente no Asaas
-    const asaasCustomer = await this.getOrCreateAsaasCustomer(userId);
-    console.log('Cliente Asaas:', asaasCustomer.id);
+    let asaasCustomer;
+    try {
+      asaasCustomer = await this.getOrCreateAsaasCustomer(userId);
+      console.log('Cliente Asaas criado/obtido:', asaasCustomer.id);
+    } catch (error: any) {
+      console.error('❌ Erro ao criar/obter cliente Asaas:', error.message);
+      console.error('Stack:', error.stack);
+      throw new Error(`Erro ao processar cliente: ${error.message}`);
+    }
 
     // Criar ou buscar assinatura
     let subscription = await prisma.subscription.findUnique({
