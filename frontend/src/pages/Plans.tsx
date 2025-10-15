@@ -205,9 +205,9 @@ function Plans() {
               <div className="flex items-start">
                 <span className="text-2xl mr-3">🐕</span>
                 <div>
-                  <h3 className="font-bold text-gray-900">Mais Pets</h3>
+                  <h3 className="font-bold text-gray-900">Até 2 Pets</h3>
                   <p className="text-gray-600 text-sm">
-                    Cadastre vários pets e encontre matches para todos eles
+                    Cadastre até 2 pets (FREE = 1 pet, Premium/VIP = 2 pets)
                   </p>
                 </div>
               </div>
@@ -217,6 +217,15 @@ function Plans() {
                   <h3 className="font-bold text-gray-900">Swipes Ilimitados</h3>
                   <p className="text-gray-600 text-sm">
                     Sem limites diários, dê quantos likes quiser
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start">
+                <span className="text-2xl mr-3">🔍</span>
+                <div>
+                  <h3 className="font-bold text-gray-900">Filtros Avançados</h3>
+                  <p className="text-gray-600 text-sm">
+                    Filtre por raça específica, faixa etária e localização
                   </p>
                 </div>
               </div>
@@ -237,6 +246,15 @@ function Plans() {
                   <h3 className="font-bold text-gray-900">Ver Quem Curtiu</h3>
                   <p className="text-gray-600 text-sm">
                     Veja quem deu like no seu pet antes de dar match
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start">
+                <span className="text-2xl mr-3">⭐</span>
+                <div>
+                  <h3 className="font-bold text-gray-900">Selo Premium/VIP</h3>
+                  <p className="text-gray-600 text-sm">
+                    Mostre que é um membro especial da comunidade
                   </p>
                 </div>
               </div>
