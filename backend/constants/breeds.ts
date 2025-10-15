@@ -8,7 +8,23 @@ export const DOG_BREEDS = [
   'Pinscher',
   'Dachshund',
   'Pug',
-  'Maltês'
+  'Maltês',
+  'Poodle',
+  'Labrador Retriever',
+  'Pastor Alemão',
+  'Bulldog Francês',
+  'Beagle',
+  'Rottweiler',
+  'Chihuahua',
+  'Husky Siberiano',
+  'Border Collie',
+  'Jack Russell Terrier',
+  'Cocker Spaniel',
+  'Bulldog Inglês',
+  'Akita',
+  'Doberman',
+  'Boxer',
+  'Pitbull'
 ] as const;
 
 export type DogBreed = typeof DOG_BREEDS[number];

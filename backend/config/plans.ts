@@ -30,42 +30,43 @@ export interface PlanConfig {
     PREMIUM: {
       name: 'Premium',
       price: 19.90,
-      maxPets: 5,
+      maxPets: 2,
       maxSwipesPerDay: -1, // ilimitado
       canSeeWhoLiked: true,
       canBoost: true,
       canUndoSwipe: false,
       boostsPerMonth: 1,
       features: [
-        'Até 5 pets cadastrados',
+        'Até 2 pets cadastrados',
         'Swipes ilimitados',
         'Ver quem curtiu seu pet',
         '1 Boost por mês',
-        'Filtros avançados',
+        'Filtros avançados (raça, idade, localização)',
         'Chat sem limitações',
-        'Badge verificado',
+        'Selo Premium',
         'Suporte prioritário'
       ]
     },
     VIP: {
       name: 'VIP',
       price: 39.90,
-      maxPets: -1, // ilimitado
+      maxPets: 2,
       maxSwipesPerDay: -1, // ilimitado
       canSeeWhoLiked: true,
       canBoost: true,
       canUndoSwipe: true,
       boostsPerMonth: 3,
       features: [
-        'Pets ilimitados',
+        'Até 2 pets cadastrados',
         'Swipes ilimitados',
         'Ver quem curtiu seu pet',
         '3 Boosts por mês',
+        'Filtros avançados (raça, idade, localização)',
         'Aparecer primeiro nos resultados',
         'Desfazer swipes',
         'Modo viagem',
         'Analytics do perfil',
-        'Selo VIP',
+        'Selo VIP exclusivo',
         'Suporte VIP prioritário'
       ]
     }
