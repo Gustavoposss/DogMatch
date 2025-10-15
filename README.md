@@ -182,8 +182,8 @@ O projeto utiliza **Asaas** como gateway de pagamentos, suportando:
 3. Obtenha sua API Key em: **Integrações → API Key**
 4. Configure no `.env`: `ASAAS_API_KEY` e `ASAAS_ENVIRONMENT`
 5. Configure webhooks em: **Integrações → Webhooks**
-   - URL: `https://seu-dominio.com/payments/webhook`
-   - Eventos: PAYMENT_CONFIRMED, PAYMENT_RECEIVED, etc.
+   - URL: `https://dogmatch.onrender.com/payments/webhook`
+   - Eventos: PAYMENT_CONFIRMED, PAYMENT_RECEIVED, PAYMENT_OVERDUE, PAYMENT_DELETED
 
 ### CORS
 O backend está configurado para aceitar requisições dos seguintes domínios:
@@ -191,6 +191,8 @@ O backend está configurado para aceitar requisições dos seguintes domínios:
 - `http://localhost:3001`
 - `http://localhost:5173`
 - `http://localhost:4173`
+- `https://dog-match-five.vercel.app` (Frontend em produção)
+- `https://dogmatch.onrender.com` (Backend em produção)
 
 ## 📖 API Documentation
 
