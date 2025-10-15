@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { FilterOptions, SwipeFilters } from '../services/swipeService';
+import { DOG_BREEDS } from '../data/breeds';
 
 interface FilterPanelProps {
   filters: SwipeFilters;
@@ -101,13 +102,16 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
               <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
                 Raça:
               </label>
-              <input
-                type="text"
-                placeholder="Digite a raça..."
+              <select
                 value={filters.breed || ''}
                 onChange={(e) => handleFilterChange('breed', e.target.value || undefined)}
                 style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
-              />
+              >
+                <option value="">Todas as raças</option>
+                {DOG_BREEDS.map(breed => (
+                  <option key={breed} value={breed}>{breed}</option>
+                ))}
+              </select>
             </div>
 
             {/* Tamanho */}

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import { getPetsByUser, createPet, updatePet, deletePet } from '../services/petService';
+import { uploadPetPhoto, validateImageFile, createImagePreview } from '../services/uploadService';
+import { DOG_BREEDS } from '../data/breeds';
 
 interface JwtPayload {
   userId: string;
@@ -38,6 +40,9 @@ function Pets() {
   const [objective, setObjective] = useState('');
   const [photoUrl, setPhotoUrl] = useState('https://via.placeholder.com/150');
   const [editingPet, setEditingPet] = useState<any>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const [isUploading, setIsUploading] = useState(false);
 
   function handleEdit(pet: any) {
     setEditingPet(pet);
@@ -49,6 +54,31 @@ function Pets() {
     setIsNeutered(pet.isNeutered);
     setObjective(pet.objective);
     setPhotoUrl(pet.photoUrl);
+    setSelectedFile(null);
+    setImagePreview('');
+  }
+
+  async function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validar arquivo
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      setError(validation.error!);
+      return;
+    }
+
+    setError('');
+    setSelectedFile(file);
+
+    // Criar preview da imagem
+    try {
+      const preview = await createImagePreview(file);
+      setImagePreview(preview);
+    } catch (error) {
+      setError('Erro ao carregar preview da imagem.');
+    }
   }
 
   async function handleDelete(id: string) {
@@ -61,11 +91,29 @@ function Pets() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsUploading(true);
+
     try {
+      let finalPhotoUrl = photoUrl;
+
+      // Se há um arquivo selecionado, fazer upload
+      if (selectedFile) {
+        try {
+          finalPhotoUrl = await uploadPetPhoto(selectedFile, token!);
+        } catch (uploadError) {
+          setError('Erro ao fazer upload da imagem.');
+          setIsUploading(false);
+          return;
+        }
+      } else if (!editingPet && photoUrl.trim() === '') {
+        // Se não há arquivo nem URL, usar placeholder
+        finalPhotoUrl = 'https://via.placeholder.com/150';
+      }
+
       if (editingPet) {
         const updatedPet = await updatePet(editingPet.id, {
           name, breed, age: Number(age), gender, size, isNeutered, objective,
-          photoUrl: photoUrl.trim() !== '' ? photoUrl : 'https://via.placeholder.com/150',
+          photoUrl: finalPhotoUrl,
           ownerId: userId
         }, token!);
         setPets(pets.map(p => p.id === editingPet.id ? updatedPet : p));
@@ -73,11 +121,12 @@ function Pets() {
       } else {
         const newPet = await createPet({
           name, breed, age: Number(age), gender, size, isNeutered, objective,
-          photoUrl: photoUrl.trim() !== '' ? photoUrl : 'https://via.placeholder.com/150',
+          photoUrl: finalPhotoUrl,
           ownerId: userId
         }, token!);
         setPets([...pets, newPet]);
       }
+
       // Limpa o formulário
       setName('');
       setBreed('');
@@ -87,8 +136,12 @@ function Pets() {
       setIsNeutered(false);
       setObjective('');
       setPhotoUrl('');
+      setSelectedFile(null);
+      setImagePreview('');
     } catch {
       setError(editingPet ? 'Erro ao editar pet.' : 'Erro ao cadastrar pet.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -125,14 +178,19 @@ function Pets() {
             required
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
-          <input
-            type="text"
-            placeholder="Raça"
+          <select
             value={breed}
             onChange={e => setBreed(e.target.value)}
             required
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+          >
+            <option value="">Selecione a raça</option>
+            {DOG_BREEDS.map(dogBreed => (
+              <option key={dogBreed} value={dogBreed}>
+                {dogBreed}
+              </option>
+            ))}
+          </select>
           <input
             type="number"
             placeholder="Idade"
@@ -162,16 +220,69 @@ function Pets() {
             <option value="cruzamento">Cruzamento</option>
             <option value="adoção">Adoção</option>
           </select>
-          <input
-            type="text"
-            placeholder="URL da foto"
-            value={photoUrl}
-            onChange={e => setPhotoUrl(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+          <div className="space-y-3">
+            {/* Preview da imagem */}
+            {(imagePreview || photoUrl) && (
+              <div className="flex justify-center">
+                <img
+                  src={imagePreview || photoUrl}
+                  alt="Preview"
+                  className="w-32 h-32 object-cover rounded-xl border-2 border-blue-200 shadow"
+                />
+              </div>
+            )}
+            
+            {/* Upload de arquivo */}
+            <div className="flex flex-col items-center space-y-2">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+                id="photo-upload"
+              />
+              <label
+                htmlFor="photo-upload"
+                className="w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-semibold text-center cursor-pointer hover:from-blue-600 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
+              >
+                📷 {selectedFile ? 'Imagem Selecionada' : 'Selecionar Foto do Pet'}
+              </label>
+              <p className="text-xs text-gray-500 text-center">
+                Formatos: JPG, PNG, WebP • Máximo: 5MB
+              </p>
+            </div>
+
+            {/* Opção alternativa: URL (para casos especiais) */}
+            <details className="text-sm">
+              <summary className="cursor-pointer text-blue-600 hover:text-blue-800">
+                Ou inserir URL da imagem
+              </summary>
+              <input
+                type="text"
+                placeholder="URL da foto (opcional)"
+                value={photoUrl}
+                onChange={e => setPhotoUrl(e.target.value)}
+                className="w-full px-3 py-2 mt-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+            </details>
+          </div>
           <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row gap-4 mt-2">
-            <button type="submit" className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all">
-              {editingPet ? 'Salvar Alterações' : 'Cadastrar Pet'}
+            <button 
+              type="submit" 
+              disabled={isUploading}
+              className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isUploading ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {selectedFile ? 'Fazendo Upload...' : (editingPet ? 'Salvando...' : 'Cadastrando...')}
+                </span>
+              ) : (
+                editingPet ? 'Salvar Alterações' : 'Cadastrar Pet'
+              )}
             </button>
             {editingPet && (
               <button type="button" onClick={() => setEditingPet(null)} className="w-full md:w-auto px-8 py-3 bg-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-400 transition-all">
