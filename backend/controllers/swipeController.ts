@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../prismaClient';
 import { UsageLimitService } from '../services/usageLimitService';
+import { DOG_BREEDS } from '../constants/breeds';
 
 interface AuthRequest extends Request {
   userId?: string;
@@ -214,11 +215,8 @@ export const getFilterOptions = async (req: Request, res: Response) => {
       distinct: ['city']
     });
 
-    // Buscar raças únicas
-    const breeds = await prisma.pet.findMany({
-      select: { breed: true },
-      distinct: ['breed']
-    });
+    // Raças pré-definidas (sincronizadas com o frontend)
+    const breeds = DOG_BREEDS;
 
     // Opções de tamanho
     const sizes = ['pequeno', 'médio', 'grande'];
@@ -234,7 +232,7 @@ export const getFilterOptions = async (req: Request, res: Response) => {
 
     res.json({
       cities: cities.map(c => c.city),
-      breeds: breeds.map(b => b.breed),
+      breeds,
       sizes,
       genders,
       objectives,

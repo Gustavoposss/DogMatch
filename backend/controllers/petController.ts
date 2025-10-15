@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../prismaClient';
 import { UsageLimitService } from '../services/usageLimitService';
+import { isValidBreed } from '../constants/breeds';
 
 interface AuthRequest extends Request {
   userId?: string;
@@ -16,6 +17,13 @@ export const createPet = async (req: AuthRequest, res: Response) => {
     if (!ownerId || !name || !breed || !age || !gender || !size || !objective || !photoUrl) {
       return res.status(400).json({ 
         error: 'Preencha todos os campos obrigatórios: name, breed, age, gender, size, objective, photoUrl e esteja autenticado.' 
+      });
+    }
+
+    // Validar raça
+    if (!isValidBreed(breed)) {
+      return res.status(400).json({ 
+        error: 'Raça inválida. Selecione uma das raças disponíveis.' 
       });
     }
 
@@ -126,6 +134,13 @@ export const updatePet = async (req: AuthRequest, res: Response) => {
     }
     if (existingPet.ownerId !== userId) {
       return res.status(403).json({ error: 'Você não tem permissão para editar este pet.' });
+    }
+
+    // Validar raça se fornecida
+    if (updateData.breed && !isValidBreed(updateData.breed)) {
+      return res.status(400).json({ 
+        error: 'Raça inválida. Selecione uma das raças disponíveis.' 
+      });
     }
 
     // Atualizar o pet

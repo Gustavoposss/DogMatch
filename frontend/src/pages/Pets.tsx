@@ -214,7 +214,7 @@ function Pets() {
             <input type="checkbox" checked={isNeutered} onChange={e => setIsNeutered(e.target.checked)} className="form-checkbox h-5 w-5 text-blue-600" />
             Castrado?
           </label>
-          <select value={objective} onChange={e => setObjective(e.target.value)} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          <select value={objective} onChange={e => setObjective(e.target.value)} required className="w-full px-4 py-3 h-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
             <option value="">Selecione o objetivo</option>
             <option value="amizade">Amizade</option>
             <option value="cruzamento">Cruzamento</option>
@@ -226,7 +226,7 @@ function Pets() {
               <div className="flex justify-center">
                 <img
                   src={imagePreview || photoUrl}
-                  alt="Preview"
+                  alt="Foto do pet"
                   className="w-32 h-32 object-cover rounded-xl border-2 border-blue-200 shadow"
                 />
               </div>
@@ -252,19 +252,6 @@ function Pets() {
               </p>
             </div>
 
-            {/* Opção alternativa: URL (para casos especiais) */}
-            <details className="text-sm">
-              <summary className="cursor-pointer text-blue-600 hover:text-blue-800">
-                Ou inserir URL da imagem
-              </summary>
-              <input
-                type="text"
-                placeholder="URL da foto (opcional)"
-                value={photoUrl}
-                onChange={e => setPhotoUrl(e.target.value)}
-                className="w-full px-3 py-2 mt-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              />
-            </details>
           </div>
           <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row gap-4 mt-2">
             <button 
