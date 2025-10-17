@@ -60,14 +60,7 @@ function Navbar() {
               </Link>
               <Link 
                 to="/plans" 
-                className="btn-brand-secondary px-4 py-2 rounded-lg font-bold transition-all duration-200 shadow-brand hover:shadow-brand-lg"
-                style={{
-                  background: 'linear-gradient(135deg, #FCD34D 0%, #F59E0B 100%)',
-                  color: '#1E293B',
-                  border: 'none',
-                  textDecoration: 'none',
-                  display: 'inline-block'
-                }}
+                className="btn-brand-secondary"
               >
                 ⬆️ Upgrade
               </Link>

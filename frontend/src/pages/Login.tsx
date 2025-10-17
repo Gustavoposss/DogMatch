@@ -83,16 +83,7 @@ function Login() {
             <button 
               type="submit" 
               disabled={isLoading}
-              className="w-full btn-brand-primary"
-              style={{
-                background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
-                color: '#FFFFFF',
-                border: 'none',
-                padding: '12px 24px',
-                borderRadius: '12px',
-                fontWeight: '600',
-                fontSize: '16px'
-              }}
+              className="btn-brand-primary"
             >
               {isLoading ? 'Entrando...' : 'Entrar'}
             </button>

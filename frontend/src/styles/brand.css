@@ -80,8 +80,8 @@
 
 /* Botões da marca */
 .btn-brand-primary {
-  background: var(--brand-gradient-primary) !important;
-  color: var(--brand-white) !important;
+  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%) !important;
+  color: #FFFFFF !important;
   border: none !important;
   padding: 12px 24px !important;
   border-radius: 12px !important;
@@ -91,6 +91,9 @@
   display: inline-block !important;
   text-align: center !important;
   text-decoration: none !important;
+  font-size: 16px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .btn-brand-primary:hover {
@@ -105,8 +108,8 @@
 }
 
 .btn-brand-secondary {
-  background: var(--brand-gradient-secondary) !important;
-  color: var(--text-primary) !important;
+  background: linear-gradient(135deg, #FCD34D 0%, #F59E0B 100%) !important;
+  color: #1E293B !important;
   border: none !important;
   padding: 12px 24px !important;
   border-radius: 12px !important;
@@ -116,6 +119,8 @@
   display: inline-block !important;
   text-align: center !important;
   text-decoration: none !important;
+  font-size: 16px !important;
+  box-sizing: border-box !important;
 }
 
 .btn-brand-secondary:hover {
@@ -225,4 +230,42 @@
 
 .shadow-brand-lg {
   box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+}
+
+/* Força máxima para botões - sobrescreve qualquer coisa */
+button.btn-brand-primary,
+a.btn-brand-primary,
+input.btn-brand-primary {
+  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  padding: 12px 24px !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer !important;
+  display: inline-block !important;
+  text-align: center !important;
+  text-decoration: none !important;
+  font-size: 16px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+button.btn-brand-secondary,
+a.btn-brand-secondary,
+input.btn-brand-secondary {
+  background: linear-gradient(135deg, #FCD34D 0%, #F59E0B 100%) !important;
+  color: #1E293B !important;
+  border: none !important;
+  padding: 12px 24px !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer !important;
+  display: inline-block !important;
+  text-align: center !important;
+  text-decoration: none !important;
+  font-size: 16px !important;
+  box-sizing: border-box !important;
 }
