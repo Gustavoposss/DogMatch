@@ -39,6 +39,11 @@ function PaymentFailure() {
           <button
             onClick={() => navigate('/plans')}
             className="w-full btn-brand-primary px-6 py-3 font-brand-secondary font-bold rounded-lg transition-all"
+            style={{
+              background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+              color: '#FFFFFF',
+              border: 'none'
+            }}
           >
             🔄 Tentar Novamente
           </button>
