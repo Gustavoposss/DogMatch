@@ -24,7 +24,7 @@ app.use(cors({
       'http://localhost:3001',
       'http://localhost:5173',
       'http://localhost:4173',
-      'https://dog-match-five.vercel.app'
+      'https://par-de-patas.vercel.app'
     ];
     
     // Permitir requisições sem origin (mobile apps, Postman, etc)
@@ -64,9 +64,9 @@ const swaggerOptions = {
   swaggerDefinition: {
     openapi: '3.0.0',
     info: {
-      title: 'DogMatch API',
+      title: 'Par de Patas API',
       version: '1.0.0',
-      description: 'Documentação da API do DogMatch'
+      description: 'Documentação da API do Par de Patas - Conexões Caninas'
     }
   },
   apis: ['./routes/*.ts', './controllers/*.ts'],

@@ -94,21 +94,21 @@ function Plans() {
 
   const getPlanColor = (type: string) => {
     if (type === 'FREE') return 'from-gray-400 to-gray-600';
-    if (type === 'PREMIUM') return 'from-blue-500 to-purple-600';
-    if (type === 'VIP') return 'from-yellow-400 to-orange-500';
+    if (type === 'PREMIUM') return 'from-purple-500 to-purple-700';
+    if (type === 'VIP') return 'from-yellow-400 to-yellow-600';
     return 'from-gray-400 to-gray-600';
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 py-12 px-4">
+    <div className="min-h-screen brand-bg-light py-12 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl md:text-5xl font-brand-primary font-bold text-gray-900 mb-4">
             Escolha o Melhor Plano para Você
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Encontre o par perfeito para seu pet com recursos incríveis!
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto font-brand-secondary">
+            Mais que encontros, conexões caninas! Encontre o par perfeito para seu pet com recursos incríveis!
           </p>
           {currentPlan && (
             <div className="mt-4">

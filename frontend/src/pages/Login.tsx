@@ -26,15 +26,18 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center px-4">
+    <div className="min-h-screen brand-bg-light flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
-          <h2 className="text-4xl font-bold text-gray-900 mb-2">
-            🐕 DogMatch
+          <div className="flex items-center justify-center mb-4">
+            <img src="/par-de-patas-logo.svg" alt="Par de Patas" className="w-16 h-16 paw-animation" />
+          </div>
+          <h2 className="text-4xl font-brand-primary font-bold text-gray-900 mb-2">
+            🐾 Par de Patas
           </h2>
-          <p className="text-gray-600">
-            Faça login para conectar seu pet
+          <p className="text-gray-600 font-brand-secondary slogan-brand">
+            Mais que encontros, conexões caninas
           </p>
         </div>
 
@@ -80,7 +83,7 @@ function Login() {
             <button 
               type="submit" 
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full btn-brand-primary py-3 px-4 rounded-lg font-brand-secondary font-semibold focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Entrando...' : 'Entrar'}
             </button>
@@ -88,11 +91,11 @@ function Login() {
 
           {/* Footer */}
           <div className="mt-6 text-center">
-            <p className="text-gray-600">
+            <p className="text-gray-600 font-brand-secondary">
               Não tem uma conta?{' '}
               <Link 
                 to="/register" 
-                className="text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
+                className="brand-text-primary hover:text-purple-700 font-medium transition-colors duration-200"
               >
                 Cadastre-se
               </Link>

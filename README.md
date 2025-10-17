@@ -1,4 +1,4 @@
-# 🐕 DogMatch - Encontros para Pets
+# 🐾 Par de Patas - Conexões Caninas
 
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-19.1.0-blue.svg)](https://reactjs.org/)
@@ -6,7 +6,7 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue.svg)](https://www.postgresql.org/)
 [![Prisma](https://img.shields.io/badge/Prisma-6.11.1-purple.svg)](https://www.prisma.io/)
 
-> **DogMatch** é uma plataforma de encontros para pets, similar ao Tinder, mas focado em conectar cachorros para amizade, cruzamento ou adoção. Desenvolvido com tecnologias modernas e uma arquitetura robusta.
+> **Par de Patas** é uma plataforma de conexões para pets que une tutores e seus cães de forma leve, moderna e divertida. Mais que encontros, conexões caninas. Focado em conectar cachorros para amizade, cruzamento ou adoção. Desenvolvido com tecnologias modernas e uma arquitetura robusta.
 
 ## 📋 Índice
 
@@ -89,8 +89,8 @@
 
 ### 1. Clone o repositório
 ```bash
-git clone https://github.com/seu-usuario/dogmatch.git
-cd dogmatch
+git clone https://github.com/seu-usuario/par-de-patas.git
+cd par-de-patas
 ```
 
 ### 2. Configure o Backend
@@ -109,8 +109,8 @@ npm install
 
 Crie um arquivo `.env` na pasta `backend`:
 ```env
-DATABASE_URL="postgresql://usuario:senha@localhost:5432/dogmatch"
-DIRECT_URL="postgresql://usuario:senha@localhost:5432/dogmatch"
+DATABASE_URL="postgresql://usuario:senha@localhost:5432/par_de_patas"
+DIRECT_URL="postgresql://usuario:senha@localhost:5432/par_de_patas"
 JWT_SECRET="sua-chave-secreta-aqui"
 PORT=3000
 ```
@@ -139,7 +139,7 @@ npm run dev
 ## 📁 Estrutura do Projeto
 
 ```
-DogMatch/
+ParDePatas/
 ├── backend/
 │   ├── controllers/          # Controladores da API
 │   ├── middlewares/          # Middlewares (auth, etc.)
@@ -164,7 +164,7 @@ DogMatch/
 ### Banco de Dados
 O projeto usa PostgreSQL com Prisma. Certifique-se de:
 1. Ter PostgreSQL instalado e rodando
-2. Criar um banco de dados chamado `dogmatch`
+2. Criar um banco de dados chamado `par_de_patas`
 3. Configurar as variáveis de ambiente corretamente
 
 ### Upload de Imagens
@@ -191,7 +191,7 @@ O backend está configurado para aceitar requisições dos seguintes domínios:
 - `http://localhost:3001`
 - `http://localhost:5173`
 - `http://localhost:4173`
-- `https://dog-match-five.vercel.app` (Frontend em produção)
+- `https://par-de-patas.vercel.app` (Frontend em produção)
 - `https://dogmatch.onrender.com` (Backend em produção)
 
 ## 📖 API Documentation
@@ -303,4 +303,4 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ---
 
-**🐕 Feito com ❤️ para conectar pets e seus donos!** 
+**🐾 Feito com ❤️ para conectar pets e seus tutores!** 

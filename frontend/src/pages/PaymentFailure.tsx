@@ -38,14 +38,14 @@ function PaymentFailure() {
         <div className="space-y-3">
           <button
             onClick={() => navigate('/plans')}
-            className="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all"
+            className="w-full btn-brand-primary px-6 py-3 font-brand-secondary font-bold rounded-lg transition-all"
           >
             🔄 Tentar Novamente
           </button>
           
           <button
             onClick={() => navigate('/subscription')}
-            className="w-full px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50 transition-all"
+            className="w-full px-6 py-3 bg-white border-2 border-purple-300 text-gray-700 font-brand-secondary font-bold rounded-lg hover:bg-purple-50 transition-all"
           >
             Voltar para Assinatura
           </button>
@@ -53,12 +53,12 @@ function PaymentFailure() {
 
         {/* Help */}
         <div className="mt-6 pt-6 border-t">
-          <p className="text-sm text-gray-600 mb-2">
+          <p className="text-sm text-gray-600 mb-2 font-brand-secondary">
             Precisa de ajuda?
           </p>
           <a
-            href="mailto:suporte@dogmatch.com"
-            className="text-sm text-blue-600 hover:underline"
+            href="mailto:suporte@pardepatas.com.br"
+            className="text-sm brand-text-primary hover:underline font-brand-secondary"
           >
             Entre em contato com o suporte
           </a>

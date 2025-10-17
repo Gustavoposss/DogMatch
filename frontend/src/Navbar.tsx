@@ -17,16 +17,17 @@ function Navbar() {
   }
 
   return (
-    <nav className="bg-gradient-to-r from-blue-500 to-purple-600 shadow-lg relative">
+    <nav className="brand-gradient-primary shadow-brand relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
             <Link 
               to="/" 
-              className="text-white font-bold text-xl hover:text-blue-100 transition-colors duration-200"
+              className="text-white font-brand-primary font-bold text-xl hover:text-yellow-200 transition-colors duration-200 flex items-center gap-2"
             >
-              🐕 DogMatch
+              <img src="/par-de-patas-logo.svg" alt="Par de Patas" className="w-8 h-8" />
+              Par de Patas
             </Link>
           </div>
 
@@ -35,31 +36,31 @@ function Navbar() {
             <div className="hidden md:flex items-center space-x-6">
               <Link 
                 to="/pets" 
-                className="text-white hover:text-blue-100 transition-colors duration-200 font-medium"
+                className="text-white hover:text-yellow-200 transition-colors duration-200 font-brand-secondary font-medium"
               >
                 Meus Pets
               </Link>
               <Link 
                 to="/swipe" 
-                className="text-white hover:text-blue-100 transition-colors duration-200 font-medium"
+                className="text-white hover:text-yellow-200 transition-colors duration-200 font-brand-secondary font-medium"
               >
                 Swipe
               </Link>
               <Link 
                 to="/matches" 
-                className="text-white hover:text-blue-100 transition-colors duration-200 font-medium"
+                className="text-white hover:text-yellow-200 transition-colors duration-200 font-brand-secondary font-medium"
               >
                 Matches
               </Link>
               <Link 
                 to="/subscription" 
-                className="text-white hover:text-blue-100 transition-colors duration-200 font-medium flex items-center"
+                className="text-white hover:text-yellow-200 transition-colors duration-200 font-brand-secondary font-medium flex items-center"
               >
                 💎 Assinatura
               </Link>
               <Link 
                 to="/plans" 
-                className="bg-yellow-400 text-gray-900 hover:bg-yellow-300 px-4 py-2 rounded-lg font-bold transition-colors duration-200 shadow-md hover:shadow-lg"
+                className="btn-brand-secondary px-4 py-2 rounded-lg font-bold transition-all duration-200 shadow-brand hover:shadow-brand-lg"
               >
                 ⬆️ Upgrade
               </Link>
@@ -71,7 +72,7 @@ function Navbar() {
             {token ? (
               <button 
                 onClick={handleLogout}
-                className="bg-white text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg font-semibold transition-colors duration-200 shadow-md hover:shadow-lg"
+                className="bg-white text-purple-600 hover:bg-purple-50 px-4 py-2 rounded-lg font-brand-secondary font-semibold transition-colors duration-200 shadow-brand hover:shadow-brand-lg"
               >
                 Sair
               </button>
@@ -79,13 +80,13 @@ function Navbar() {
               <div className="flex items-center space-x-4">
                 <Link 
                   to="/login" 
-                  className="text-white hover:text-blue-100 transition-colors duration-200 font-medium"
+                  className="text-white hover:text-yellow-200 transition-colors duration-200 font-brand-secondary font-medium"
                 >
                   Login
                 </Link>
                 <Link 
                   to="/register" 
-                  className="bg-white text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg font-semibold transition-colors duration-200 shadow-md hover:shadow-lg"
+                  className="bg-white text-purple-600 hover:bg-purple-50 px-4 py-2 rounded-lg font-brand-secondary font-semibold transition-colors duration-200 shadow-brand hover:shadow-brand-lg"
                 >
                   Cadastro
                 </Link>

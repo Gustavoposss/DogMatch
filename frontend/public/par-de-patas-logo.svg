@@ -1,0 +1,20 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Círculo de fundo roxo -->
+  <circle cx="100" cy="100" r="95" fill="#8B5CF6" stroke="#7C3AED" stroke-width="4"/>
+  
+  <!-- Pata amarela -->
+  <g fill="#FCD34D">
+    <!-- Dedos da pata -->
+    <ellipse cx="85" cy="75" rx="8" ry="12" transform="rotate(-20 85 75)"/>
+    <ellipse cx="100" cy="70" rx="8" ry="12"/>
+    <ellipse cx="115" cy="75" rx="8" ry="12" transform="rotate(20 115 75)"/>
+    <ellipse cx="92" cy="65" rx="6" ry="10"/>
+    <ellipse cx="108" cy="65" rx="6" ry="10"/>
+    
+    <!-- Palma da pata -->
+    <ellipse cx="100" cy="95" rx="18" ry="25" transform="rotate(0 100 95)"/>
+    
+    <!-- Letras PP -->
+    <text x="100" y="102" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#FCD34D">PP</text>
+  </g>
+</svg>
