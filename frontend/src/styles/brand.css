@@ -44,7 +44,13 @@
 }
 
 .brand-text-primary {
-  color: var(--brand-purple);
+  color: var(--brand-purple) !important;
+  text-decoration: none !important;
+}
+
+.brand-text-primary:hover {
+  color: var(--brand-purple-dark) !important;
+  text-decoration: underline !important;
 }
 
 .brand-text-secondary {
@@ -74,33 +80,47 @@
 
 /* Botões da marca */
 .btn-brand-primary {
-  background: var(--brand-gradient-primary);
-  color: var(--brand-white);
-  border: none;
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-weight: 600;
-  transition: all 0.3s ease;
+  background: var(--brand-gradient-primary) !important;
+  color: var(--brand-white) !important;
+  border: none !important;
+  padding: 12px 24px !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer !important;
+  display: inline-block !important;
+  text-align: center !important;
+  text-decoration: none !important;
 }
 
 .btn-brand-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3) !important;
+}
+
+.btn-brand-primary:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
 }
 
 .btn-brand-secondary {
-  background: var(--brand-gradient-secondary);
-  color: var(--text-primary);
-  border: none;
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-weight: 600;
-  transition: all 0.3s ease;
+  background: var(--brand-gradient-secondary) !important;
+  color: var(--text-primary) !important;
+  border: none !important;
+  padding: 12px 24px !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+  cursor: pointer !important;
+  display: inline-block !important;
+  text-align: center !important;
+  text-decoration: none !important;
 }
 
 .btn-brand-secondary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(252, 211, 77, 0.3);
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(252, 211, 77, 0.3) !important;
 }
 
 /* Cards da marca */
