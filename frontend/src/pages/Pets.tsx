@@ -4,6 +4,9 @@ import { getPetsByUser, createPet, updatePet, deletePet } from '../services/petS
 import { uploadPetPhoto, validateImageFile, createImagePreview } from '../services/uploadService';
 import { DOG_BREEDS } from '../data/breeds';
 
+// Placeholder SVG - Imagem de cachorro
+const DOG_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNDAlIiBmb250LXNpemU9IjUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5Ij7wn5C2PC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjUlIiBmb250LXNpemU9IjE0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4=';
+
 interface JwtPayload {
   userId: string;
 }
@@ -38,7 +41,7 @@ function Pets() {
   const [size, setSize] = useState('');
   const [isNeutered, setIsNeutered] = useState(false);
   const [objective, setObjective] = useState('');
-  const [photoUrl, setPhotoUrl] = useState('https://via.placeholder.com/150');
+  const [photoUrl, setPhotoUrl] = useState(DOG_PLACEHOLDER);
   const [editingPet, setEditingPet] = useState<any>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
@@ -107,7 +110,7 @@ function Pets() {
         }
       } else if (!editingPet && photoUrl.trim() === '') {
         // Se não há arquivo nem URL, usar placeholder
-        finalPhotoUrl = 'https://via.placeholder.com/150';
+        finalPhotoUrl = DOG_PLACEHOLDER;
       }
 
       if (editingPet) {
@@ -156,7 +159,7 @@ function Pets() {
                 src={pet.photoUrl}
                 alt={pet.name}
                 className="w-28 h-28 object-cover rounded-xl mb-3 border-2 border-blue-200 shadow"
-                onError={e => (e.currentTarget.src = 'https://via.placeholder.com/120')}
+                onError={e => (e.currentTarget.src = DOG_PLACEHOLDER)}
               />
               <div className="font-bold text-lg text-gray-800 mb-1">{pet.name}</div>
               <div className="text-gray-600 mb-1">{pet.breed}</div>
