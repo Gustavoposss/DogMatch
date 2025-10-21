@@ -1,5 +1,9 @@
 import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import cors from 'cors';
+import jwt from 'jsonwebtoken';
+import './types/socket';
 import userRoutes from './routes/userRoutes';
 import petRoutes from './routes/petRoutes';
 import authRoutes from './routes/authRoutes';
@@ -12,8 +16,22 @@ import paymentRoutes from './routes/paymentRoutes';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 
-
 const app = express();
+const server = createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3001', 
+      'http://localhost:5173',
+      'http://localhost:4173',
+      'https://par-de-patas.vercel.app'
+    ],
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 
 // Configuração do CORS - Permitir frontend Vercel
@@ -75,6 +93,66 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+// Socket.IO - Autenticação
+io.use((socket, next) => {
+  const token = socket.handshake.auth.token;
+  if (!token) {
+    return next(new Error('Token não fornecido'));
+  }
+  
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'segredo_supersecreto') as { userId: string };
+    socket.userId = decoded.userId;
+    next();
+  } catch (err) {
+    next(new Error('Token inválido'));
+  }
+});
+
+// Socket.IO - Eventos
+io.on('connection', (socket) => {
+  console.log(`✅ Usuário conectado: ${socket.userId}`);
+  
+  // Entrar na sala do match para receber mensagens
+  socket.on('join_match', (matchId) => {
+    socket.join(`match_${matchId}`);
+    console.log(`📱 Usuário ${socket.userId} entrou no match ${matchId}`);
+  });
+  
+  // Sair da sala do match
+  socket.on('leave_match', (matchId) => {
+    socket.leave(`match_${matchId}`);
+    console.log(`📱 Usuário ${socket.userId} saiu do match ${matchId}`);
+  });
+  
+  // Enviar mensagem
+  socket.on('send_message', async (data) => {
+    try {
+      const { matchId, content } = data;
+      
+      // Emitir para todos na sala do match
+      io.to(`match_${matchId}`).emit('new_message', {
+        matchId,
+        senderId: socket.userId,
+        content,
+        timestamp: new Date()
+      });
+      
+      console.log(`💬 Mensagem enviada no match ${matchId} por ${socket.userId}`);
+    } catch (error) {
+      socket.emit('error', { message: 'Erro ao enviar mensagem' });
+    }
+  });
+  
+  socket.on('disconnect', () => {
+    console.log(`❌ Usuário desconectado: ${socket.userId}`);
+  });
+});
+
+// Exportar io para uso em outros arquivos
+export { io };
+
+server.listen(PORT, () => {
+  console.log(`🚀 Servidor rodando na porta ${PORT}`);
+  console.log(`📡 Socket.IO ativo para chat em tempo real`);
 });

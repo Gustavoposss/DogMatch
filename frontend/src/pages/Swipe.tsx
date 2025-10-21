@@ -5,6 +5,7 @@ import type { SwipeFilters } from '../services/swipeService';
 import { getPetsByUser } from '../services/petService';
 import FilterPanel from '../components/FilterPanel';
 import ActiveFilters from '../components/ActiveFilters';
+import MatchPopup from '../components/MatchPopup';
 
 interface JwtPayload {
   userId: string;
@@ -17,6 +18,8 @@ function Swipe() {
   const [filters, setFilters] = useState<SwipeFilters>({});
   const [isLoading, setIsLoading] = useState(false);
   const [hasPet, setHasPet] = useState(true);
+  const [showMatchPopup, setShowMatchPopup] = useState(false);
+  const [matchData, setMatchData] = useState<any>(null);
   const token = localStorage.getItem('token');
   let userId = '';
 
@@ -66,9 +69,22 @@ function Swipe() {
       try {
         const result = await likePet(currentPet.id, token!);
         if (result.isMatch) {
-          alert('🎉 É um Match! Vocês se curtiram!');
+          // Criar dados do match para o popup
+          const match = {
+            petA: userPets[0], // Pet do usuário atual
+            petB: currentPet   // Pet que foi curtido
+          };
+          setMatchData(match);
+          setShowMatchPopup(true);
         } else {
-          alert('❤️ Like enviado!');
+          // Toast de like simples
+          const toast = document.createElement('div');
+          toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-slide-up';
+          toast.textContent = '❤️ Like enviado!';
+          document.body.appendChild(toast);
+          setTimeout(() => {
+            toast.remove();
+          }, 3000);
         }
       } catch (error: any) {
         if (error.response?.data?.limitReached) {
@@ -100,6 +116,18 @@ function Swipe() {
     setFilters(newFilters);
     // Recarregar pets com os novos filtros
     setTimeout(() => loadPetsToSwipe(), 100);
+  };
+
+  const handleCloseMatchPopup = () => {
+    setShowMatchPopup(false);
+    setMatchData(null);
+  };
+
+  const handleStartChat = () => {
+    // Redirecionar para página de matches/chat
+    window.location.href = '/matches';
+    setShowMatchPopup(false);
+    setMatchData(null);
   };
 
   const currentPet = petsToSwipe[currentPetIndex];
@@ -209,6 +237,16 @@ function Swipe() {
             ❤️ Sim
           </button>
         </div>
+
+        {/* Popup de Match */}
+        {showMatchPopup && matchData && (
+          <MatchPopup
+            isOpen={showMatchPopup}
+            onClose={handleCloseMatchPopup}
+            match={matchData}
+            onStartChat={handleStartChat}
+          />
+        )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import { getMatchesByUser } from '../services/swipeService';
+import ChatInterface from '../components/ChatInterface';
 
 interface JwtPayload {
   userId: string;
@@ -8,6 +9,7 @@ interface JwtPayload {
 
 function Matches() {
   const [matches, setMatches] = useState<any[]>([]);
+  const [selectedMatch, setSelectedMatch] = useState<any>(null);
   const token = localStorage.getItem('token');
   let userId = '';
 
@@ -28,28 +30,116 @@ function Matches() {
     }
   }, [userId, token]);
 
+  const handleSelectMatch = (match: any) => {
+    setSelectedMatch(match);
+  };
+
+  const handleBackToList = () => {
+    setSelectedMatch(null);
+  };
+
+  // Se um match está selecionado, mostrar o chat
+  if (selectedMatch) {
+    const otherPet = selectedMatch.petA?.ownerId === userId ? selectedMatch.petB : selectedMatch.petA;
+    const otherUser = {
+      id: otherPet?.ownerId,
+      name: otherPet?.owner?.name,
+      petName: otherPet?.name,
+      petPhoto: otherPet?.photoUrl
+    };
+
+    return (
+      <div className="min-h-[100vh] bg-gradient-to-br from-blue-50 to-purple-50">
+        <div className="max-w-4xl mx-auto p-4">
+          {/* Header com botão voltar */}
+          <div className="mb-4">
+            <button
+              onClick={handleBackToList}
+              className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 text-gray-700"
+            >
+              <span>←</span>
+              Voltar aos Matches
+            </button>
+          </div>
+          
+          {/* Interface de Chat */}
+          <div className="h-[calc(100vh-120px)]">
+            <ChatInterface
+              matchId={selectedMatch.id}
+              currentUserId={userId}
+              otherUser={otherUser}
+              token={token!}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-[80vh] flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 py-8 px-2">
-      <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-8">
+    <div className="min-h-[100vh] bg-gradient-to-br from-blue-50 to-purple-50 py-8 px-2">
+      <div className="max-w-4xl mx-auto">
         <h2 className="text-3xl font-bold text-blue-700 mb-6 text-center">Seus Matches</h2>
+        
         {matches.length === 0 ? (
-          <p className="text-gray-500 text-center">Você ainda não tem matches.</p>
+          <div className="bg-white rounded-3xl shadow-2xl p-8 text-center">
+            <div className="text-6xl mb-4">💔</div>
+            <h3 className="text-xl font-bold text-gray-700 mb-2">Nenhum match ainda</h3>
+            <p className="text-gray-500 mb-4">Continue dando likes para encontrar conexões incríveis!</p>
+            <a 
+              href="/swipe"
+              className="inline-block px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200"
+            >
+              🐾 Continuar Swipando
+            </a>
+          </div>
         ) : (
-          <ul className="space-y-6">
+          <div className="grid gap-4">
             {matches.map((match) => (
-              <li key={match.id} className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-blue-50 rounded-xl p-4 shadow-md">
-                <div className="flex items-center gap-4 flex-1">
-                  <img src={match.petA?.photoUrl} alt={match.petA?.name} className="w-16 h-16 object-cover rounded-lg border-2 border-blue-200 shadow" />
-                  <span className="font-bold text-gray-800 text-lg">{match.petA?.name}</span>
+              <div 
+                key={match.id} 
+                onClick={() => handleSelectMatch(match)}
+                className="bg-white rounded-2xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4 flex-1">
+                    <img 
+                      src={match.petA?.photoUrl} 
+                      alt={match.petA?.name} 
+                      className="w-16 h-16 object-cover rounded-full border-4 border-blue-200 shadow-lg" 
+                    />
+                    <div>
+                      <h3 className="font-bold text-gray-800 text-lg">{match.petA?.name}</h3>
+                      <p className="text-gray-600 text-sm">{match.petA?.owner?.name}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="text-3xl mb-2">💕</div>
+                    <p className="text-sm text-gray-500">Match!</p>
+                  </div>
+                  
+                  <div className="flex items-center gap-4 flex-1 justify-end">
+                    <div className="text-right">
+                      <h3 className="font-bold text-gray-800 text-lg">{match.petB?.name}</h3>
+                      <p className="text-gray-600 text-sm">{match.petB?.owner?.name}</p>
+                    </div>
+                    <img 
+                      src={match.petB?.photoUrl} 
+                      alt={match.petB?.name} 
+                      className="w-16 h-16 object-cover rounded-full border-4 border-purple-200 shadow-lg" 
+                    />
+                  </div>
                 </div>
-                <span className="text-2xl">❤️</span>
-                <div className="flex items-center gap-4 flex-1 justify-end">
-                  <img src={match.petB?.photoUrl} alt={match.petB?.name} className="w-16 h-16 object-cover rounded-lg border-2 border-purple-200 shadow" />
-                  <span className="font-bold text-gray-800 text-lg">{match.petB?.name}</span>
+                
+                <div className="mt-4 text-center">
+                  <span className="inline-block px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full text-sm font-semibold">
+                    💬 Iniciar Conversa
+                  </span>
                 </div>
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </div>
     </div>
