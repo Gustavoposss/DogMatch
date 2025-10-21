@@ -12,8 +12,14 @@ export const likePet = async (req: AuthRequest, res: Response) => {
     const { toPetId } = req.body;
     const userId = req.userId;
 
+    // Executar verificações em paralelo para reduzir tempo
+    const [swipeCheck, fromPet, toPet] = await Promise.all([
+      UsageLimitService.canSwipe(userId!),
+      prisma.pet.findFirst({ where: { ownerId: userId } }),
+      prisma.pet.findUnique({ where: { id: toPetId }, select: { id: true, ownerId: true } })
+    ]);
+
     // VERIFICAR LIMITE DE SWIPES
-    const swipeCheck = await UsageLimitService.canSwipe(userId!);
     if (!swipeCheck.canSwipe) {
       return res.status(403).json({ 
         error: swipeCheck.reason,
@@ -22,66 +28,73 @@ export const likePet = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Buscar o pet do usuário autenticado
-    const fromPet = await prisma.pet.findFirst({
-      where: { ownerId: userId }
-    });
-
     if (!fromPet) {
       return res.status(404).json({ error: 'Você não possui um pet cadastrado.' });
     }
 
-    // Verificar se já curtiu esse pet antes
-    const existingLike = await prisma.like.findFirst({
-      where: {
-        fromPetId: fromPet.id,
-        toPetId
-      }
-    });
+    if (!toPet) {
+      return res.status(404).json({ error: 'Pet não encontrado.' });
+    }
+
+    // Buscar like existente e like recíproco em uma única query
+    const [existingLike, reciprocalLike] = await Promise.all([
+      prisma.like.findFirst({
+        where: { fromPetId: fromPet.id, toPetId }
+      }),
+      prisma.like.findFirst({
+        where: { fromPetId: toPetId, toPetId: fromPet.id }
+      })
+    ]);
 
     if (existingLike) {
       return res.status(409).json({ error: 'Você já curtiu esse pet.' });
     }
 
-    // Registrar o like
-    await prisma.like.create({
-      data: {
-        fromPetId: fromPet.id,
-        toPetId
-      }
-    });
+    // Criar like e incrementar contador em paralelo
+    const [newLike] = await Promise.all([
+      prisma.like.create({
+        data: {
+          fromPetId: fromPet.id,
+          toPetId
+        }
+      }),
+      UsageLimitService.incrementSwipeCount(userId!)
+    ]);
 
-    // INCREMENTAR CONTADOR DE SWIPES
-    await UsageLimitService.incrementSwipeCount(userId!);
-
-    // Verificar se houve match (o outro pet já curtiu o seu)
-    const reciprocalLike = await prisma.like.findFirst({
-      where: {
-        fromPetId: toPetId,
-        toPetId: fromPet.id
-      }
-    });
-
+    // Se houver match, criar o match
+    let isMatch = false;
     if (reciprocalLike) {
-      // Criar o match
       await prisma.match.create({
         data: {
           petAId: fromPet.id,
           petBId: toPetId,
           userAId: fromPet.ownerId,
-          userBId: (await prisma.pet.findUnique({ where: { id: toPetId } }))?.ownerId || ''
+          userBId: toPet.ownerId
         }
       });
-      return res.status(201).json({ message: 'Match realizado!', isMatch: true });
+      isMatch = true;
+
+      // Emitir evento de match via Socket.IO
+      const { io } = await import('../index');
+      io.to(`user_${userId}`).emit('new_match', {
+        petA: fromPet,
+        petB: toPet,
+        timestamp: new Date()
+      });
+      io.to(`user_${toPet.ownerId}`).emit('new_match', {
+        petA: toPet,
+        petB: fromPet,
+        timestamp: new Date()
+      });
     }
 
-    // Retornar swipes restantes
-    const updatedCheck = await UsageLimitService.canSwipe(userId!);
+    // Retornar swipes restantes apenas se não houver match (para economizar query)
+    const updatedCheck = !isMatch ? await UsageLimitService.canSwipe(userId!) : { remaining: (swipeCheck.remaining || 0) - 1 };
 
     res.status(201).json({ 
-      message: 'Like registrado!',
-      isMatch: false,
-      swipesRemaining: updatedCheck.remaining 
+      message: isMatch ? 'Match realizado!' : 'Like registrado!',
+      isMatch,
+      swipesRemaining: updatedCheck.remaining || 0
     });
   } catch (error) {
     console.error('Erro ao curtir pet:', error);

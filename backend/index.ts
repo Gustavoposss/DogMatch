@@ -113,6 +113,10 @@ io.use((socket, next) => {
 io.on('connection', (socket) => {
   console.log(`✅ Usuário conectado: ${socket.userId}`);
   
+  // Entrar na sala do próprio usuário para receber notificações
+  socket.join(`user_${socket.userId}`);
+  console.log(`📱 Usuário ${socket.userId} entrou na sala de notificações`);
+  
   // Entrar na sala do match para receber mensagens
   socket.on('join_match', (matchId) => {
     socket.join(`match_${matchId}`);

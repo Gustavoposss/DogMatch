@@ -56,8 +56,21 @@ export const createPet = async (req: AuthRequest, res: Response) => {
         description,
         photoUrl,
         ownerId
+      },
+      include: {
+        owner: {
+          select: { id: true, name: true, city: true }
+        }
       }
     });
+
+    // Emitir evento para o usuário que criou o pet
+    try {
+      const { io } = await import('../index');
+      io.to(`user_${ownerId}`).emit('pet_created', { pet });
+    } catch (error) {
+      console.error('Erro ao emitir evento pet_created:', error);
+    }
 
     res.status(201).json({ pet });
   } catch (error) {
@@ -146,8 +159,21 @@ export const updatePet = async (req: AuthRequest, res: Response) => {
     // Atualizar o pet
     const pet = await prisma.pet.update({
       where: { id },
-      data: updateData
+      data: updateData,
+      include: {
+        owner: {
+          select: { id: true, name: true, city: true }
+        }
+      }
     });
+
+    // Emitir evento para o usuário que atualizou o pet
+    try {
+      const { io } = await import('../index');
+      io.to(`user_${userId}`).emit('pet_updated', { pet });
+    } catch (error) {
+      console.error('Erro ao emitir evento pet_updated:', error);
+    }
 
     res.json({ pet });
   } catch (error) {
@@ -173,6 +199,14 @@ export const deletePet = async (req: AuthRequest, res: Response) => {
 
     // Remover o pet
     await prisma.pet.delete({ where: { id } });
+
+    // Emitir evento para o usuário que deletou o pet
+    try {
+      const { io } = await import('../index');
+      io.to(`user_${userId}`).emit('pet_deleted', { petId: id });
+    } catch (error) {
+      console.error('Erro ao emitir evento pet_deleted:', error);
+    }
 
     res.json({ message: 'Pet removido com sucesso.' });
   } catch (error) {

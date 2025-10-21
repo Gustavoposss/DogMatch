@@ -3,6 +3,7 @@ import { jwtDecode } from 'jwt-decode';
 import { getPetsByUser, createPet, updatePet, deletePet } from '../services/petService';
 import { uploadPetPhoto, validateImageFile, createImagePreview } from '../services/uploadService';
 import { DOG_BREEDS } from '../data/breeds';
+import { useSocket } from '../hooks/useSocket';
 
 // Placeholder SVG - Imagem de cachorro
 const DOG_PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNDAlIiBmb250LXNpemU9IjUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5Ij7wn5C2PC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjUlIiBmb250LXNpemU9IjE0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5Ij5TZW0gZm90bzwvdGV4dD48L3N2Zz4=';
@@ -24,6 +25,24 @@ function Pets() {
     const decoded = jwtDecode<JwtPayload>(token);
     userId = decoded.userId;
   }
+
+  // Socket.IO - Atualizar lista de pets em tempo real
+  useSocket({
+    onPetCreated: (data) => {
+      console.log('🐕 Novo pet criado!', data);
+      setPets((prevPets) => [...prevPets, data.pet]);
+    },
+    onPetUpdated: (data) => {
+      console.log('✏️ Pet atualizado!', data);
+      setPets((prevPets) =>
+        prevPets.map((pet) => (pet.id === data.pet.id ? data.pet : pet))
+      );
+    },
+    onPetDeleted: (data) => {
+      console.log('🗑️ Pet deletado!', data);
+      setPets((prevPets) => prevPets.filter((pet) => pet.id !== data.petId));
+    }
+  });
 
   useEffect(() => {
     if (userId && token) {
@@ -119,15 +138,31 @@ function Pets() {
           photoUrl: finalPhotoUrl,
           ownerId: userId
         }, token!);
+        // Socket.IO vai atualizar automaticamente, mas fazemos aqui também para feedback imediato
         setPets(pets.map(p => p.id === editingPet.id ? updatedPet : p));
         setEditingPet(null);
+        
+        // Feedback de sucesso
+        const toast = document.createElement('div');
+        toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        toast.textContent = '✅ Pet atualizado com sucesso!';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
       } else {
         const newPet = await createPet({
           name, breed, age: Number(age), gender, size, isNeutered, objective,
           photoUrl: finalPhotoUrl,
           ownerId: userId
         }, token!);
+        // Socket.IO vai atualizar automaticamente, mas fazemos aqui também para feedback imediato
         setPets([...pets, newPet]);
+        
+        // Feedback de sucesso
+        const toast = document.createElement('div');
+        toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        toast.textContent = '✅ Pet cadastrado com sucesso!';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
       }
 
       // Limpa o formulário

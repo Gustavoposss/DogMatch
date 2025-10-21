@@ -6,6 +6,7 @@ import { getPetsByUser } from '../services/petService';
 import FilterPanel from '../components/FilterPanel';
 import ActiveFilters from '../components/ActiveFilters';
 import MatchPopup from '../components/MatchPopup';
+import { useSocket } from '../hooks/useSocket';
 
 interface JwtPayload {
   userId: string;
@@ -20,6 +21,7 @@ function Swipe() {
   const [hasPet, setHasPet] = useState(true);
   const [showMatchPopup, setShowMatchPopup] = useState(false);
   const [matchData, setMatchData] = useState<any>(null);
+  const [isLiking, setIsLiking] = useState(false);
   const token = localStorage.getItem('token');
   let userId = '';
 
@@ -27,6 +29,15 @@ function Swipe() {
     const decoded = jwtDecode<JwtPayload>(token);
     userId = decoded.userId;
   }
+
+  // Socket.IO - Receber atualizações em tempo real
+  useSocket({
+    onNewMatch: (data) => {
+      console.log('🎉 Novo match recebido!', data);
+      setMatchData(data);
+      setShowMatchPopup(true);
+    }
+  });
 
   const loadPetsToSwipe = async () => {
     if (token) {
@@ -64,37 +75,59 @@ function Swipe() {
   }, [userId, token]);
 
   const handleLike = async () => {
-    if (currentPetIndex < petsToSwipe.length) {
+    if (currentPetIndex < petsToSwipe.length && !isLiking) {
       const currentPet = petsToSwipe[currentPetIndex];
+      
+      // Optimistic update - mudar para o próximo pet imediatamente
+      setIsLiking(true);
+      const nextIndex = currentPetIndex + 1;
+      setCurrentPetIndex(nextIndex);
+      
+      // Mostrar feedback visual imediato
+      const toast = document.createElement('div');
+      toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-slide-up';
+      toast.textContent = '❤️ Enviando like...';
+      document.body.appendChild(toast);
+      
       try {
         const result = await likePet(currentPet.id, token!);
+        
+        // Atualizar o toast
+        toast.textContent = result.isMatch ? '🎉 É um Match!' : '❤️ Like enviado!';
+        toast.className = result.isMatch 
+          ? 'fixed top-4 right-4 bg-purple-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-slide-up'
+          : 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-slide-up';
+        
         if (result.isMatch) {
-          // Criar dados do match para o popup
-          const match = {
-            petA: userPets[0], // Pet do usuário atual
-            petB: currentPet   // Pet que foi curtido
-          };
-          setMatchData(match);
-          setShowMatchPopup(true);
-        } else {
-          // Toast de like simples
-          const toast = document.createElement('div');
-          toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-slide-up';
-          toast.textContent = '❤️ Like enviado!';
-          document.body.appendChild(toast);
+          // Match será tratado via Socket.IO
+          // Mas também tratamos aqui caso o socket não esteja conectado
           setTimeout(() => {
-            toast.remove();
-          }, 3000);
+            const match = {
+              petA: userPets[0],
+              petB: currentPet
+            };
+            setMatchData(match);
+            setShowMatchPopup(true);
+          }, 500);
         }
+        
+        setTimeout(() => {
+          toast.remove();
+        }, 3000);
       } catch (error: any) {
+        // Rollback em caso de erro
+        setCurrentPetIndex(currentPetIndex);
+        toast.remove();
+        
         if (error.response?.data?.limitReached) {
           alert('⚠️ ' + error.response.data.error);
         } else {
           alert('❌ Erro ao enviar like');
         }
+      } finally {
+        setIsLiking(false);
       }
     }
-    setCurrentPetIndex(currentPetIndex + 1);
   };
 
   const handleDislike = () => {
@@ -226,15 +259,27 @@ function Swipe() {
       <div className="flex gap-8 justify-center mt-2">
           <button
             onClick={handleDislike}
-            className="px-8 py-3 bg-red-500 hover:bg-red-600 text-white text-xl font-bold rounded-full shadow-lg transition-all duration-200 focus:ring-2 focus:ring-red-300 focus:outline-none"
+            disabled={isLiking}
+            className="px-8 py-3 bg-red-500 hover:bg-red-600 text-white text-xl font-bold rounded-full shadow-lg transition-all duration-200 focus:ring-2 focus:ring-red-300 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
           >
             ❌ Não
           </button>
           <button
             onClick={handleLike}
-            className="px-8 py-3 bg-green-500 hover:bg-green-600 text-white text-xl font-bold rounded-full shadow-lg transition-all duration-200 focus:ring-2 focus:ring-green-300 focus:outline-none"
+            disabled={isLiking}
+            className="px-8 py-3 bg-green-500 hover:bg-green-600 text-white text-xl font-bold rounded-full shadow-lg transition-all duration-200 focus:ring-2 focus:ring-green-300 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            ❤️ Sim
+            {isLiking ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Enviando...
+              </span>
+            ) : (
+              '❤️ Sim'
+            )}
           </button>
         </div>
 
