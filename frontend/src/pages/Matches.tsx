@@ -40,37 +40,15 @@ function Matches() {
 
   // Se um match está selecionado, mostrar o chat
   if (selectedMatch) {
-    const otherPet = selectedMatch.petA?.ownerId === userId ? selectedMatch.petB : selectedMatch.petA;
-    const otherUser = {
-      id: otherPet?.ownerId,
-      name: otherPet?.owner?.name,
-      petName: otherPet?.name,
-      petPhoto: otherPet?.photoUrl
-    };
-
     return (
-      <div className="min-h-[100vh] bg-gradient-to-br from-blue-50 to-purple-50">
-        <div className="max-w-4xl mx-auto p-4">
-          {/* Header com botão voltar */}
-          <div className="mb-4">
-            <button
-              onClick={handleBackToList}
-              className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 text-gray-700"
-            >
-              <span>←</span>
-              Voltar aos Matches
-            </button>
-          </div>
-          
-          {/* Interface de Chat */}
-          <div className="h-[calc(100vh-120px)]">
-            <ChatInterface
-              matchId={selectedMatch.id}
-              currentUserId={userId}
-              otherUser={otherUser}
-              token={token!}
-            />
-          </div>
+      <div className="min-h-[100vh] bg-gradient-to-br from-blue-50 to-purple-50 p-4">
+        <div className="max-w-7xl mx-auto h-[calc(100vh-2rem)]">
+          <ChatInterface
+            matches={matches}
+            currentUserId={userId}
+            token={token!}
+            onBack={handleBackToList}
+          />
         </div>
       </div>
     );
