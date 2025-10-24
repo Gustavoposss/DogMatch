@@ -42,7 +42,8 @@ app.use(cors({
       'http://localhost:3001',
       'http://localhost:5173',
       'http://localhost:4173',
-      'https://par-de-patas.vercel.app'
+      'https://par-de-patas.vercel.app',
+      'http://localhost:8081'
     ];
     
     // Permitir requisições sem origin (mobile apps, Postman, etc)
@@ -156,7 +157,8 @@ io.on('connection', (socket) => {
 // Exportar io para uso em outros arquivos
 export { io };
 
-server.listen(PORT, () => {
+server.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
   console.log(`📡 Socket.IO ativo para chat em tempo real`);
+  console.log(`🌐 Acessível em: http://localhost:${PORT} e http://192.168.101.5:${PORT}`);
 });

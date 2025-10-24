@@ -6,9 +6,13 @@ import multer from 'multer';
 const upload = multer({ storage: multer.memoryStorage() });
 
 export const uploadPetPhoto = [
-  upload.single('photo'),
+  upload.single('image'),
   async (req: Request, res: Response) => {
     try {
+      console.log('📤 Recebendo upload de pet photo');
+      console.log('Request body:', req.body);
+      console.log('Request file:', (req as any).file);
+      
       const file = (req as any).file;
       if (!file) {
         console.error('❌ Nenhum arquivo enviado');

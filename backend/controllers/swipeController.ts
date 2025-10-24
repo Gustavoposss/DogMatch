@@ -169,7 +169,13 @@ export const getAvailablePets = async (req: AuthRequest, res: Response) => {
       }
     });
 
-    res.json({ pets: availablePets });
+    // Transformar photoUrl em photos array para compatibilidade com frontend
+    const petsWithPhotos = availablePets.map(pet => ({
+      ...pet,
+      photos: pet.photoUrl ? [pet.photoUrl] : []
+    }));
+
+    res.json({ pets: petsWithPhotos });
   } catch (error) {
     console.error('Erro ao buscar pets para swipe:', error);
     res.status(500).json({ error: 'Erro interno do servidor.' });

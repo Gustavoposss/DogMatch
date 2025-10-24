@@ -97,7 +97,13 @@ export const getUserPets = async (req: AuthRequest, res: Response) => {
       }
     });
 
-    res.json({ pets });
+    // Transformar photoUrl em photos array para compatibilidade com frontend
+    const petsWithPhotos = pets.map(pet => ({
+      ...pet,
+      photos: pet.photoUrl ? [pet.photoUrl] : []
+    }));
+
+    res.json({ pets: petsWithPhotos });
   } catch (error) {
     console.error('Erro ao buscar pets:', error);
     res.status(500).json({ error: 'Erro interno do servidor.' });

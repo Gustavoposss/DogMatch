@@ -6,20 +6,25 @@ node_modules/
 .env
 .env.local
 .env.production
+.env.development
 backend/.env
 frontend/.env
+mobile/.env
 
 # Build outputs
 dist/
 build/
 */dist/
 */build/
+web-build/
 
 # Logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 logs/
 
 # IDE
@@ -29,6 +34,7 @@ logs/
 *.swo
 *~
 .DS_Store
+Thumbs.db
 
 # Prisma
 backend/prisma/migrations/*_migration/
@@ -43,6 +49,10 @@ coverage/
 *.tmp
 temp/
 .cache/
+
+# Expo (mobile)
+.expo/
+expo-env.d.ts
 
 # OS
 Thumbs.db
