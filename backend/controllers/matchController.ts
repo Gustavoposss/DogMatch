@@ -21,3 +21,43 @@ export const getUserMatches = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Erro ao buscar matches.' });
   }
 };
+
+export const getMatchById = async (req: Request, res: Response) => {
+  const { matchId } = req.params;
+  try {
+    const match = await prisma.match.findUnique({
+      where: { id: matchId },
+      include: {
+        petA: {
+          include: {
+            owner: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        },
+        petB: {
+          include: {
+            owner: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    if (!match) {
+      return res.status(404).json({ error: 'Match não encontrado.' });
+    }
+    
+    res.json(match);
+  } catch (error) {
+    console.error('Erro ao buscar match:', error);
+    res.status(500).json({ error: 'Erro interno do servidor.' });
+  }
+};

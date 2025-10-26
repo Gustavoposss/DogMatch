@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { authService } from '../services/authService';
 import { useAuth } from '../contexts/AuthContext';
 import { Colors, Fonts, Spacing, BorderRadius, Shadows } from '../styles/colors';
+import { Logo, LogoGradient } from '../components/Logo';
 
 export default function RegisterScreen() {
   const navigation = useNavigation();
@@ -113,7 +114,7 @@ export default function RegisterScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Logo */}
         <View style={styles.logoContainer}>
-          <Ionicons name="paw" size={40} color={Colors.primary} />
+          <LogoGradient width={80} height={80} />
           <Text style={styles.logoText}>Par de Patas</Text>
           <Text style={styles.sloganText}>Conexões Caninas</Text>
         </View>

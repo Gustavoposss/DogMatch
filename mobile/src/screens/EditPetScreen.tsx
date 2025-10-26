@@ -16,8 +16,32 @@ import { updatePet } from '../services/petService';
 import { pickImage, takePhoto, uploadImage } from '../services/uploadService';
 
 const DOG_BREEDS = [
-  'Labrador', 'Golden Retriever', 'Pastor Alemão', 'Bulldog', 'Poodle',
-  'Beagle', 'Rottweiler', 'Yorkshire', 'Shih Tzu', 'Pug', 'Outro'
+  'Sem Raça Definida',
+  'Shih Tzu',
+  'Yorkshire Terrier',
+  'Spitz Alemão',
+  'Lhasa Apso',
+  'Golden Retriever',
+  'Pinscher',
+  'Dachshund',
+  'Pug',
+  'Maltês',
+  'Poodle',
+  'Labrador Retriever',
+  'Pastor Alemão',
+  'Bulldog Francês',
+  'Beagle',
+  'Rottweiler',
+  'Chihuahua',
+  'Husky Siberiano',
+  'Border Collie',
+  'Jack Russell Terrier',
+  'Cocker Spaniel',
+  'Bulldog Inglês',
+  'Akita',
+  'Doberman',
+  'Boxer',
+  'Pitbull'
 ];
 
 const SIZES = ['PEQUENO', 'MEDIO', 'GRANDE'];

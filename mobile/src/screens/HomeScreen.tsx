@@ -17,6 +17,7 @@ import { petService } from '../services/petService';
 import { useAuth } from '../contexts/AuthContext';
 import { Pet } from '../types';
 import { Colors, Fonts, Spacing, BorderRadius, Shadows } from '../styles/colors';
+import { LogoIcon } from '../components/Logo';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -106,7 +107,7 @@ export default function HomeScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Ionicons name="paw" size={24} color={Colors.primary} />
+          <LogoIcon width={32} height={32} />
         </View>
         <Text style={styles.headerTitle}>Par de Patas</Text>
         <View style={styles.headerRight}>

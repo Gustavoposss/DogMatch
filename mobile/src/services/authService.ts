@@ -1,9 +1,9 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_URL, logApiConfig } from '../config/api';
 
-// URL base da API - você pode configurar isso em um arquivo de configuração
-const API_URL = 'http://192.168.101.5:3000'; // Para desenvolvimento local (use seu IP)
-// Para produção, use: const API_URL = 'https://seu-backend.com';
+// Log da configuração atual
+logApiConfig();
 
 // Configurar axios com interceptors para incluir token automaticamente
 axios.interceptors.request.use(async (config) => {

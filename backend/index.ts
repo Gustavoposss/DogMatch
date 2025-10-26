@@ -20,47 +20,47 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:3001', 
-      'http://localhost:5173',
-      'http://localhost:4173',
-      'https://par-de-patas.vercel.app'
-    ],
-    methods: ['GET', 'POST'],
-    credentials: true
+    origin: true, // Permite qualquer origem
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
   }
 });
 
 const PORT = process.env.PORT || 3000;
 
-// Configuração do CORS - Permitir frontend Vercel
+// Configuração do CORS - Permitir qualquer origem com segurança
 app.use(cors({
-  origin: function (origin, callback) {
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://localhost:5173',
-      'http://localhost:4173',
-      'https://par-de-patas.vercel.app',
-      'http://localhost:8081'
-    ];
-    
-    // Permitir requisições sem origin (mobile apps, Postman, etc)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: true, // Permite qualquer origem
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'x-auth-token',
+    'Accept',
+    'Origin',
+    'X-Requested-With'
+  ],
+  exposedHeaders: ['Authorization'],
+  maxAge: 86400, // Cache preflight por 24 horas
+  optionsSuccessStatus: 200 // Para compatibilidade com navegadores antigos
 }));
 
 app.use(express.json());
+
+// Middleware para tratar requisições OPTIONS (preflight)
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-auth-token, Accept, Origin, X-Requested-With');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Max-Age', '86400');
+    return res.status(200).end();
+  }
+  next();
+});
 
 // Rotas existentes
 app.use('/users', userRoutes);
@@ -68,7 +68,7 @@ app.use('/pets', petRoutes);
 app.use('/auth', authRoutes);
 app.use('/swipe', swipeRoutes);
 app.use('/matches', matchRoutes);
-app.use('/chats', chatRoutes);
+app.use('/chat', chatRoutes);
 app.use('/upload', uploadRoutes);
 
 // NOVAS ROTAS DE MONETIZAÇÃO
@@ -77,6 +77,16 @@ app.use('/payments', paymentRoutes);
 
 app.get('/ping', (req, res) => {
   res.send('pong');
+});
+
+// Endpoint para testar CORS
+app.get('/cors-test', (req, res) => {
+  res.json({
+    message: 'CORS funcionando!',
+    origin: req.headers.origin || 'N/A',
+    method: req.method,
+    timestamp: new Date().toISOString()
+  });
 });
 
 const swaggerOptions = {

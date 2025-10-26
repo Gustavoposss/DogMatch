@@ -37,15 +37,29 @@ export default function SwipeScreen() {
   const loadPets = async () => {
     try {
       setLoading(true);
+      console.log('=== LOAD PETS DEBUG ===');
+      console.log('User ID:', state.user?.id);
+      
       if (state.user && state.user.id) {
         const response = await swipeService.getPetsToSwipe(state.user.id);
+        console.log('Resposta completa:', response);
+        
         if (response && response.pets) {
+          console.log('Pets encontrados:', response.pets.length);
+          console.log('Primeiro pet:', response.pets[0]);
           setPets(response.pets);
           setCurrentIndex(0);
+        } else {
+          console.log('Nenhum pet encontrado ou formato inválido');
+          setPets([]);
         }
+      } else {
+        console.log('Usuário não logado');
+        setPets([]);
       }
     } catch (error) {
       console.error('Erro ao carregar pets:', error);
+      setPets([]);
     } finally {
       setLoading(false);
     }
@@ -71,27 +85,6 @@ export default function SwipeScreen() {
     setCurrentIndex(currentIndex + 1);
   };
 
-  const handleSuperLike = async () => {
-    if (currentIndex < pets.length) {
-      const pet = pets[currentIndex];
-      try {
-        const response = await swipeService.likePet(pet.id);
-        if (response && response.isMatch) {
-          setMatchedPet(pet);
-          setShowMatchModal(true);
-        }
-        setCurrentIndex(currentIndex + 1);
-      } catch (error) {
-        console.error('Erro ao dar super like:', error);
-      }
-    }
-  };
-
-  const handleUndo = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-    }
-  };
 
   const handleMatchModalClose = () => {
     setShowMatchModal(false);
@@ -110,6 +103,26 @@ export default function SwipeScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Carregando pets...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (pets.length === 0) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.emptyContainer}>
+          <Ionicons name="paw" size={64} color={Colors.primary} />
+          <Text style={styles.emptyTitle}>Nenhum pet encontrado!</Text>
+          <Text style={styles.emptyMessage}>
+            Não há pets cadastrados no sistema ainda. Cadastre seu primeiro pet!
+          </Text>
+          <TouchableOpacity 
+            style={styles.refreshButton} 
+            onPress={() => navigation.navigate('Pets' as never)}
+          >
+            <Text style={styles.refreshButtonText}>Cadastrar Pet</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -176,29 +189,17 @@ export default function SwipeScreen() {
         </View>
       </View>
 
-      {/* Action Buttons */}
+      {/* Action Buttons - Simplified */}
       <View style={styles.actionBar}>
-        <TouchableOpacity style={styles.actionButton} onPress={handleUndo}>
-          <View style={[styles.actionButtonInner, styles.undoButton]}>
-            <Ionicons name="arrow-undo" size={24} color={Colors.undo} />
-          </View>
-        </TouchableOpacity>
-
         <TouchableOpacity style={styles.actionButton} onPress={handlePass}>
           <View style={[styles.actionButtonInner, styles.passButton]}>
-            <Ionicons name="close" size={28} color={Colors.dislike} />
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.actionButton} onPress={handleSuperLike}>
-          <View style={[styles.actionButtonInner, styles.superLikeButton]}>
-            <Ionicons name="star" size={24} color={Colors.superlike} />
+            <Ionicons name="close" size={32} color={Colors.white} />
           </View>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
           <View style={[styles.actionButtonInner, styles.likeButton]}>
-            <Ionicons name="heart" size={28} color={Colors.like} />
+            <Ionicons name="heart" size={32} color={Colors.white} />
           </View>
         </TouchableOpacity>
       </View>
@@ -389,9 +390,10 @@ const styles = StyleSheet.create({
   actionBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    paddingVertical: 24,
+    gap: 48,
     backgroundColor: Colors.backgroundLight,
   },
   actionButton: {
@@ -399,9 +401,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   actionButtonInner: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -410,17 +412,11 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
-  undoButton: {
-    backgroundColor: 'rgba(255, 193, 7, 0.2)',
-  },
   passButton: {
-    backgroundColor: 'rgba(244, 67, 54, 0.2)',
-  },
-  superLikeButton: {
-    backgroundColor: 'rgba(103, 58, 183, 0.2)',
+    backgroundColor: Colors.error,
   },
   likeButton: {
-    backgroundColor: 'rgba(76, 175, 80, 0.2)',
+    backgroundColor: Colors.primary,
   },
   matchModal: {
     position: 'absolute',

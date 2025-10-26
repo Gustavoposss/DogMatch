@@ -11,102 +11,131 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-// Cores inline para evitar problemas de importação
-const Colors = {
-  primary: '#ee7c2b',
-  backgroundLight: '#f8f7f6',
-  textLightPrimary: '#1b130d',
-  textLightSecondary: '#9a6c4c',
-  white: '#FFFFFF',
-  surfaceLight: '#ffffff',
-  border: '#E1E5E9',
-  success: '#4CAF50',
-  error: '#F44336',
-};
 import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '../styles/colors';
+import { chatService, Message } from '../services/chatService';
+import { useAuth } from '../contexts/AuthContext';
 
-interface Message {
-  id: string;
-  text: string;
-  isFromUser: boolean;
-  timestamp: string;
-  senderName?: string;
-  senderImage?: string;
+interface RouteParams {
+  matchId: string;
+  petName: string;
+  petImage?: string;
 }
 
 export default function ChatScreen() {
   const navigation = useNavigation();
   const route = useRoute();
+  const { state } = useAuth();
   const scrollViewRef = useRef<ScrollView>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [pet, setPet] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  
+  const { matchId, petName, petImage } = (route.params as RouteParams) || {};
 
   useEffect(() => {
-    // Simular carregamento do pet e mensagens
-    const mockPet = {
-      id: '1',
-      name: 'Bolinha',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAQNkQGeH7wjv0EAy8FAiOycQPbQaJvQ-PSmfiTZ7-iqCyEzMn6ZtlBO741OaN4yyuoekijbnt12QwAUeiOm4JQlZ6dGhsnIZQArOS3VBwt6IEhb26KYEC9sKkNW86IwEFBJZMiBcwz9gaNF98NAlW0WhN3gAZvkpAZwKgjyYgOndzOGkdAntJU1JyVnVu6NKtnMUR4aCEhrmPYncjmLuMLrY07a6Xm48VufvBodecUHfARyUH6O_Kxr7mxVfbRgAotJl2QNfWN5DI',
-      isOnline: true,
-    };
+    if (matchId) {
+      loadMessages();
+    } else {
+      setLoading(false);
+    }
+  }, [matchId]);
 
-    const mockMessages: Message[] = [
-      {
-        id: '1',
-        text: 'Olá! A Mel viu a foto do Bolinha e abanou o rabo!',
-        isFromUser: false,
-        timestamp: '10:32 AM',
-        senderName: 'Bolinha',
-        senderImage: pet?.image,
-      },
-      {
-        id: '2',
-        text: 'Haha, que legal! Onde vocês costumam passear?',
-        isFromUser: true,
-        timestamp: '10:33 AM',
-      },
-      {
-        id: '3',
-        text: 'Nós gostamos muito do Parque Ibirapuera, tem bastante espaço pra correr!',
-        isFromUser: false,
-        timestamp: '10:35 AM',
-        senderName: 'Bolinha',
-        senderImage: pet?.image,
-      },
-      {
-        id: '4',
-        text: 'Ótima ideia! Que tal nos encontrarmos lá no sábado?',
-        isFromUser: true,
-        timestamp: '10:36 AM',
-      },
-    ];
-
-    setPet(mockPet);
-    setMessages(mockMessages);
-  }, []);
-
-  const handleSendMessage = () => {
-    if (newMessage.trim()) {
-      const message: Message = {
-        id: Date.now().toString(),
-        text: newMessage.trim(),
-        isFromUser: true,
-        timestamp: new Date().toLocaleTimeString('pt-BR', { 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        }),
-      };
+  const loadMessages = async () => {
+    try {
+      setLoading(true);
+      console.log('Carregando mensagens para match:', matchId);
+      const response = await chatService.getChatMessages(matchId);
       
-      setMessages(prev => [...prev, message]);
-      setNewMessage('');
-      
-      // Scroll to bottom
-      setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+      if (response && response.messages) {
+        // Transformar mensagens do backend para o formato do frontend
+        const transformedMessages = response.messages.map((msg: any) => ({
+          id: msg.id,
+          content: msg.content,
+          senderId: msg.senderId,
+          chatId: msg.chatId,
+          createdAt: msg.createdAt,
+          isFromUser: msg.senderId === state.user?.id,
+          timestamp: new Date(msg.createdAt).toLocaleTimeString('pt-BR', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          }),
+          senderName: msg.sender?.name || petName,
+          senderImage: msg.sender?.avatar || petImage,
+        }));
+        
+        setMessages(transformedMessages);
+        console.log('Mensagens carregadas:', transformedMessages.length);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar mensagens:', error);
+      Alert.alert('Erro', 'Não foi possível carregar as mensagens');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (newMessage.trim() && matchId && !sending) {
+      try {
+        setSending(true);
+        const messageContent = newMessage.trim();
+        setNewMessage(''); // Limpar input imediatamente
+        
+        // Adicionar mensagem otimisticamente
+        const optimisticMessage: Message = {
+          id: `temp_${Date.now()}`,
+          content: messageContent,
+          senderId: state.user?.id || '',
+          chatId: '',
+          createdAt: new Date().toISOString(),
+          isFromUser: true,
+          timestamp: new Date().toLocaleTimeString('pt-BR', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          }),
+        };
+        
+        setMessages(prev => [...prev, optimisticMessage]);
+        
+        // Enviar para o backend
+        const response = await chatService.sendMessage(matchId, messageContent);
+        
+        if (response && response.message) {
+          // Substituir mensagem temporária pela real
+          setMessages(prev => prev.map(msg => 
+            msg.id === optimisticMessage.id 
+              ? {
+                  ...response.message,
+                  isFromUser: true,
+                  timestamp: new Date(response.message.createdAt).toLocaleTimeString('pt-BR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  }),
+                }
+              : msg
+          ));
+        }
+        
+        // Scroll to bottom
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+        
+      } catch (error) {
+        console.error('Erro ao enviar mensagem:', error);
+        Alert.alert('Erro', 'Não foi possível enviar a mensagem');
+        
+        // Remover mensagem otimista em caso de erro
+        setMessages(prev => prev.filter(msg => msg.id !== `temp_${Date.now()}`));
+        setNewMessage(messageContent); // Restaurar texto
+      } finally {
+        setSending(false);
+      }
     }
   };
 
@@ -130,7 +159,7 @@ export default function ChatScreen() {
           styles.messageText,
           message.isFromUser ? styles.userMessageText : styles.matchMessageText
         ]}>
-          {message.text}
+          {message.content}
         </Text>
         <Text style={[
           styles.messageTime,
@@ -163,14 +192,14 @@ export default function ChatScreen() {
         </TouchableOpacity>
         
         <Image
-          source={{ uri: pet?.image || 'https://via.placeholder.com/48' }}
+          source={{ uri: petImage || 'https://via.placeholder.com/48' }}
           style={styles.headerAvatar}
         />
         
         <View style={styles.headerInfo}>
-          <Text style={styles.headerName}>{pet?.name || 'Bolinha'}</Text>
+          <Text style={styles.headerName}>{petName || 'Pet'}</Text>
           <Text style={styles.headerStatus}>
-            {pet?.isOnline ? 'Online' : 'Offline'}
+            Online
           </Text>
         </View>
       </View>
@@ -195,12 +224,13 @@ export default function ChatScreen() {
           <View style={styles.inputWrapper}>
             <TextInput
               style={styles.textInput}
-              placeholder="Mande um latido para o Bolinha..."
+              placeholder={`Mande um latido para o ${petName || 'pet'}...`}
               placeholderTextColor={Colors.textLightSecondary}
               value={newMessage}
               onChangeText={setNewMessage}
               multiline
               maxLength={500}
+              editable={!sending}
             />
             <View style={styles.inputActions}>
               <TouchableOpacity style={styles.inputActionButton}>
@@ -213,11 +243,11 @@ export default function ChatScreen() {
           </View>
           
           <TouchableOpacity
-            style={[styles.sendButton, newMessage.trim() ? styles.sendButtonActive : styles.sendButtonInactive]}
+            style={[styles.sendButton, (newMessage.trim() && !sending) ? styles.sendButtonActive : styles.sendButtonInactive]}
             onPress={handleSendMessage}
-            disabled={!newMessage.trim()}
+            disabled={!newMessage.trim() || sending}
           >
-            <Ionicons name="send" size={24} color={Colors.white} />
+            <Ionicons name={sending ? "hourglass" : "send"} size={24} color={Colors.white} />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

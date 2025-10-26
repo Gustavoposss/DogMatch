@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,40 +10,226 @@ import {
   Switch,
   ScrollView,
   Alert,
+  Image,
+  Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Colors, Fonts, Spacing, BorderRadius, Shadows } from '../styles/colors';
 import { Ionicons } from '@expo/vector-icons';
-import { authService } from '../services/authService';
 import { useAuth } from '../contexts/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-interface UserData {
+// Interfaces
+interface UserProfile {
   name: string;
   email: string;
+  city: string;
+  phone?: string;
+  avatar?: string;
 }
 
 interface NotificationSettings {
   newMatches: boolean;
   newMessages: boolean;
   newsAndPromotions: boolean;
+  pushNotifications: boolean;
+  emailNotifications: boolean;
 }
+
+interface PrivacySettings {
+  showOnlineStatus: boolean;
+  showLastSeen: boolean;
+  allowMessagesFromStrangers: boolean;
+  shareLocation: boolean;
+}
+
+interface PetPreferences {
+  maxDistance: number;
+  ageRange: { min: number; max: number };
+  preferredBreeds: string[];
+  showOnlyNeutered: boolean;
+}
+
+// Componente de Item de Configuração
+interface SettingItemProps {
+  icon: string;
+  title: string;
+  subtitle?: string;
+  onPress?: () => void;
+  rightElement?: React.ReactNode;
+  destructive?: boolean;
+  disabled?: boolean;
+}
+
+const SettingItem: React.FC<SettingItemProps> = ({
+  icon,
+  title,
+  subtitle,
+  onPress,
+  rightElement,
+  destructive = false,
+  disabled = false,
+}) => (
+  <TouchableOpacity
+    style={[styles.settingItem, disabled && styles.disabledItem]}
+    onPress={onPress}
+    disabled={disabled}
+  >
+    <View style={styles.settingItemLeft}>
+      <View style={[styles.settingIcon, destructive && styles.destructiveIcon]}>
+        <Ionicons 
+          name={icon as any} 
+          size={24} 
+          color={destructive ? Colors.error : disabled ? Colors.textLightSecondary : Colors.primary} 
+        />
+      </View>
+      <View style={styles.settingTextContainer}>
+        <Text style={[styles.settingTitle, destructive && styles.destructiveText, disabled && styles.disabledText]}>
+          {title}
+        </Text>
+        {subtitle && (
+          <Text style={[styles.settingSubtitle, disabled && styles.disabledText]}>
+            {subtitle}
+          </Text>
+        )}
+      </View>
+    </View>
+    {rightElement || <Ionicons name="chevron-forward" size={20} color={Colors.textLightSecondary} />}
+  </TouchableOpacity>
+);
+
+// Componente de Switch Item
+interface SwitchItemProps {
+  icon: string;
+  title: string;
+  subtitle?: string;
+  value: boolean;
+  onValueChange: (value: boolean) => void;
+  disabled?: boolean;
+}
+
+const SwitchItem: React.FC<SwitchItemProps> = ({
+  icon,
+  title,
+  subtitle,
+  value,
+  onValueChange,
+  disabled = false,
+}) => (
+  <View style={[styles.settingItem, disabled && styles.disabledItem]}>
+    <View style={styles.settingItemLeft}>
+      <View style={[styles.settingIcon, disabled && styles.disabledIcon]}>
+        <Ionicons 
+          name={icon as any} 
+          size={24} 
+          color={disabled ? Colors.textLightSecondary : Colors.primary} 
+        />
+      </View>
+      <View style={styles.settingTextContainer}>
+        <Text style={[styles.settingTitle, disabled && styles.disabledText]}>
+          {title}
+        </Text>
+        {subtitle && (
+          <Text style={[styles.settingSubtitle, disabled && styles.disabledText]}>
+            {subtitle}
+          </Text>
+        )}
+      </View>
+    </View>
+    <Switch
+      value={value}
+      onValueChange={onValueChange}
+      trackColor={{ false: '#E0E0E0', true: Colors.primary }}
+      thumbColor={value ? Colors.white : '#F4F3F4'}
+      disabled={disabled}
+    />
+  </View>
+);
 
 export default function SettingsScreen() {
   const navigation = useNavigation();
   const { signOut, state } = useAuth();
-  const [userData, setUserData] = useState<UserData>({
-    name: state.user?.name || 'Usuário',
+  
+  // Estados
+  const [userProfile, setUserProfile] = useState<UserProfile>({
+    name: state.user?.name || '',
     email: state.user?.email || '',
+    city: state.user?.city || '',
+    phone: '',
+    avatar: state.user?.avatar,
   });
+  
   const [notifications, setNotifications] = useState<NotificationSettings>({
     newMatches: true,
     newMessages: true,
     newsAndPromotions: false,
+    pushNotifications: true,
+    emailNotifications: true,
   });
+  
+  const [privacy, setPrivacy] = useState<PrivacySettings>({
+    showOnlineStatus: true,
+    showLastSeen: true,
+    allowMessagesFromStrangers: false,
+    shareLocation: false,
+  });
+  
+  const [petPreferences, setPetPreferences] = useState<PetPreferences>({
+    maxDistance: 50,
+    ageRange: { min: 1, max: 15 },
+    preferredBreeds: [],
+    showOnlyNeutered: false,
+  });
+  
   const [hasChanges, setHasChanges] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
 
-  const handleInputChange = (field: keyof UserData, value: string) => {
-    setUserData(prev => ({ ...prev, [field]: value }));
+  // Carregar configurações salvas
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const savedNotifications = await AsyncStorage.getItem('notificationSettings');
+      const savedPrivacy = await AsyncStorage.getItem('privacySettings');
+      const savedPetPreferences = await AsyncStorage.getItem('petPreferences');
+      
+      if (savedNotifications) {
+        setNotifications(JSON.parse(savedNotifications));
+      }
+      if (savedPrivacy) {
+        setPrivacy(JSON.parse(savedPrivacy));
+      }
+      if (savedPetPreferences) {
+        setPetPreferences(JSON.parse(savedPetPreferences));
+      }
+    } catch (error) {
+      console.error('Erro ao carregar configurações:', error);
+    }
+  };
+
+  const saveSettings = async () => {
+    try {
+      setLoading(true);
+      await AsyncStorage.setItem('notificationSettings', JSON.stringify(notifications));
+      await AsyncStorage.setItem('privacySettings', JSON.stringify(privacy));
+      await AsyncStorage.setItem('petPreferences', JSON.stringify(petPreferences));
+      
+      setHasChanges(false);
+      Alert.alert('Sucesso', 'Configurações salvas com sucesso!');
+    } catch (error) {
+      console.error('Erro ao salvar configurações:', error);
+      Alert.alert('Erro', 'Não foi possível salvar as configurações');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleProfileChange = (field: keyof UserProfile, value: string) => {
+    setUserProfile(prev => ({ ...prev, [field]: value }));
     setHasChanges(true);
   };
 
@@ -52,20 +238,14 @@ export default function SettingsScreen() {
     setHasChanges(true);
   };
 
-  const handleSaveChanges = () => {
-    // Implementar salvamento
-    setHasChanges(false);
-    Alert.alert('Sucesso', 'Alterações salvas com sucesso!');
+  const handlePrivacyChange = (field: keyof PrivacySettings, value: boolean) => {
+    setPrivacy(prev => ({ ...prev, [field]: value }));
+    setHasChanges(true);
   };
 
-  const handleChangePassword = () => {
-    // Implementar mudança de senha
-    Alert.alert('Mudança de Senha', 'Funcionalidade em desenvolvimento');
-  };
-
-  const handlePrivacyPolicy = () => {
-    // Implementar política de privacidade
-    Alert.alert('Política de Privacidade', 'Funcionalidade em desenvolvimento');
+  const handlePetPreferenceChange = (field: keyof PetPreferences, value: any) => {
+    setPetPreferences(prev => ({ ...prev, [field]: value }));
+    setHasChanges(true);
   };
 
   const handleLogout = async () => {
@@ -73,43 +253,18 @@ export default function SettingsScreen() {
       'Sair da Conta',
       'Tem certeza que deseja sair da sua conta?',
       [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
+        { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Sair',
           style: 'destructive',
           onPress: async () => {
             try {
               await signOut();
-              // A navegação será automática através do AuthContext
             } catch (error) {
               console.error('Erro ao fazer logout:', error);
             }
           },
         },
-      ]
-    );
-  };
-
-  const handleTermsOfService = () => {
-    // Implementar termos de serviço
-    Alert.alert('Termos de Serviço', 'Funcionalidade em desenvolvimento');
-  };
-
-  const handleContactUs = () => {
-    // Implementar contato
-    Alert.alert('Contato', 'Funcionalidade em desenvolvimento');
-  };
-
-  const handleDeactivateAccount = () => {
-    Alert.alert(
-      'Desativar Conta',
-      'Tem certeza que deseja desativar sua conta?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Desativar', style: 'destructive', onPress: () => console.log('Desativar conta') }
       ]
     );
   };
@@ -134,71 +289,6 @@ export default function SettingsScreen() {
     </View>
   );
 
-  const renderInputField = (
-    label: string,
-    value: string,
-    onChangeText: (text: string) => void,
-    placeholder?: string,
-    keyboardType?: 'default' | 'email-address'
-  ) => (
-    <View style={styles.inputField}>
-      <Text style={styles.inputLabel}>{label}</Text>
-      <TextInput
-        style={styles.textInput}
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        keyboardType={keyboardType}
-        placeholderTextColor={Colors.textLightSecondary}
-      />
-    </View>
-  );
-
-  const renderSwitchItem = (
-    icon: string,
-    title: string,
-    value: boolean,
-    onValueChange: (value: boolean) => void
-  ) => (
-    <View style={styles.switchItem}>
-      <View style={styles.switchItemLeft}>
-        <View style={styles.switchIcon}>
-          <Ionicons name={icon as any} size={24} color={Colors.textLightSecondary} />
-        </View>
-        <Text style={styles.switchItemText}>{title}</Text>
-      </View>
-      <Switch
-        value={value}
-        onValueChange={onValueChange}
-        trackColor={{ false: '#767577', true: Colors.primary }}
-        thumbColor={value ? Colors.white : '#f4f3f4'}
-      />
-    </View>
-  );
-
-  const renderLinkItem = (
-    icon: string,
-    title: string,
-    onPress: () => void,
-    destructive?: boolean
-  ) => (
-    <TouchableOpacity style={styles.linkItem} onPress={onPress}>
-      <View style={styles.linkItemLeft}>
-        <View style={styles.linkIcon}>
-          <Ionicons 
-            name={icon as any} 
-            size={24} 
-            color={destructive ? '#F44336' : Colors.textLightSecondary} 
-          />
-        </View>
-        <Text style={[styles.linkItemText, destructive && styles.destructiveText]}>
-          {title}
-        </Text>
-      </View>
-      <Ionicons name="chevron-forward" size={20} color={Colors.textLightSecondary} />
-    </TouchableOpacity>
-  );
-
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.backgroundLight} />
@@ -216,112 +306,297 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Account Section */}
-        {renderSection('Conta', (
+        {/* Profile Section */}
+        {renderSection('Perfil', (
           <>
-            {renderInputField(
-              'Nome',
-              userData.name,
-              (text) => handleInputChange('name', text),
-              'Digite seu nome'
-            )}
-            {renderInputField(
-              'E-mail',
-              userData.email,
-              (text) => handleInputChange('email', text),
-              'Digite seu e-mail',
-              'email-address'
-            )}
-            <TouchableOpacity style={styles.linkItem} onPress={handleChangePassword}>
-              <View style={styles.linkItemLeft}>
-                <View style={styles.linkIcon}>
-                  <Ionicons name="lock-closed" size={24} color={Colors.textLightSecondary} />
-                </View>
-                <Text style={styles.linkItemText}>Alterar Senha</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={Colors.textLightSecondary} />
-            </TouchableOpacity>
+            <SettingItem
+              icon="person-circle"
+              title="Editar Perfil"
+              subtitle={`${userProfile.name} • ${userProfile.city}`}
+              onPress={() => setShowEditProfile(true)}
+            />
+            <SettingItem
+              icon="paw"
+              title="Meus Pets"
+              subtitle="Gerenciar pets cadastrados"
+              onPress={() => navigation.navigate('Pets' as never)}
+            />
+            <SettingItem
+              icon="heart"
+              title="Meus Matches"
+              subtitle="Ver todos os matches"
+              onPress={() => navigation.navigate('Matches' as never)}
+            />
           </>
         ))}
 
         {/* Notifications Section */}
         {renderSection('Notificações', (
           <>
-            {renderSwitchItem(
-              'heart',
-              'Novos Matches',
-              notifications.newMatches,
-              (value) => handleNotificationChange('newMatches', value)
-            )}
-            {renderSwitchItem(
-              'chatbubble',
-              'Novas Mensagens',
-              notifications.newMessages,
-              (value) => handleNotificationChange('newMessages', value)
-            )}
-            {renderSwitchItem(
-              'megaphone',
-              'Notícias e Promoções',
-              notifications.newsAndPromotions,
-              (value) => handleNotificationChange('newsAndPromotions', value)
-            )}
+            <SwitchItem
+              icon="notifications"
+              title="Notificações Push"
+              subtitle="Receber notificações no dispositivo"
+              value={notifications.pushNotifications}
+              onValueChange={(value) => handleNotificationChange('pushNotifications', value)}
+            />
+            <SwitchItem
+              icon="heart"
+              title="Novos Matches"
+              subtitle="Notificar quando houver novos matches"
+              value={notifications.newMatches}
+              onValueChange={(value) => handleNotificationChange('newMatches', value)}
+              disabled={!notifications.pushNotifications}
+            />
+            <SwitchItem
+              icon="chatbubble"
+              title="Novas Mensagens"
+              subtitle="Notificar quando receber mensagens"
+              value={notifications.newMessages}
+              onValueChange={(value) => handleNotificationChange('newMessages', value)}
+              disabled={!notifications.pushNotifications}
+            />
+            <SwitchItem
+              icon="mail"
+              title="Notificações por E-mail"
+              subtitle="Receber notificações por e-mail"
+              value={notifications.emailNotifications}
+              onValueChange={(value) => handleNotificationChange('emailNotifications', value)}
+            />
+            <SwitchItem
+              icon="megaphone"
+              title="Notícias e Promoções"
+              subtitle="Receber ofertas e novidades"
+              value={notifications.newsAndPromotions}
+              onValueChange={(value) => handleNotificationChange('newsAndPromotions', value)}
+            />
           </>
         ))}
 
-        {/* Privacy and Support Section */}
-        {renderSection('Privacidade e Suporte', (
+        {/* Privacy Section */}
+        {renderSection('Privacidade', (
           <>
-            {renderLinkItem('shield-checkmark', 'Política de Privacidade', handlePrivacyPolicy)}
-            {renderLinkItem('document-text', 'Termos de Serviço', handleTermsOfService)}
-            {renderLinkItem('help-circle', 'Fale Conosco', handleContactUs)}
+            <SwitchItem
+              icon="eye"
+              title="Mostrar Status Online"
+              subtitle="Outros usuários podem ver quando você está online"
+              value={privacy.showOnlineStatus}
+              onValueChange={(value) => handlePrivacyChange('showOnlineStatus', value)}
+            />
+            <SwitchItem
+              icon="time"
+              title="Mostrar Última Vez Online"
+              subtitle="Mostrar quando você esteve online pela última vez"
+              value={privacy.showLastSeen}
+              onValueChange={(value) => handlePrivacyChange('showLastSeen', value)}
+            />
+            <SwitchItem
+              icon="chatbubbles"
+              title="Mensagens de Estranhos"
+              subtitle="Permitir mensagens de usuários não matchados"
+              value={privacy.allowMessagesFromStrangers}
+              onValueChange={(value) => handlePrivacyChange('allowMessagesFromStrangers', value)}
+            />
+            <SwitchItem
+              icon="location"
+              title="Compartilhar Localização"
+              subtitle="Mostrar sua cidade para outros usuários"
+              value={privacy.shareLocation}
+              onValueChange={(value) => handlePrivacyChange('shareLocation', value)}
+            />
+          </>
+        ))}
+
+        {/* Pet Preferences Section */}
+        {renderSection('Preferências de Pets', (
+          <>
+            <SettingItem
+              icon="location"
+              title="Distância Máxima"
+              subtitle={`${petPreferences.maxDistance} km`}
+              onPress={() => console.log('Ajustar distância')}
+            />
+            <SettingItem
+              icon="calendar"
+              title="Faixa Etária"
+              subtitle={`${petPreferences.ageRange.min} - ${petPreferences.ageRange.max} anos`}
+              onPress={() => console.log('Ajustar idade')}
+            />
+            <SettingItem
+              icon="paw"
+              title="Raças Preferidas"
+              subtitle={petPreferences.preferredBreeds.length > 0 ? `${petPreferences.preferredBreeds.length} raças selecionadas` : 'Todas as raças'}
+              onPress={() => console.log('Selecionar raças')}
+            />
+            <SwitchItem
+              icon="medical"
+              title="Apenas Castrados"
+              subtitle="Mostrar apenas pets castrados"
+              value={petPreferences.showOnlyNeutered}
+              onValueChange={(value) => handlePetPreferenceChange('showOnlyNeutered', value)}
+            />
+          </>
+        ))}
+
+        {/* Support Section */}
+        {renderSection('Suporte', (
+          <>
+            <SettingItem
+              icon="help-circle"
+              title="Central de Ajuda"
+              subtitle="Perguntas frequentes e tutoriais"
+              onPress={() => console.log('Central de ajuda')}
+            />
+            <SettingItem
+              icon="mail"
+              title="Fale Conosco"
+              subtitle="Envie sua dúvida ou sugestão"
+              onPress={() => console.log('Contato')}
+            />
+            <SettingItem
+              icon="star"
+              title="Avaliar App"
+              subtitle="Deixe sua avaliação na loja"
+              onPress={() => console.log('Avaliar app')}
+            />
+            <SettingItem
+              icon="information-circle"
+              title="Sobre o App"
+              subtitle="Versão 1.0.0"
+              onPress={() => console.log('Sobre')}
+            />
+          </>
+        ))}
+
+        {/* Legal Section */}
+        {renderSection('Legal', (
+          <>
+            <SettingItem
+              icon="shield-checkmark"
+              title="Política de Privacidade"
+              onPress={() => console.log('Política de privacidade')}
+            />
+            <SettingItem
+              icon="document-text"
+              title="Termos de Serviço"
+              onPress={() => console.log('Termos de serviço')}
+            />
+            <SettingItem
+              icon="lock-closed"
+              title="Alterar Senha"
+              onPress={() => console.log('Alterar senha')}
+            />
           </>
         ))}
 
         {/* Account Management Section */}
         {renderSection('Gerenciar Conta', (
           <>
-            <TouchableOpacity style={styles.linkItem} onPress={handleDeactivateAccount}>
-              <View style={styles.linkItemLeft}>
-                <View style={styles.linkIcon}>
-                  <Ionicons name="pause-circle" size={24} color={Colors.textLightSecondary} />
-                </View>
-                <Text style={styles.linkItemText}>Desativar Conta</Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.linkItem} onPress={handleDeleteAccount}>
-              <View style={styles.linkItemLeft}>
-                <View style={styles.linkIcon}>
-                  <Ionicons name="trash" size={24} color="#F44336" />
-                </View>
-                <Text style={styles.destructiveText}>Excluir Conta Permanentemente</Text>
-              </View>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={[styles.linkItem, styles.logoutItem]} onPress={handleLogout}>
-              <View style={styles.linkItemLeft}>
-                <View style={styles.linkIcon}>
-                  <Ionicons name="log-out" size={24} color={Colors.error} />
-                </View>
-                <Text style={[styles.linkItemText, styles.logoutText]}>Sair da Conta</Text>
-              </View>
-            </TouchableOpacity>
+            <SettingItem
+              icon="log-out"
+              title="Sair da Conta"
+              onPress={handleLogout}
+            />
+            <SettingItem
+              icon="trash"
+              title="Excluir Conta"
+              subtitle="Esta ação não pode ser desfeita"
+              onPress={handleDeleteAccount}
+              destructive
+            />
           </>
         ))}
       </ScrollView>
 
-      {/* Save Button - Only show when there are changes */}
+      {/* Save Button */}
       {hasChanges && (
         <View style={styles.saveButtonContainer}>
           <TouchableOpacity
-            style={styles.saveButton}
-            onPress={handleSaveChanges}
+            style={[styles.saveButton, loading && styles.saveButtonDisabled]}
+            onPress={saveSettings}
+            disabled={loading}
           >
-            <Text style={styles.saveButtonText}>
-              Salvar Alterações
-            </Text>
+            {loading ? (
+              <ActivityIndicator color={Colors.white} />
+            ) : (
+              <Text style={styles.saveButtonText}>Salvar Alterações</Text>
+            )}
           </TouchableOpacity>
         </View>
       )}
+
+      {/* Edit Profile Modal */}
+      <Modal
+        visible={showEditProfile}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setShowEditProfile(false)}>
+              <Text style={styles.modalCancelText}>Cancelar</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Editar Perfil</Text>
+            <TouchableOpacity onPress={() => setShowEditProfile(false)}>
+              <Text style={styles.modalSaveText}>Salvar</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView style={styles.modalContent}>
+            <View style={styles.avatarContainer}>
+              <Image
+                source={{ uri: userProfile.avatar || 'https://via.placeholder.com/100' }}
+                style={styles.avatar}
+              />
+              <TouchableOpacity style={styles.avatarEditButton}>
+                <Ionicons name="camera" size={20} color={Colors.white} />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Nome</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={userProfile.name}
+                onChangeText={(text) => handleProfileChange('name', text)}
+                placeholder="Digite seu nome"
+              />
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>E-mail</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={userProfile.email}
+                onChangeText={(text) => handleProfileChange('email', text)}
+                placeholder="Digite seu e-mail"
+                keyboardType="email-address"
+              />
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Cidade</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={userProfile.city}
+                onChangeText={(text) => handleProfileChange('city', text)}
+                placeholder="Digite sua cidade"
+              />
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Telefone</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={userProfile.phone}
+                onChangeText={(text) => handleProfileChange('phone', text)}
+                placeholder="Digite seu telefone"
+                keyboardType="phone-pad"
+              />
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -335,7 +610,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 12,
     backgroundColor: Colors.backgroundLight,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0, 0, 0, 0.05)',
@@ -362,14 +637,14 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   section: {
-    marginTop: 20,
+    marginTop: 24,
   },
   sectionTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '600',
     color: Colors.textPrimary,
     paddingHorizontal: 16,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   sectionContent: {
     backgroundColor: Colors.surfaceLight,
@@ -377,91 +652,55 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     overflow: 'hidden',
   },
-  inputField: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: Colors.textLightSecondary,
-    marginBottom: 8,
-  },
-  textInput: {
-    fontSize: 16,
-    color: Colors.textPrimary,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: 'transparent',
-  },
-  linkItem: {
+  settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0, 0, 0, 0.05)',
   },
-  linkItemLeft: {
+  settingItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
-  linkIcon: {
+  settingIcon: {
     width: 40,
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
   },
-  linkItemText: {
+  settingTextContainer: {
+    flex: 1,
+  },
+  settingTitle: {
     fontSize: 16,
     color: Colors.textPrimary,
-    flex: 1,
+    fontWeight: '500',
+  },
+  settingSubtitle: {
+    fontSize: 14,
+    color: Colors.textLightSecondary,
+    marginTop: 2,
+  },
+  destructiveIcon: {
+    backgroundColor: 'rgba(244, 67, 54, 0.1)',
+    borderRadius: 20,
   },
   destructiveText: {
-    color: '#F44336',
-    fontWeight: '500',
-  },
-  logoutItem: {
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    marginTop: 8,
-    paddingTop: 16,
-  },
-  logoutText: {
     color: Colors.error,
-    fontWeight: '500',
   },
-  switchItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
+  disabledItem: {
+    opacity: 0.5,
   },
-  switchItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
+  disabledIcon: {
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    borderRadius: 20,
   },
-  switchIcon: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  switchItemText: {
-    fontSize: 16,
-    color: Colors.textPrimary,
-    flex: 1,
+  disabledText: {
+    color: Colors.textLightSecondary,
   },
   saveButtonContainer: {
     position: 'absolute',
@@ -484,9 +723,84 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
+  saveButtonDisabled: {
+    opacity: 0.7,
+  },
   saveButtonText: {
     color: Colors.white,
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  // Modal styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: Colors.backgroundLight,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  modalCancelText: {
+    fontSize: 16,
+    color: Colors.textLightSecondary,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
+  },
+  modalSaveText: {
+    fontSize: 16,
+    color: Colors.primary,
+    fontWeight: '600',
+  },
+  modalContent: {
+    flex: 1,
+    padding: 16,
+  },
+  avatarContainer: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 16,
+  },
+  avatarEditButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: Colors.primary,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.textPrimary,
+    marginBottom: 8,
+  },
+  modalInput: {
+    fontSize: 16,
+    color: Colors.textPrimary,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: Colors.surfaceLight,
   },
 });

@@ -13,13 +13,36 @@ import {
 } from 'react-native';
 import { NavigationProps } from '../types';
 import { createPet } from '../services/petService';
-import { getCurrentUser } from '../services/authService';
 import { pickImage, takePhoto, uploadImage } from '../services/uploadService';
 import { useAuth } from '../contexts/AuthContext';
 
 const DOG_BREEDS = [
-  'Labrador', 'Golden Retriever', 'Pastor Alemão', 'Bulldog', 'Poodle',
-  'Beagle', 'Rottweiler', 'Yorkshire', 'Shih Tzu', 'Pug', 'Outro'
+  'Sem Raça Definida',
+  'Shih Tzu',
+  'Yorkshire Terrier',
+  'Spitz Alemão',
+  'Lhasa Apso',
+  'Golden Retriever',
+  'Pinscher',
+  'Dachshund',
+  'Pug',
+  'Maltês',
+  'Poodle',
+  'Labrador Retriever',
+  'Pastor Alemão',
+  'Bulldog Francês',
+  'Beagle',
+  'Rottweiler',
+  'Chihuahua',
+  'Husky Siberiano',
+  'Border Collie',
+  'Jack Russell Terrier',
+  'Cocker Spaniel',
+  'Bulldog Inglês',
+  'Akita',
+  'Doberman',
+  'Boxer',
+  'Pitbull'
 ];
 
 const SIZES = ['PEQUENO', 'MEDIO', 'GRANDE'];
@@ -80,36 +103,7 @@ export default function AddPetScreen({ navigation }: NavigationProps) {
       return;
     }
 
-    // Verificar limite de pets antes de prosseguir
-    try {
-      const token = await getCurrentUser();
-      if (token) {
-        const response = await fetch('http://192.168.101.5:3000/subscription/limits', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (response.ok) {
-          const limits = await response.json();
-          if (limits.pets && !limits.pets.canCreate) {
-            Alert.alert(
-              'Limite Atingido', 
-              limits.pets.reason || 'Você atingiu o limite de pets. Faça upgrade para adicionar mais!',
-              [
-                { text: 'OK', style: 'default' },
-                { text: 'Ver Planos', onPress: () => navigation.navigate('Plans' as never) }
-              ]
-            );
-            return;
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao verificar limites:', error);
-      // Continuar mesmo se a verificação falhar
-    }
+    // Verificação de limite será feita pelo backend
 
     setLoading(true);
     try {

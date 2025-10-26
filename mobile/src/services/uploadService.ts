@@ -1,8 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
-
-const API_URL = 'http://192.168.101.5:3000';
+import { API_URL } from '../config/api';
 
 export async function uploadImage(uri: string, type: string = 'image/jpeg') {
   try {

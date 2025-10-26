@@ -146,19 +146,28 @@ export const updatePet = async (req: AuthRequest, res: Response) => {
     const updateData = req.body;
     const userId = req.userId;
 
+    console.log('=== UPDATE PET DEBUG ===');
+    console.log('Pet ID:', id);
+    console.log('User ID:', userId);
+    console.log('Update Data:', updateData);
+
     // Verificar se o pet existe e pertence ao usuário autenticado
     const existingPet = await prisma.pet.findUnique({ where: { id } });
     if (!existingPet) {
+      console.log('Pet não encontrado');
       return res.status(404).json({ error: 'Pet não encontrado.' });
     }
     if (existingPet.ownerId !== userId) {
+      console.log('Usuário não tem permissão');
       return res.status(403).json({ error: 'Você não tem permissão para editar este pet.' });
     }
 
     // Validar raça se fornecida
     if (updateData.breed && !isValidBreed(updateData.breed)) {
+      console.log('Raça inválida:', updateData.breed);
+      console.log('Raças válidas:', require('../constants/breeds').DOG_BREEDS);
       return res.status(400).json({ 
-        error: 'Raça inválida. Selecione uma das raças disponíveis.' 
+        error: `Raça inválida: "${updateData.breed}". Selecione uma das raças disponíveis.` 
       });
     }
 
@@ -224,14 +233,38 @@ export const deletePet = async (req: AuthRequest, res: Response) => {
 export const getPetsToSwipe = async (req: Request, res: Response) => {
   const { userId } = req.params;
   try {
+    console.log('Buscando pets para swipe do usuário:', userId);
+    
     // Busca todos os pets que NÃO são do usuário logado
     const pets = await prisma.pet.findMany({
       where: {
         ownerId: { not: userId }
+      },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            city: true
+          }
+        }
       }
     });
-    res.json(pets);
+
+    console.log('Pets encontrados:', pets.length);
+    console.log('Primeiro pet:', pets[0]);
+
+    // Transformar photoUrl em photos array para compatibilidade com frontend
+    const petsWithPhotos = pets.map(pet => ({
+      ...pet,
+      photos: pet.photoUrl ? [pet.photoUrl] : []
+    }));
+
+    console.log('Pets com photos:', petsWithPhotos[0]);
+
+    res.json({ pets: petsWithPhotos });
   } catch (error) {
+    console.error('Erro ao buscar pets para swipe:', error);
     res.status(500).json({ error: 'Erro ao buscar pets para swipe.' });
   }
 };

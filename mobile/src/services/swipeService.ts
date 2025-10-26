@@ -1,7 +1,6 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const API_URL = 'http://192.168.101.5:3000';
+import { API_URL } from '../config/api';
 
 export interface FilterOptions {
   cities: string[];

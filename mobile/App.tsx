@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { ApiConfigDebug } from './src/components/ApiConfigDebug';
 
 // Importar telas
 import LoginScreen from './src/screens/LoginScreen';
@@ -141,6 +142,7 @@ export default function App() {
     <SafeAreaProvider>
       <AuthProvider>
         <AppNavigator />
+        <ApiConfigDebug />
       </AuthProvider>
     </SafeAreaProvider>
   );

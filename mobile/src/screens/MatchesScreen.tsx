@@ -94,7 +94,15 @@ export default function MatchesScreen() {
 
 
   const handleMatchPress = (match: Match) => {
-    navigation.navigate('Chat' as never);
+    // Determinar qual pet é o "outro" (não do usuário atual)
+    const currentUserId = state.user?.id;
+    const otherPet = match.petA.ownerId === currentUserId ? match.petB : match.petA;
+    
+    navigation.navigate('Chat' as never, {
+      matchId: match.id,
+      petName: otherPet.name,
+      petImage: otherPet.photoUrl,
+    } as never);
   };
 
   const handleSearch = () => {
