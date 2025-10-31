@@ -3,19 +3,78 @@ import supabase from '../supabaseClient';
 
 // Para lidar com uploads multipart/form-data
 import multer from 'multer';
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  // Aumentar limites para React Native
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB
+  }
+});
+
+// Middleware para processar uploads base64 (JSON) antes do multer
+const processBase64Upload = async (req: Request, res: Response, next: any) => {
+  const contentType = req.headers['content-type'] || '';
+  
+  // Se é JSON (base64 do React Native), processar antes do multer
+  if (contentType.includes('application/json')) {
+    // O express.json() já processou o body
+    if (req.body && req.body.image && typeof req.body.image === 'string') {
+      console.log('📤 Detectado upload base64 via JSON');
+      // Marcar como já processado para pular multer
+      (req as any).skipMulter = true;
+      (req as any).base64Data = req.body;
+    }
+  }
+  
+  next();
+};
 
 export const uploadPetPhoto = [
+  // Processar base64 primeiro
+  processBase64Upload,
+  // Tentar processar com multer (pode ser ignorado se skipMulter = true)
   upload.single('image'),
   async (req: Request, res: Response) => {
     try {
       console.log('📤 Recebendo upload de pet photo');
       console.log('Request body:', req.body);
       console.log('Request file:', (req as any).file);
+      console.log('Request headers:', req.headers);
+      console.log('Content-Type:', req.headers['content-type']);
       
-      const file = (req as any).file;
+      let file = (req as any).file;
+      
+      // Se foi marcado para pular multer ou não tem file mas tem base64, processar
+      if ((req as any).skipMulter || (!file && req.body.image && typeof req.body.image === 'string')) {
+        console.log('📤 Processando upload via base64 (React Native)');
+        
+        try {
+          // Converter base64 para buffer
+          const base64Data = req.body.image;
+          const buffer = Buffer.from(base64Data, 'base64');
+          
+          const filename = req.body.filename || 'image.jpg';
+          const mimetype = req.body.mimetype || 'image/jpeg';
+          
+          // Criar objeto file compatível com multer
+          file = {
+            buffer: buffer,
+            originalname: filename,
+            mimetype: mimetype,
+            size: buffer.length,
+          };
+          
+          console.log('✅ Arquivo base64 convertido:', filename, 'Tamanho:', file.size);
+        } catch (base64Error) {
+          console.error('❌ Erro ao processar base64:', base64Error);
+          return res.status(400).json({ error: 'Erro ao processar arquivo base64.' });
+        }
+      }
+      
       if (!file) {
         console.error('❌ Nenhum arquivo enviado');
+        console.error('Body keys:', Object.keys(req.body));
+        console.error('Body image:', req.body.image ? typeof req.body.image : 'não existe');
         return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
       }
 

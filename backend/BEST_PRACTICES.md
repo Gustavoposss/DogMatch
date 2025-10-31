@@ -101,6 +101,11 @@
 - ✅ API URL dinâmica baseada em ambiente
 - ✅ Tratamento de erros de rede
 - ✅ Logs de debug condicionais
+- ✅ Safe Area Insets para navegação
+- ✅ FlatList para listas eficientes (MatchesScreen, PetsScreen)
+- ✅ Compressão de imagens (quality: 0.7)
+- ✅ Upload via base64 para React Native
+- ✅ Expo-file-system para leitura de arquivos
 
 ### ⚠️ Recomendações Adicionais
 - [ ] Error boundary para React Native
@@ -108,6 +113,10 @@
 - [ ] Push notifications
 - [ ] Analytics integrado
 - [ ] Crash reporting (Sentry)
+- [ ] Otimizar HomeScreen para usar FlatList ao invés de ScrollView + map
+- [ ] Implementar cache de imagens (expo-image ou react-native-fast-image)
+- [ ] Lazy loading de imagens em listas
+- [ ] Otimização de imagens antes do upload (redimensionamento)
 
 ## 🔐 Variáveis de Ambiente Obrigatórias
 
