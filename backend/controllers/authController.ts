@@ -5,7 +5,12 @@ import jwt from 'jsonwebtoken';
 import { SubscriptionService } from '../services/subscriptionService';
 import { isValidCPF, cleanCPF, isValidEmail } from '../utils/validators';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'segredo_supersecreto';
+// JWT_SECRET é obrigatório
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error('❌ JWT_SECRET não configurado nas variáveis de ambiente!');
+}
 
 export const login = async (req: Request, res: Response) => {
   try {
@@ -26,6 +31,10 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // Gerar token JWT
+    if (!JWT_SECRET) {
+      return res.status(500).json({ error: 'Erro de configuração do servidor.' });
+    }
+    
     const token = jwt.sign(
       { userId: user.id, email: user.email },
       JWT_SECRET,
@@ -98,6 +107,10 @@ export const register = async (req: Request, res: Response) => {
     console.log('✅ Assinatura gratuita criada');
 
     // Gera o token JWT
+    if (!JWT_SECRET) {
+      return res.status(500).json({ error: 'Erro de configuração do servidor.' });
+    }
+    
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
     console.log('✅ Token JWT gerado');
 

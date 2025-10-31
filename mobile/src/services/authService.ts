@@ -104,6 +104,11 @@ export async function register(
   phone?: string
 ) {
   try {
+    // Log forçado para debug (sempre aparece)
+    console.log('🔧 === TENTANDO REGISTRO ===');
+    console.log('🌐 API URL:', API_URL);
+    console.log('📝 Endpoint completo:', `${API_URL}/auth/register`);
+    
     if (IS_DEBUG) {
       logger.debug('=== TENTANDO REGISTRO ===');
       logger.debug('🌐 API URL:', API_URL);

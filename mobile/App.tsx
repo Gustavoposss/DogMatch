@@ -3,9 +3,9 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 // Importar telas
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
@@ -34,6 +34,12 @@ const Tab = createBottomTabNavigator();
 
 // Tab Navigator para usuários autenticados
 function MainTabNavigator(): React.JSX.Element {
+  // Obter insets de safe area (especialmente importante para Android)
+  const insets = useSafeAreaInsets();
+  
+  // Altura base da tab bar + padding bottom base + insets do sistema
+  const tabBarHeight = 60 + insets.bottom;
+  
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -48,8 +54,11 @@ function MainTabNavigator(): React.JSX.Element {
           shadowOffset: { width: 0, height: -2 },
           shadowOpacity: 0.1,
           shadowRadius: 8,
-          height: 60,
-          paddingBottom: 5,
+          // Altura dinâmica baseada nos insets do sistema (60px base + insets)
+          height: tabBarHeight,
+          // Padding bottom considera a barra de navegação do sistema Android
+          // Math.max garante um mínimo de 8px mesmo se insets.bottom for 0
+          paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 8) : 5,
           paddingTop: 5,
         },
         tabBarLabelStyle: {

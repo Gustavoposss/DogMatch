@@ -31,10 +31,18 @@ const config = {
 export const getApiUrl = (): string => {
   const env = config.environment as keyof typeof config.apiUrls;
   
-  // Se tiver apiUrl customizada no app.json, usar ela
+  // Prioridade 1: Se tiver apiUrl customizada no app.config.js, usar ela (sempre)
   const customApiUrl = Constants.expoConfig?.extra?.apiUrl;
-  if (customApiUrl && env !== 'development') {
+  if (customApiUrl) {
+    console.log('🌐 Usando API URL customizada do app.config.js:', customApiUrl);
     return customApiUrl;
+  }
+  
+  // Se ambiente for produção, SEMPRE usar URL de produção
+  if (env === 'production') {
+    const productionUrl = config.apiUrls.production.api || 'https://dogmatch.onrender.com';
+    console.log('🚀 Produção detectada - usando API de produção:', productionUrl);
+    return productionUrl;
   }
   
   if (env === 'development') {
@@ -81,6 +89,14 @@ export const DEBUG = config.debug;
 export const IS_EXPO_GO = config.isExpoGo;
 export const IS_EMULATOR = config.isEmulator;
 export const IS_WEB = config.isWeb;
+
+// Log inicial da configuração (sempre, mesmo em produção)
+console.log('🔧 === CONFIGURAÇÃO DE API ===');
+console.log('🌍 Environment:', ENVIRONMENT);
+console.log('🌐 API URL:', API_URL);
+console.log('📱 Platform:', Platform.OS);
+console.log('📦 Custom API URL from config:', Constants.expoConfig?.extra?.apiUrl || 'não definida');
+console.log('===============================');
 
 // Função para debug
 export const logEnvironmentConfig = () => {

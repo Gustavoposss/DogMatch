@@ -136,7 +136,8 @@ export default function AddPetScreen({ navigation }: NavigationProps) {
       navigation.navigate('Pets');
     } catch (error: any) {
       console.error('Erro ao cadastrar pet:', error);
-      Alert.alert('Erro', error.response?.data?.message || 'Erro ao cadastrar pet');
+      const errorMessage = error.message || error.response?.data?.error || error.response?.data?.message || 'Erro ao cadastrar pet';
+      Alert.alert('Erro', errorMessage);
     } finally {
       setLoading(false);
     }

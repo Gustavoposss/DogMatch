@@ -3,6 +3,8 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import jwt from 'jsonwebtoken';
+import helmet from 'helmet';
+import { logger } from './utils/logger';
 import './types/socket';
 import userRoutes from './routes/userRoutes';
 import petRoutes from './routes/petRoutes';
@@ -18,9 +20,20 @@ import swaggerJsdoc from 'swagger-jsdoc';
 
 const app = express();
 const server = createServer(app);
+
+// Helmet para segurança HTTP headers (apenas em produção)
+if (process.env.NODE_ENV === 'production') {
+  app.use(helmet({
+    contentSecurityPolicy: false, // Desabilitar CSP para permitir Socket.IO
+    crossOriginEmbedderPolicy: false
+  }));
+}
+
 const io = new Server(server, {
   cors: {
-    origin: true, // Permite qualquer origem
+    origin: process.env.NODE_ENV === 'production' 
+      ? (process.env.ALLOWED_ORIGINS?.split(',') || ['https://dogmatch.onrender.com'])
+      : true, // Em desenvolvimento, permite qualquer origem
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
@@ -29,9 +42,13 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3000;
 
-// Configuração do CORS - Permitir qualquer origem com segurança
+// Configuração do CORS - Restringir em produção, permissivo em desenvolvimento
+const allowedOrigins = process.env.NODE_ENV === 'production' 
+  ? (process.env.ALLOWED_ORIGINS?.split(',') || ['https://dogmatch.onrender.com'])
+  : true; // Em desenvolvimento, permite qualquer origem
+
 app.use(cors({
-  origin: true, // Permite qualquer origem
+  origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: [
@@ -47,7 +64,9 @@ app.use(cors({
   optionsSuccessStatus: 200 // Para compatibilidade com navegadores antigos
 }));
 
-app.use(express.json());
+// Limite de tamanho do body (10MB)
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Middleware para tratar requisições OPTIONS (preflight)
 app.use((req, res, next) => {
@@ -112,13 +131,19 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Socket.IO - Autenticação
 io.use((socket, next) => {
+  const JWT_SECRET = process.env.JWT_SECRET;
+  
+  if (!JWT_SECRET) {
+    return next(new Error('JWT_SECRET não configurado'));
+  }
+  
   const token = socket.handshake.auth.token;
   if (!token) {
     return next(new Error('Token não fornecido'));
   }
   
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'segredo_supersecreto') as { userId: string };
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
     socket.userId = decoded.userId;
     next();
   } catch (err) {
