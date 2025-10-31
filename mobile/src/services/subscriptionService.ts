@@ -4,7 +4,7 @@ import { API_URL } from '../config/api';
 
 export async function getPlans() {
   try {
-    const response = await axios.get(`${API_URL}/plans`);
+    const response = await axios.get(`${API_URL}/subscriptions/plans`);
     return response.data;
   } catch (error) {
     console.error('Erro ao buscar planos:', error);
@@ -17,7 +17,7 @@ export async function getMySubscription() {
     const token = await AsyncStorage.getItem('token');
     if (!token) throw new Error('Token não encontrado');
     
-    const response = await axios.get(`${API_URL}/subscription/my`, {
+    const response = await axios.get(`${API_URL}/subscriptions/my-subscription`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
@@ -32,7 +32,7 @@ export async function cancelSubscription() {
     const token = await AsyncStorage.getItem('token');
     if (!token) throw new Error('Token não encontrado');
     
-    const response = await axios.delete(`${API_URL}/subscription/cancel`, {
+    const response = await axios.post(`${API_URL}/subscriptions/cancel`, {}, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;

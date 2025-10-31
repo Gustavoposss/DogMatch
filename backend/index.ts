@@ -75,19 +75,22 @@ app.use('/upload', uploadRoutes);
 app.use('/subscriptions', subscriptionRoutes);
 app.use('/payments', paymentRoutes);
 
+// Endpoint de health check (disponível em todos os ambientes)
 app.get('/ping', (req, res) => {
   res.send('pong');
 });
 
-// Endpoint para testar CORS
-app.get('/cors-test', (req, res) => {
-  res.json({
-    message: 'CORS funcionando!',
-    origin: req.headers.origin || 'N/A',
-    method: req.method,
-    timestamp: new Date().toISOString()
+// Endpoint para testar CORS (apenas em desenvolvimento)
+if (process.env.NODE_ENV !== 'production') {
+  app.get('/cors-test', (req, res) => {
+    res.json({
+      message: 'CORS funcionando!',
+      origin: req.headers.origin || 'N/A',
+      method: req.method,
+      timestamp: new Date().toISOString()
+    });
   });
-});
+}
 
 const swaggerOptions = {
   swaggerDefinition: {
@@ -101,8 +104,11 @@ const swaggerOptions = {
   apis: ['./routes/*.ts', './controllers/*.ts'],
 };
 
-const swaggerDocs = swaggerJsdoc(swaggerOptions);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+// Documentação Swagger (apenas em desenvolvimento e staging)
+if (process.env.NODE_ENV !== 'production') {
+  const swaggerDocs = swaggerJsdoc(swaggerOptions);
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+}
 
 // Socket.IO - Autenticação
 io.use((socket, next) => {
@@ -170,5 +176,11 @@ export { io };
 server.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
   console.log(`📡 Socket.IO ativo para chat em tempo real`);
-  console.log(`🌐 Acessível em: http://localhost:${PORT} e http://192.168.101.5:${PORT}`);
+  console.log(`🌐 Acessível em:`);
+  console.log(`   - http://localhost:${PORT} (local)`);
+  console.log(`   - http://192.168.101.5:${PORT} (rede local - use este IP no celular)`);
+  console.log(`\n💡 Para conectar o celular:`);
+  console.log(`   1. Certifique-se de que o celular está na mesma rede Wi-Fi`);
+  console.log(`   2. No app mobile, o IP 192.168.101.5 já está configurado no app.json`);
+  console.log(`   3. Reinicie o app mobile após alterar a configuração`);
 });

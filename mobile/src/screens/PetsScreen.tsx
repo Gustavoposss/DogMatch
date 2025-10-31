@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Colors, Fonts, Spacing, BorderRadius, Shadows } from '../styles/colors';
+import { LogoIcon } from '../components/Logo';
 import { Ionicons } from '@expo/vector-icons';
 import { petService } from '../services/petService';
 import { useAuth } from '../contexts/AuthContext';
@@ -46,11 +47,11 @@ export default function PetsScreen() {
   };
 
   const handleAddPet = () => {
-    navigation.navigate('AddPet' as never);
+    (navigation as any).navigate('AddPet');
   };
 
   const handleEditPet = (pet: Pet) => {
-    navigation.navigate('EditPet' as never, { pet } as never);
+    (navigation as any).navigate('EditPet', { pet });
   };
 
   const handleDeletePet = (pet: Pet) => {
@@ -114,7 +115,7 @@ export default function PetsScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
-      <Ionicons name="paw" size={64} color={Colors.primary} />
+      <LogoIcon width={64} height={64} />
       <Text style={styles.emptyTitle}>Nenhum pet cadastrado</Text>
       <Text style={styles.emptyMessage}>
         Adicione seu primeiro pet para começar a encontrar novos amigos!

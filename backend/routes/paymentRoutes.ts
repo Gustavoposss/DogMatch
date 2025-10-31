@@ -13,8 +13,10 @@ import { authenticateToken } from '../middlewares/authMiddleware';
 
 const router = Router();
 
-// Teste de conexão (público)
-router.get('/test', testAsaas);
+// Teste de conexão (apenas em desenvolvimento)
+if (process.env.NODE_ENV !== 'production') {
+  router.get('/test', testAsaas);
+}
 
 // Webhook (rota pública - Asaas vai chamar)
 router.post('/webhook', asaasWebhook);

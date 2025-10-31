@@ -10,18 +10,9 @@ import {
   Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-// Cores inline para evitar problemas de importação
-const Colors = {
-  primary: '#ee7c2b',
-  backgroundLight: '#f8f7f6',
-  textLightPrimary: '#1b130d',
-  textLightSecondary: '#9a6c4c',
-  white: '#FFFFFF',
-  surfaceLight: '#ffffff',
-  border: '#E1E5E9',
-  success: '#4CAF50',
-  error: '#F44336',
-};
+import { Colors } from '../styles/colors';
+import { subscriptionService } from '../services/subscriptionService';
+import { paymentService } from '../services/paymentService';
 import { Ionicons } from '@expo/vector-icons';
 
 interface Subscription {
@@ -48,6 +39,7 @@ export default function SubscriptionScreen() {
   const navigation = useNavigation();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     loadSubscription();
@@ -56,65 +48,77 @@ export default function SubscriptionScreen() {
 
   const loadSubscription = async () => {
     try {
-      // Simular carregamento da assinatura atual
-      const mockSubscription: Subscription = {
-        id: 'premium',
-        name: 'Plano Cão-panheiro Premium',
-        price: 'R$ 29,90',
-        period: '/ mês',
-        status: 'active',
-        renewalDate: '15 de Julho, 2024',
-        image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBi28YpTMC5ObczNxr7H6b0wxH0C7Om253VlYaOLVTZEQYD5gSqz5awviR1O4NDxa6o-95XuuWXMCToaxPL33O0YSxMV8qrZktU6UQejXYA_10PttD-ICS0LVtDthusYR-Dj6oN9_W5pGcJrzw_2TsKv6LYoTk87BJSw69DbE-6FznAddKg1JCndFljrk9b87rae2tmOwHbFQo1WpcBCO5d1ybnrka_QOw3rVgAzGTosdoUy5HxIELGsJhpKHI8SDCAh-CVrp8tCzjA'
-      };
-      setSubscription(mockSubscription);
+      setLoading(true);
+      const sub = await subscriptionService.getMySubscription();
+      if (sub) {
+        setSubscription({
+          id: sub.id,
+          name: sub.planName || sub.name,
+          price: sub.priceFormatted || (sub.amount ? `R$ ${Number(sub.amount).toFixed(2)}` : ''),
+          period: sub.periodLabel || (sub.period === 'MONTHLY' ? '/ mês' : sub.period === 'YEARLY' ? '/ ano' : ''),
+          status: sub.status === 'ACTIVE' ? 'active' : 'inactive',
+          renewalDate: sub.renewalDateFormatted || sub.renewalDate || '',
+          image: sub.image || undefined,
+        });
+      } else {
+        setSubscription(null);
+      }
     } catch (error) {
       console.error('Erro ao carregar assinatura:', error);
+      setSubscription(null);
+    } finally {
+      setLoading(false);
     }
   };
 
   const loadPlans = async () => {
     try {
-      const mockPlans: Plan[] = [
-        {
-          id: 'monthly',
-          name: 'Plano Mensal',
-          price: 'R$ 29,90',
-          period: '/mês',
-          features: [
-            'Likes ilimitados',
-            '5 Super Likes por semana',
-            'Veja quem te curtiu'
-          ],
-          current: true
-        },
-        {
-          id: 'yearly',
-          name: 'Plano Anual',
-          price: 'R$ 299,90',
-          period: '/ano',
-          features: [
-            'Todos os benefícios do plano mensal',
-            'Economize 2 meses',
-            'Impulso de perfil semanal'
-          ],
-          popular: true
-        }
-      ];
-      setPlans(mockPlans);
+      const apiPlans = await subscriptionService.getPlans();
+      const mapped: Plan[] = (apiPlans?.plans || apiPlans || []).map((p: any) => ({
+        id: p.type || p.id,
+        name: (p.name || p.title || '').toUpperCase(),
+        price: p.priceFormatted || (p.price ? `R$ ${Number(p.price).toFixed(2)}` : 'R$ 0'),
+        period: '/mês',
+        features: p.features || [],
+        popular: !!p.popular,
+        current: subscription ? (p.type || p.id) === subscription.id : false,
+      }));
+      setPlans(mapped);
     } catch (error) {
       console.error('Erro ao carregar planos:', error);
+      setPlans([]);
     }
   };
 
-  const handlePlanUpgrade = (planId: string) => {
-    if (planId === 'yearly') {
-      navigation.navigate('PaymentPix' as never);
+  const handlePlanUpgrade = async (planId: string) => {
+    try {
+      const payment = await paymentService.createPayment(planId as any, 'PIX');
+      const pix = payment?.pixQrCode || {};
+      const qrCodeImage = pix?.encodedImage
+        ? `data:image/png;base64,${pix.encodedImage}`
+        : '';
+      const pixCode = pix?.payload || '';
+      (navigation as any).navigate('PaymentPix', {
+        paymentId: payment?.paymentId,
+        pixCode,
+        qrCodeImage,
+        amount: payment?.value ?? payment?.amount,
+        planName: planId,
+      });
+    } catch (error) {
+      console.error('Erro ao iniciar upgrade:', error);
+      alert('Não foi possível iniciar o upgrade.');
     }
   };
 
-  const handleCancelSubscription = () => {
-    // Implementar cancelamento
-    console.log('Cancelar assinatura');
+  const handleCancelSubscription = async () => {
+    try {
+      await subscriptionService.cancelSubscription();
+      await loadSubscription();
+      alert('Assinatura cancelada com sucesso.');
+    } catch (error) {
+      alert('Não foi possível cancelar a assinatura.');
+    }
   };
 
   const renderCurrentSubscription = () => (
@@ -190,7 +194,7 @@ export default function SubscriptionScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.backgroundLight} />
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
       
       {/* Header */}
       <View style={styles.header}>
@@ -198,7 +202,7 @@ export default function SubscriptionScreen() {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={24} color={Colors.textLightPrimary} />
+          <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Minha Assinatura</Text>
         <View style={styles.headerSpacer} />
@@ -243,14 +247,14 @@ export default function SubscriptionScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.backgroundLight,
+    backgroundColor: Colors.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: Colors.backgroundLight,
+    backgroundColor: Colors.background,
   },
   backButton: {
     width: 40,
@@ -264,7 +268,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
-    color: Colors.textLightPrimary,
+    color: Colors.textPrimary,
   },
   headerSpacer: {
     width: 40,
@@ -300,7 +304,7 @@ const styles = StyleSheet.create({
   subscriptionName: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: Colors.textLightPrimary,
+    color: Colors.textPrimary,
     marginBottom: 8,
   },
   priceContainer: {
@@ -311,21 +315,21 @@ const styles = StyleSheet.create({
   subscriptionPrice: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: Colors.textLightPrimary,
+    color: Colors.textPrimary,
   },
   subscriptionPeriod: {
     fontSize: 16,
-    color: Colors.textLightSecondary,
+    color: Colors.textSecondary,
     marginLeft: 4,
   },
   renewalText: {
     fontSize: 14,
-    color: Colors.textLightSecondary,
+    color: Colors.textSecondary,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: Colors.textLightPrimary,
+    color: Colors.textPrimary,
     marginTop: 16,
     marginBottom: 12,
   },
@@ -366,18 +370,18 @@ const styles = StyleSheet.create({
   planName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: Colors.textLightPrimary,
+    color: Colors.textPrimary,
     marginBottom: 4,
   },
   planPrice: {
     fontSize: 36,
     fontWeight: '900',
-    color: Colors.textLightPrimary,
+    color: Colors.textPrimary,
   },
   planPeriod: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: Colors.textLightPrimary,
+    color: Colors.textPrimary,
     marginLeft: 4,
   },
   featuresContainer: {
@@ -390,7 +394,7 @@ const styles = StyleSheet.create({
   },
   featureText: {
     fontSize: 14,
-    color: Colors.textLightSecondary,
+    color: Colors.textSecondary,
     marginLeft: 12,
   },
   planButton: {
@@ -438,7 +442,7 @@ const styles = StyleSheet.create({
   },
   footerLinkText: {
     fontSize: 12,
-    color: Colors.textLightSecondary,
+    color: Colors.textSecondary,
     textDecorationLine: 'underline',
   },
 });

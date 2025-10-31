@@ -42,8 +42,20 @@ export const register = async (req: Request, res: Response) => {
   try {
     const { name, email, password, city, cpf, phone } = req.body;
 
+    console.log('=== REGISTRO DE USUÁRIO ===');
+    console.log('📍 IP do cliente:', req.ip || req.socket.remoteAddress);
+    console.log('📦 Body recebido:', { 
+      name, 
+      email, 
+      city,
+      cpf: cpf ? `${cpf.substring(0, 3)}***` : 'não informado',
+      phone: phone || 'não informado',
+      hasPassword: !!password
+    });
+
     // Validações básicas
     if (!name || !email || !password || !city) {
+      console.log('❌ Validação falhou: campos obrigatórios ausentes');
       return res.status(400).json({ error: 'Nome, e-mail, senha e cidade são obrigatórios.' });
     }
 
@@ -81,11 +93,15 @@ export const register = async (req: Request, res: Response) => {
     });
 
     // CRIAR ASSINATURA GRATUITA AUTOMATICAMENTE
+    console.log('📦 Criando assinatura gratuita para usuário:', user.id);
     await SubscriptionService.createFreeSubscription(user.id);
+    console.log('✅ Assinatura gratuita criada');
 
     // Gera o token JWT
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
+    console.log('✅ Token JWT gerado');
 
+    console.log('✅ Usuário registrado com sucesso:', user.email);
     res.status(201).json({ 
       token, 
       user: {
@@ -95,8 +111,19 @@ export const register = async (req: Request, res: Response) => {
         city: user.city
       }
     });
-  } catch (error) {
-    console.error('Erro ao cadastrar usuário:', error);
-    res.status(500).json({ error: 'Erro ao cadastrar usuário.' });
+  } catch (error: any) {
+    console.error('❌ Erro ao cadastrar usuário:', error);
+    console.error('📦 Detalhes:', error.message);
+    console.error('🔍 Stack:', error.stack);
+    
+    // Se for erro de banco de dados (ex: email duplicado)
+    if (error.code === 'P2002') {
+      return res.status(400).json({ error: 'E-mail já cadastrado.' });
+    }
+    
+    res.status(500).json({ 
+      error: error.message || 'Erro ao cadastrar usuário.',
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };

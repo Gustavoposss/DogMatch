@@ -7,13 +7,13 @@ const config = {
   apiUrls: {
     development: {
       local: 'http://localhost:3000',
-      network: `http://${Constants.expoConfig?.extra?.localIp || '192.168.0.10'}:3000`,
+      network: `http://${Constants.expoConfig?.extra?.localIp || '192.168.101.5'}:3000`,
     },
     staging: {
       api: 'https://api-staging.par-de-patas.com',
     },
     production: {
-      api: 'https://api.par-de-patas.com',
+      api: Constants.expoConfig?.extra?.apiUrl || 'https://dogmatch.onrender.com',
     }
   },
   
@@ -31,23 +31,46 @@ const config = {
 export const getApiUrl = (): string => {
   const env = config.environment as keyof typeof config.apiUrls;
   
+  // Se tiver apiUrl customizada no app.json, usar ela
+  const customApiUrl = Constants.expoConfig?.extra?.apiUrl;
+  if (customApiUrl && env !== 'development') {
+    return customApiUrl;
+  }
+  
   if (env === 'development') {
     // Em desenvolvimento, escolher entre local ou network baseado na plataforma
-    if (config.isExpoGo) {
-      // Expo Go (celular físico) - usar IP da rede
-      console.log('📱 Expo Go detectado - usando IP da rede:', config.apiUrls.development.network);
-      return config.apiUrls.development.network;
+    if (Platform.OS === 'web') {
+      // Web - sempre usar localhost
+      if (DEBUG) {
+        console.log('💻 Web detectado - usando localhost:', config.apiUrls.development.local);
+      }
+      return config.apiUrls.development.local;
+    } else if (Platform.OS === 'android' || Platform.OS === 'ios') {
+      // Android/iOS (celular físico ou emulador físico) - usar IP da rede
+      const networkUrl = config.apiUrls.development.network;
+      if (DEBUG) {
+        console.log('📱 Celular/Emulador detectado - usando IP da rede:', networkUrl);
+      }
+      return networkUrl;
     } else {
-      // Emulador/Web - usar localhost
-      console.log('💻 Emulador/Web detectado - usando localhost:', config.apiUrls.development.local);
+      // Fallback - usar localhost
+      if (DEBUG) {
+        console.log('💻 Emulador/Web detectado - usando localhost:', config.apiUrls.development.local);
+      }
       return config.apiUrls.development.local;
     }
   } else if (env === 'staging') {
-    console.log('🧪 Staging - usando API de staging:', config.apiUrls.staging.api);
+    if (DEBUG) {
+      console.log('🧪 Staging - usando API de staging:', config.apiUrls.staging.api);
+    }
     return config.apiUrls.staging.api;
   } else {
-    console.log('🚀 Produção - usando API de produção:', config.apiUrls.production.api);
-    return config.apiUrls.production.api;
+    // Produção - usar URL configurada
+    const productionUrl = config.apiUrls.production.api;
+    if (DEBUG) {
+      console.log('🚀 Produção - usando API de produção:', productionUrl);
+    }
+    return productionUrl;
   }
 };
 

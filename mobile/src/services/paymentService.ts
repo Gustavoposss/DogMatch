@@ -2,13 +2,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { API_URL } from '../config/api';
 
-export async function createPayment(planId: string, billingType: 'MONTHLY' | 'YEARLY') {
+export type PlanType = 'FREE' | 'PREMIUM' | 'VIP';
+export type BillingType = 'PIX' | 'BOLETO' | 'CREDIT_CARD';
+
+export async function createPayment(planType: PlanType, billingType: BillingType = 'PIX') {
   try {
     const token = await AsyncStorage.getItem('token');
     if (!token) throw new Error('Token não encontrado');
     
-    const response = await axios.post(`${API_URL}/payments/create`, {
-      planId,
+    const response = await axios.post(`${API_URL}/payments/create-plan-payment`, {
+      planType,
       billingType
     }, {
       headers: { Authorization: `Bearer ${token}` }
@@ -25,7 +28,7 @@ export async function getPaymentStatus(paymentId: string) {
     const token = await AsyncStorage.getItem('token');
     if (!token) throw new Error('Token não encontrado');
     
-    const response = await axios.get(`${API_URL}/payments/${paymentId}/status`, {
+    const response = await axios.get(`${API_URL}/payments/status/${paymentId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
@@ -40,7 +43,7 @@ export async function getMyPayments() {
     const token = await AsyncStorage.getItem('token');
     if (!token) throw new Error('Token não encontrado');
     
-    const response = await axios.get(`${API_URL}/payments/my`, {
+    const response = await axios.get(`${API_URL}/payments/my-payments`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;

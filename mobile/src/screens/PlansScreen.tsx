@@ -9,22 +9,14 @@ import {
   StatusBar,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-// Cores inline para evitar problemas de importação
-const Colors = {
-  primary: '#ee7c2b',
-  backgroundLight: '#f8f7f6',
-  textLightPrimary: '#1b130d',
-  textLightSecondary: '#9a6c4c',
-  white: '#FFFFFF',
-  surfaceLight: '#ffffff',
-  border: '#E1E5E9',
-  success: '#4CAF50',
-  error: '#F44336',
-};
+import { Colors } from '../styles/colors';
+import { subscriptionService } from '../services/subscriptionService';
+import { paymentService } from '../services/paymentService';
 import { Ionicons } from '@expo/vector-icons';
 
 interface Plan {
-  id: string;
+  id: string; // manter para key
+  type: 'FREE' | 'PREMIUM' | 'VIP';
   name: string;
   price: string;
   period: string;
@@ -37,6 +29,7 @@ export default function PlansScreen() {
   const navigation = useNavigation();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     loadPlans();
@@ -44,54 +37,53 @@ export default function PlansScreen() {
 
   const loadPlans = async () => {
     try {
-      // Simular carregamento de planos
-      const mockPlans: Plan[] = [
-        {
-          id: 'free',
-          name: 'FREE',
-          price: 'R$ 0',
-          period: '',
-          features: [
-            'Criação de perfil',
-            'Swipes limitados por dia',
-            'Mensagens com matches'
-          ]
-        },
-        {
-          id: 'basic',
-          name: 'BASIC',
-          price: 'R$ 19,90',
-          period: '/mês',
-          features: [
-            'Swipes ilimitados',
-            'Ver quem curtiu seu pet'
-          ]
-        },
-        {
-          id: 'premium',
-          name: 'PREMIUM',
-          price: 'R$ 29,90',
-          period: '/mês',
-          features: [
-            '5 Super Likes mensais',
-            'Destacar o perfil do pet',
-            'Filtros de busca avançados'
-          ],
-          popular: true
-        }
-      ];
-      setPlans(mockPlans);
+      setLoading(true);
+      const api = await subscriptionService.getPlans();
+      const mapped: Plan[] = (api?.plans || []).map((p: any) => ({
+        id: p.type,
+        type: p.type,
+        name: (p.name || '').toUpperCase(),
+        price: `R$ ${Number(p.price || 0).toFixed(2)}`,
+        period: '/mês',
+        features: p.features || [],
+        popular: p.type === 'PREMIUM',
+      }));
+      setPlans(mapped);
     } catch (error) {
       console.error('Erro ao carregar planos:', error);
+      setPlans([
+        { id: 'FREE', type: 'FREE', name: 'FREE', price: 'R$ 0,00', period: '', features: ['Swipes limitados', 'Ver matches'] },
+        { id: 'PREMIUM', type: 'PREMIUM', name: 'PREMIUM', price: 'R$ 19,90', period: '/mês', features: ['Swipes ilimitados', 'Ver quem curtiu', '1 Boost/mês'], popular: true },
+        { id: 'VIP', type: 'VIP', name: 'VIP', price: 'R$ 39,90', period: '/mês', features: ['Tudo do Premium', '3 Boosts/mês', 'Desfazer Swipe'] },
+      ]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handlePlanSelect = (planId: string) => {
-    if (planId === 'free') {
-      navigation.goBack();
-    } else {
-      // Navegar para pagamento
-      navigation.navigate('PaymentPix' as never);
+  const handlePlanSelect = async (planId: string) => {
+    try {
+      if (planId === 'FREE') {
+        (navigation as any).goBack();
+        return;
+      }
+      const planType = planId as 'PREMIUM' | 'VIP';
+      const payment = await paymentService.createPayment(planType, 'PIX');
+      const pix = payment?.pixQrCode || {};
+      const qrCodeImage = pix?.encodedImage
+        ? `data:image/png;base64,${pix.encodedImage}`
+        : '';
+      const pixCode = pix?.payload || '';
+      (navigation as any).navigate('PaymentPix', {
+        paymentId: payment?.paymentId,
+        pixCode,
+        qrCodeImage,
+        amount: payment?.value ?? payment?.amount ?? (planType === 'PREMIUM' ? 19.9 : 39.9),
+        planName: planType,
+      });
+    } catch (error: any) {
+      console.error('Erro ao iniciar pagamento:', error);
+      alert(error?.response?.data?.error || 'Não foi possível iniciar o pagamento.');
     }
   };
 
@@ -120,24 +112,24 @@ export default function PlansScreen() {
         style={[
           styles.selectButton,
           plan.popular && styles.popularButton,
-          plan.id === 'free' && styles.freeButton
+          plan.id === 'FREE' && styles.freeButton
         ]}
         onPress={() => handlePlanSelect(plan.id)}
       >
         <Text style={[
           styles.buttonText,
           plan.popular && styles.popularButtonText,
-          plan.id === 'free' && styles.freeButtonText
+          plan.id === 'FREE' && styles.freeButtonText
         ]}>
-          {plan.id === 'free' ? 'Continuar Grátis' : 
-           plan.id === 'basic' ? 'Escolher o Basic' : 'Seja Premium'}
+          {plan.id === 'FREE' ? 'Continuar Grátis' : 
+           plan.id === 'PREMIUM' ? 'Escolher o Premium' : 'Seja VIP'}
         </Text>
       </TouchableOpacity>
 
       <View style={styles.featuresContainer}>
-        {plan.id !== 'free' && (
+        {plan.id !== 'FREE' && (
           <Text style={styles.featuresTitle}>
-            {plan.id === 'basic' ? 'Tudo do plano FREE, e mais:' : 'Tudo do plano BASIC, e mais:'}
+            {plan.id === 'PREMIUM' ? 'Tudo do plano FREE, e mais:' : 'Tudo do plano PREMIUM, e mais:'}
           </Text>
         )}
         {plan.features.map((feature, index) => (
@@ -152,7 +144,7 @@ export default function PlansScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.backgroundLight} />
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
       
       {/* Header */}
       <View style={styles.header}>
@@ -160,54 +152,16 @@ export default function PlansScreen() {
           style={styles.closeButton}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="close" size={24} color={Colors.textLightPrimary} />
+          <Ionicons name="close" size={24} color={Colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Desbloqueie mais recursos</Text>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Billing Cycle Toggle */}
-        <View style={styles.billingContainer}>
-          <View style={styles.billingToggle}>
-            <TouchableOpacity
-              style={[
-                styles.billingOption,
-                billingCycle === 'monthly' && styles.billingOptionActive
-              ]}
-              onPress={() => setBillingCycle('monthly')}
-            >
-              <Text style={[
-                styles.billingText,
-                billingCycle === 'monthly' && styles.billingTextActive
-              ]}>
-                Mensal
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.billingOption,
-                billingCycle === 'yearly' && styles.billingOptionActive
-              ]}
-              onPress={() => setBillingCycle('yearly')}
-            >
-              <Text style={[
-                styles.billingText,
-                billingCycle === 'yearly' && styles.billingTextActive
-              ]}>
-                Anual
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.savingsText}>
-            Economize até 25% no plano anual!
-          </Text>
-        </View>
-
         {/* Plans Grid */}
         <View style={styles.plansGrid}>
           {plans.map(renderPlanCard)}
         </View>
-
         {/* Footer Links */}
         <View style={styles.footer}>
           <TouchableOpacity style={styles.restoreButton}>
@@ -215,8 +169,7 @@ export default function PlansScreen() {
           </TouchableOpacity>
           <Text style={styles.disclaimer}>
             A assinatura será renovada automaticamente. Você pode cancelar a qualquer momento. 
-            Para mais informações, consulte nossos{' '}
-            <Text style={styles.linkText}>Termos de Serviço</Text>.
+            Para mais informações, consulte nossos <Text style={styles.linkText}>Termos de Serviço</Text>.
           </Text>
         </View>
       </ScrollView>
@@ -227,14 +180,14 @@ export default function PlansScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.backgroundLight,
+    backgroundColor: Colors.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: Colors.backgroundLight,
+    backgroundColor: Colors.background,
   },
   closeButton: {
     width: 40,
@@ -248,7 +201,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
-    color: Colors.textLightPrimary,
+    color: Colors.textPrimary,
     marginRight: 40, // Compensar o botão de fechar
   },
   content: {
@@ -272,7 +225,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   billingOptionActive: {
-    backgroundColor: Colors.surfaceLight,
+    backgroundColor: Colors.surface,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -282,10 +235,10 @@ const styles = StyleSheet.create({
   billingText: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: Colors.textLightSecondary,
+    color: Colors.textSecondary,
   },
   billingTextActive: {
-    color: Colors.textLightPrimary,
+    color: Colors.textPrimary,
   },
   savingsText: {
     textAlign: 'center',
@@ -298,7 +251,7 @@ const styles = StyleSheet.create({
     marginVertical: 12,
   },
   planCard: {
-    backgroundColor: Colors.surfaceLight,
+    backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: 24,
     borderWidth: 1,
@@ -330,7 +283,7 @@ const styles = StyleSheet.create({
   planName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: Colors.textLightPrimary,
+    color: Colors.textPrimary,
     marginBottom: 8,
   },
   popularPlanName: {
@@ -343,12 +296,12 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 36,
     fontWeight: '900',
-    color: Colors.textLightPrimary,
+    color: Colors.textPrimary,
   },
   period: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: Colors.textLightSecondary,
+    color: Colors.textSecondary,
     marginLeft: 4,
   },
   selectButton: {
@@ -372,13 +325,13 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: Colors.textLightPrimary,
+    color: Colors.textPrimary,
   },
   popularButtonText: {
     color: Colors.white,
   },
   freeButtonText: {
-    color: Colors.textLightPrimary,
+    color: Colors.textPrimary,
   },
   featuresContainer: {
     borderTopWidth: 1,
@@ -388,7 +341,7 @@ const styles = StyleSheet.create({
   featuresTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: Colors.textLightPrimary,
+    color: Colors.textPrimary,
     marginBottom: 12,
   },
   featureItem: {
@@ -398,7 +351,7 @@ const styles = StyleSheet.create({
   },
   featureText: {
     fontSize: 14,
-    color: Colors.textLightPrimary,
+    color: Colors.textPrimary,
     marginLeft: 12,
   },
   footer: {
@@ -412,12 +365,12 @@ const styles = StyleSheet.create({
   restoreText: {
     fontSize: 14,
     fontWeight: '500',
-    color: Colors.textLightSecondary,
+    color: Colors.textSecondary,
     textDecorationLine: 'underline',
   },
   disclaimer: {
     fontSize: 12,
-    color: Colors.textLightSecondary,
+    color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 18,
     opacity: 0.7,

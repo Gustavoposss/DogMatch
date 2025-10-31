@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Colors, Fonts, Spacing, BorderRadius, Shadows } from '../styles/colors';
+import { LogoIcon } from '../components/Logo';
 import { Ionicons } from '@expo/vector-icons';
 import { swipeService } from '../services/swipeService';
 import { useAuth } from '../contexts/AuthContext';
@@ -93,7 +94,7 @@ export default function SwipeScreen() {
 
   const handleSendMessage = () => {
     setShowMatchModal(false);
-    navigation.navigate('Chat' as never, { pet: matchedPet } as never);
+    (navigation as any).navigate('Chat', { pet: matchedPet });
   };
 
   const currentPet = pets[currentIndex];
@@ -112,7 +113,7 @@ export default function SwipeScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.emptyContainer}>
-          <Ionicons name="paw" size={64} color={Colors.primary} />
+          <LogoIcon width={64} height={64} />
           <Text style={styles.emptyTitle}>Nenhum pet encontrado!</Text>
           <Text style={styles.emptyMessage}>
             Não há pets cadastrados no sistema ainda. Cadastre seu primeiro pet!
@@ -132,7 +133,7 @@ export default function SwipeScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.emptyContainer}>
-          <Ionicons name="paw" size={64} color={Colors.primary} />
+          <LogoIcon width={64} height={64} />
           <Text style={styles.emptyTitle}>Não há mais pets!</Text>
           <Text style={styles.emptyMessage}>
             Você viu todos os pets disponíveis. Tente novamente mais tarde.

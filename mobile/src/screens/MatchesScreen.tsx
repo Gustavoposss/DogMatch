@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Colors, Fonts, Spacing, BorderRadius, Shadows } from '../styles/colors';
+import { LogoIcon } from '../components/Logo';
 import { Ionicons } from '@expo/vector-icons';
 import { swipeService } from '../services/swipeService';
 import { useAuth } from '../contexts/AuthContext';
@@ -27,6 +28,7 @@ interface Match {
     size: string;
     objective: string;
     isNeutered: boolean;
+    ownerId: string; // Added ownerId
   };
   petB: {
     id: string;
@@ -38,6 +40,7 @@ interface Match {
     size: string;
     objective: string;
     isNeutered: boolean;
+    ownerId: string; // Added ownerId
   };
   userAId: string;
   userBId: string;
@@ -68,11 +71,11 @@ export default function MatchesScreen() {
         console.log('Resposta completa:', response);
         
         // Verificar se response é um array direto ou tem propriedade matches
-        let matchesData = [];
+        let matchesData: Match[] = [];
         if (Array.isArray(response)) {
-          matchesData = response;
+          matchesData = response as Match[];
         } else if (response && response.matches && Array.isArray(response.matches)) {
-          matchesData = response.matches;
+          matchesData = response.matches as Match[];
         }
         
         console.log('Matches processados:', matchesData);
@@ -96,13 +99,13 @@ export default function MatchesScreen() {
   const handleMatchPress = (match: Match) => {
     // Determinar qual pet é o "outro" (não do usuário atual)
     const currentUserId = state.user?.id;
-    const otherPet = match.petA.ownerId === currentUserId ? match.petB : match.petA;
+    const otherPet = match.userAId === currentUserId ? match.petB : match.petA;
     
-    navigation.navigate('Chat' as never, {
+    (navigation as any).navigate('Chat', {
       matchId: match.id,
       petName: otherPet.name,
       petImage: otherPet.photoUrl,
-    } as never);
+    });
   };
 
   const handleSearch = () => {
@@ -173,7 +176,7 @@ export default function MatchesScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Ionicons name="paw" size={32} color={Colors.primary} />
+          <LogoIcon width={32} height={32} />
         </View>
         <Text style={styles.headerTitle}>Seus Matches</Text>
         <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>

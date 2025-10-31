@@ -9,33 +9,67 @@ import {
   Image,
   Alert,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { Colors } from '../styles/colors';
 // Cores inline para evitar problemas de importação
-const Colors = {
-  primary: '#ee7c2b',
-  backgroundLight: '#f8f7f6',
-  textLightPrimary: '#1b130d',
-  textLightSecondary: '#9a6c4c',
-  white: '#FFFFFF',
-  surfaceLight: '#ffffff',
-  border: '#E1E5E9',
-  success: '#4CAF50',
-  error: '#F44336',
-};
+// const Colors = {
+//   primary: '#ee7c2b',
+//   backgroundLight: '#f8f7f6',
+//   textLightPrimary: '#1b130d',
+//   textLightSecondary: '#9a6c4c',
+//   white: '#FFFFFF',
+//   surfaceLight: '#ffffff',
+//   border: '#E1E5E9',
+//   success: '#4CAF50',
+//   error: '#F44336',
+// };
 import { Ionicons } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
+import { paymentService } from '../services/paymentService';
 
 export default function PaymentPixScreen() {
   const navigation = useNavigation();
+  const route = useRoute() as any;
+  const { paymentId, pixCode: pixFromRoute, qrCodeImage, amount, planName } = route.params || {};
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutos em segundos
-  const [pixCode, setPixCode] = useState('');
+  const [pixCode, setPixCode] = useState<string>(pixFromRoute || '');
+  const qrUri: string | null = (() => {
+    if (!qrCodeImage) return null;
+    if (qrCodeImage.startsWith('data:image')) return qrCodeImage;
+    // Se vier base64 sem prefixo
+    if (/^[A-Za-z0-9+/=]+$/.test(qrCodeImage)) {
+      return `data:image/png;base64,${qrCodeImage}`;
+    }
+    return qrCodeImage;
+  })();
 
   useEffect(() => {
-    generatePixCode();
+    if (!pixFromRoute) {
+      generatePixCode();
+    }
     startTimer();
+    let interval: any;
+      if (paymentId) {
+      interval = setInterval(async () => {
+        try {
+          const statusResp = await paymentService.getPaymentStatus(paymentId);
+            const internal = statusResp?.payment?.status || statusResp?.status;
+            const asaas = statusResp?.payment?.asaasStatus;
+            if (
+              internal === 'COMPLETED' ||
+              (asaas && ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH'].includes(asaas))
+            ) {
+            clearInterval(interval);
+            (navigation as any).navigate('PaymentSuccess');
+          }
+        } catch (e) {}
+      }, 5000);
+    }
+    return () => interval && clearInterval(interval);
   }, []);
 
   const generatePixCode = () => {
-    // Simular geração de código PIX
+    // fallback mock se não vier do backend
     const mockPixCode = '00020126580014br.gov.bcb.pix0136123e4567-e89b-12d3-a456-42661417400052040000530398654041.005802BR5913Teste Pagamento6008Brasilia62070503***6304';
     setPixCode(mockPixCode);
   };
@@ -62,7 +96,9 @@ export default function PaymentPixScreen() {
 
   const handleCopyCode = async () => {
     try {
-      // Aqui você implementaria a cópia para clipboard
+      const code = pixCode || pixFromRoute || '';
+      if (!code) throw new Error('Código PIX indisponível');
+      await Clipboard.setStringAsync(code);
       Alert.alert('Código copiado!', 'O código PIX foi copiado para a área de transferência.');
     } catch (error) {
       Alert.alert('Erro', 'Não foi possível copiar o código.');
@@ -120,11 +156,11 @@ export default function PaymentPixScreen() {
         <View style={styles.orderSummary}>
           <View style={styles.orderItem}>
             <Text style={styles.orderLabel}>Plano</Text>
-            <Text style={styles.orderValue}>Plano Au-Migo Premium</Text>
+            <Text style={styles.orderValue}>{planName || 'Plano Premium'}</Text>
           </View>
           <View style={styles.orderItem}>
             <Text style={styles.orderLabel}>Valor Total</Text>
-            <Text style={[styles.orderValue, styles.orderPrice]}>R$ 19,90</Text>
+            <Text style={[styles.orderValue, styles.orderPrice]}>{amount ? `R$ ${Number(amount).toFixed(2)}` : 'R$ 0,00'}</Text>
           </View>
         </View>
 
@@ -132,17 +168,24 @@ export default function PaymentPixScreen() {
         <View style={styles.qrSection}>
           <Text style={styles.qrTitle}>Pague com QR Code</Text>
           <View style={styles.qrContainer}>
-            <Image
-              source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuARreM-edDRf82_wRR3_ZW87X-ZOd5uwx3ug2eUCCSEEU2ejfZ4FTlzUSlnPUDoVK38mV1z4GlA9dCYc0EhBFIwYNj_jrZqiLw2oO7JK7YCFH8naI-d0xQV0Tz9aOABvHn3mpC4Zq7C4hbzyA-KXdzl7-DHVPSdgcz9KdDuzeilQhx7vhg6Ss5YJAU-u0GkpLfuDeRIJWdXdcx3NfD2IJ8bRL0yohmrCIvGuXtKhFgAKVMbYBcbL8mYfmDBWxayWTrS1rySewLT3G3l' }}
-              style={styles.qrCode}
-              resizeMode="contain"
-            />
+            {qrUri ? (
+              <Image
+                source={{ uri: qrUri }}
+                style={styles.qrCode}
+                resizeMode="contain"
+              />
+            ) : (
+              <View style={styles.qrFallback}>
+                <Ionicons name="qr-code" size={32} color={Colors.textLightSecondary} />
+                <Text style={styles.qrFallbackText}>QR Code indisponível</Text>
+              </View>
+            )}
           </View>
         </View>
 
         {/* Timer */}
         <View style={styles.timerContainer}>
-          <Ionicons name="time" size={16} color={Colors.textLightSecondary} />
+          <Ionicons name="time" size={16} color={Colors.textSecondary} />
           <Text style={styles.timerText}>
             Este código expira em <Text style={styles.timerBold}>{formatTime(timeLeft)}</Text>
           </Text>
@@ -249,6 +292,17 @@ const styles = StyleSheet.create({
   qrCode: {
     width: '100%',
     height: '100%',
+  },
+  qrFallback: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  qrFallbackText: {
+    fontSize: 12,
+    color: Colors.textLightSecondary,
   },
   timerContainer: {
     flexDirection: 'row',
