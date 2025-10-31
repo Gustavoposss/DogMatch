@@ -39,14 +39,70 @@ export async function uploadImage(uri: string, type: string = 'image/jpeg') {
       // Para React Native (iOS/Android), ler arquivo e enviar como base64 via JSON
       // Isso é mais confiável que usar URI diretamente ou FormData
       try {
-        const base64 = await FileSystem.readAsStringAsync(uri, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
+        // Verificar se a URI existe
+        if (!uri) {
+          throw new Error('URI da imagem não fornecida');
+        }
+        
+        console.log('Lendo arquivo como base64, URI:', uri);
+        console.log('Verificando API do expo-file-system...');
+        
+        // Usar a API correta do expo-file-system para SDK 54 (expo-file-system 19.x)
+        // Verificar se EncodingType existe antes de usar
+        let base64: string;
+        
+        try {
+          // Verificar qual API está disponível
+          const hasEncodingType = FileSystem.EncodingType && typeof FileSystem.EncodingType !== 'undefined';
+          
+          if (hasEncodingType && (FileSystem.EncodingType as any).Base64) {
+            // SDK mais antigo - usar EncodingType.Base64
+            console.log('Usando EncodingType.Base64 (API antiga)');
+            base64 = await FileSystem.readAsStringAsync(uri, {
+              encoding: (FileSystem.EncodingType as any).Base64,
+            } as any);
+          } else {
+            // SDK mais novo (SDK 54) - usar string 'base64' diretamente
+            console.log('Usando encoding como string "base64" (API nova)');
+            base64 = await FileSystem.readAsStringAsync(uri, {
+              encoding: 'base64',
+            } as any);
+          }
+          
+          // Verificar se base64 foi retornado corretamente
+          if (!base64 || typeof base64 !== 'string' || base64.length === 0) {
+            throw new Error('Arquivo não foi convertido para base64 corretamente');
+          }
+          
+          console.log('✅ Base64 lido com sucesso, tamanho:', base64.length, 'caracteres');
+        } catch (readError: any) {
+          console.error('❌ Erro ao ler arquivo como base64:', readError);
+          console.error('📋 Erro detalhado:', readError.message);
+          console.error('📋 Stack:', readError.stack);
+          console.error('📋 URI que falhou:', uri);
+          
+          // Mensagens de erro mais específicas baseadas no tipo de erro
+          if (readError.message?.includes('No such file') || readError.message?.includes('ENOENT')) {
+            throw new Error('Arquivo não encontrado. Por favor, selecione uma nova imagem.');
+          } else if (readError.message?.includes('permission') || readError.message?.includes('Permission')) {
+            throw new Error('Sem permissão para acessar o arquivo. Verifique as permissões do app nas configurações.');
+          } else if (readError.message?.includes('base64') || readError.message?.includes('Base64')) {
+            throw new Error('Erro ao processar imagem em base64. Por favor, tente novamente ou escolha outra imagem.');
+          } else if (readError.message?.includes('undefined')) {
+            throw new Error('Erro de configuração ao processar imagem. Por favor, reinicie o app e tente novamente.');
+          } else {
+            throw new Error(`Erro ao processar imagem: ${readError.message || 'Erro desconhecido'}`);
+          }
+        }
+        
+        if (!base64 || typeof base64 !== 'string') {
+          throw new Error('Falha ao ler arquivo como base64 - resultado inválido');
+        }
         
         const fileName = uri.split('/').pop() || 'image.jpg';
         const fileExtension = fileName.split('.').pop() || 'jpg';
         
-        console.log('Enviando upload como JSON (base64) para:', `${API_URL}/upload/pet-photo`);
+        console.log('Enviando upload como JSON (base64), tamanho:', base64.length);
         
         // Enviar como JSON com base64
         const response = await fetch(`${API_URL}/upload/pet-photo`, {
@@ -70,8 +126,15 @@ export async function uploadImage(uri: string, type: string = 'image/jpeg') {
         const data = await response.json();
         console.log('Upload response:', data);
         return data;
-      } catch (fileError) {
+      } catch (fileError: any) {
         console.error('Erro ao ler arquivo ou fazer upload:', fileError);
+        console.error('Erro detalhes:', fileError.message);
+        console.error('URI que falhou:', uri);
+        
+        // Mensagem de erro mais específica
+        if (fileError.message?.includes('base64')) {
+          throw new Error('Erro ao processar imagem. Por favor, tente novamente ou escolha outra imagem.');
+        }
         throw fileError;
       }
     }
