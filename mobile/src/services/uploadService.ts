@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { Platform } from 'react-native';
-import * as FileSystem from 'expo-file-system';
+// Usar API legacy para compatibilidade com readAsStringAsync e EncodingType
+import * as FileSystem from 'expo-file-system/legacy';
 import { API_URL } from '../config/api';
 
 export async function uploadImage(uri: string, type: string = 'image/jpeg') {
@@ -45,29 +46,17 @@ export async function uploadImage(uri: string, type: string = 'image/jpeg') {
         }
         
         console.log('Lendo arquivo como base64, URI:', uri);
-        console.log('Verificando API do expo-file-system...');
         
-        // Usar a API correta do expo-file-system para SDK 54 (expo-file-system 19.x)
-        // Verificar se EncodingType existe antes de usar
+        // Usar API legacy do expo-file-system que suporta EncodingType.Base64
+        // Conforme documentação: https://docs.expo.dev/versions/v54.0.0/sdk/filesystem/
         let base64: string;
         
         try {
-          // Verificar qual API está disponível
-          const hasEncodingType = FileSystem.EncodingType && typeof FileSystem.EncodingType !== 'undefined';
-          
-          if (hasEncodingType && (FileSystem.EncodingType as any).Base64) {
-            // SDK mais antigo - usar EncodingType.Base64
-            console.log('Usando EncodingType.Base64 (API antiga)');
-            base64 = await FileSystem.readAsStringAsync(uri, {
-              encoding: (FileSystem.EncodingType as any).Base64,
-            } as any);
-          } else {
-            // SDK mais novo (SDK 54) - usar string 'base64' diretamente
-            console.log('Usando encoding como string "base64" (API nova)');
-            base64 = await FileSystem.readAsStringAsync(uri, {
-              encoding: 'base64',
-            } as any);
-          }
+          // A API legacy garante que EncodingType.Base64 está disponível
+          // Documentação: FileSystem.EncodingType.Base64 = "base64"
+          base64 = await FileSystem.readAsStringAsync(uri, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
           
           // Verificar se base64 foi retornado corretamente
           if (!base64 || typeof base64 !== 'string' || base64.length === 0) {
@@ -82,7 +71,7 @@ export async function uploadImage(uri: string, type: string = 'image/jpeg') {
           console.error('📋 URI que falhou:', uri);
           
           // Mensagens de erro mais específicas baseadas no tipo de erro
-          if (readError.message?.includes('No such file') || readError.message?.includes('ENOENT')) {
+          if (readError.message?.includes('No such file') || readError.message?.includes('ENOENT') || readError.message?.includes('not found')) {
             throw new Error('Arquivo não encontrado. Por favor, selecione uma nova imagem.');
           } else if (readError.message?.includes('permission') || readError.message?.includes('Permission')) {
             throw new Error('Sem permissão para acessar o arquivo. Verifique as permissões do app nas configurações.');
