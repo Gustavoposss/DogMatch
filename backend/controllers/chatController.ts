@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../prismaClient';
+import { io } from '../index';
 
 interface AuthRequest extends Request {
   userId?: string;
@@ -58,6 +59,32 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
       sender: sender || null,
       createdAt: message.createdAt.toISOString(),
     };
+
+    // Preparar dados da mensagem para Socket.IO
+    const messageData = {
+      id: message.id,
+      matchId,
+      senderId: userId!,
+      content: message.content,
+      chatId: chat.id,
+      createdAt: message.createdAt.toISOString(),
+      timestamp: message.createdAt
+    };
+
+    // Verificar quantos sockets estão na sala
+    const roomName = `match_${matchId}`;
+    io.in(roomName).fetchSockets().then((socketsInRoom) => {
+      console.log(`📊 [REST API] Sockets na sala ${roomName}:`, socketsInRoom.length);
+      socketsInRoom.forEach((s) => {
+        console.log(`  - Socket ID: ${s.id}, User ID: ${(s as any).userId}`);
+      });
+      
+      // Emitir para todos na sala do match (incluindo o remetente)
+      io.to(roomName).emit('new_message', messageData);
+      
+      console.log(`💬 [REST API] Mensagem salva e enviada no match ${matchId} por ${userId}`);
+      console.log(`💬 [REST API] Dados da mensagem emitida:`, JSON.stringify(messageData, null, 2));
+    });
 
     res.status(201).json({ message: messageWithSender });
   } catch (error) {
