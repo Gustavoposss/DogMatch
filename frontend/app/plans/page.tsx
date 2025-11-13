@@ -7,10 +7,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { paymentService } from "@/lib/services/paymentService";
 import { subscriptionService } from "@/lib/services/subscriptionService";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function PlansPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [feedback, setFeedback] = useState<string | null>(null);
 
   const { data: plansData } = useQuery({
@@ -36,7 +38,13 @@ export default function PlansPage() {
       setFeedback(null);
     },
     onSuccess: (payment) => {
-      setFeedback('Pagamento iniciado com sucesso! Utilize o QR Code PIX gerado no painel de pagamentos.');
+      // Redirecionar para página de pagamento PIX
+      const paymentId = payment.paymentId || payment.id;
+      if (paymentId) {
+        router.push(`/payment/pix?paymentId=${paymentId}`);
+      } else {
+        setFeedback('Pagamento iniciado, mas não foi possível obter o ID. Verifique no painel.');
+      }
       refetchSubscription();
     },
     onError: (error: any) => {

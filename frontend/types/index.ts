@@ -62,15 +62,26 @@ export interface Subscription {
 }
 
 export interface Payment {
-  id: string;
-  userId: string;
-  planId: string;
+  paymentId?: string;
+  id?: string;
+  userId?: string;
+  planId?: string;
   amount: number;
+  value?: number;
   status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
-  paymentMethod: 'PIX' | 'CREDIT_CARD' | 'BOLETO';
+  paymentMethod?: 'PIX' | 'CREDIT_CARD' | 'BOLETO';
+  billingType?: 'PIX' | 'CREDIT_CARD' | 'BOLETO';
   pixCode?: string;
-  pixQrCode?: string;
-  createdAt: string;
+  pixQrCode?: {
+    encodedImage: string;
+    payload: string;
+    expirationDate: string;
+  };
+  asaasPaymentId?: string;
+  invoiceUrl?: string;
+  bankSlipUrl?: string;
+  dueDate?: string;
+  createdAt?: string;
 }
 
 export interface Plan {

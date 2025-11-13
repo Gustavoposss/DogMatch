@@ -393,6 +393,8 @@ export class PaymentService {
       throw new Error('Pagamento não encontrado');
     }
 
+    let pixQrCode = null;
+
     // Se tem asaasPaymentId, buscar status atualizado no Asaas
     if (payment.asaasPaymentId) {
       try {
@@ -420,6 +422,20 @@ export class PaymentService {
             status = 'PENDING';
         }
 
+        // Se for PIX e ainda estiver pendente, buscar QR code
+        if (payment.paymentMethod === 'pix' && status === 'PENDING') {
+          try {
+            const pixData = await asaasClient.getPixQrCode(payment.asaasPaymentId);
+            pixQrCode = {
+              encodedImage: pixData.encodedImage,
+              payload: pixData.payload,
+              expirationDate: pixData.expirationDate
+            };
+          } catch (error) {
+            console.error('Erro ao obter QR Code PIX:', error);
+          }
+        }
+
         // Atualizar se mudou
         if (status !== payment.status) {
           await prisma.payment.update({
@@ -428,13 +444,21 @@ export class PaymentService {
           });
         }
 
-        return { ...payment, status, asaasStatus: asaasPayment.status };
+        return { 
+          ...payment, 
+          status, 
+          asaasStatus: asaasPayment.status,
+          pixQrCode,
+          value: asaasPayment.value,
+          dueDate: asaasPayment.dueDate,
+          invoiceUrl: asaasPayment.invoiceUrl
+        };
       } catch (error) {
         console.error('Erro ao buscar pagamento no Asaas:', error);
       }
     }
 
-    return payment;
+    return { ...payment, pixQrCode };
   }
 
   /**

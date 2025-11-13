@@ -16,8 +16,8 @@ export const paymentService = {
   },
 
   async checkPaymentStatus(paymentId: string): Promise<Payment> {
-    const response = await api.get<Payment>(`/payments/${paymentId}/status`);
-    return response.data;
+    const response = await api.get<{ payment: Payment }>(`/payments/status/${paymentId}`);
+    return response.data.payment;
   },
 
   async getUserPayments(): Promise<Payment[]> {
