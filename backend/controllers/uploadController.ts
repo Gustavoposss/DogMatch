@@ -109,6 +109,41 @@ export const uploadPetPhoto = [
 
       if (error) {
         console.error('❌ Erro do Supabase:', error);
+        
+        // Tratamento de erros específicos do Supabase
+        if (error.message?.includes('Bucket not found')) {
+          return res.status(404).json({ 
+            error: 'Bucket de armazenamento não encontrado. Verifique a configuração do Supabase.',
+            details: error.message 
+          });
+        }
+        
+        // Se o arquivo já existe, tentar novamente com nome mais único
+        if (error.message?.includes('The resource already exists')) {
+          console.log('⚠️ Arquivo já existe, tentando com nome mais único...');
+          const retryFileName = `pets/${Date.now()}_${Math.random().toString(36).substring(7)}_${file.originalname}`;
+          const { data: retryData, error: retryError } = await supabase.storage
+            .from('pet-photos')
+            .upload(retryFileName, file.buffer, {
+              contentType: file.mimetype,
+              upsert: false
+            });
+          
+          if (retryError) {
+            return res.status(500).json({ 
+              error: 'Erro ao fazer upload da imagem.', 
+              details: retryError.message 
+            });
+          }
+          
+          const { data: retryPublicUrlData } = supabase.storage
+            .from('pet-photos')
+            .getPublicUrl(retryFileName);
+          
+          console.log('✅ Upload concluído (retry):', retryPublicUrlData.publicUrl);
+          return res.status(201).json({ url: retryPublicUrlData.publicUrl });
+        }
+        
         return res.status(500).json({ 
           error: 'Erro ao fazer upload da imagem.', 
           details: error.message 

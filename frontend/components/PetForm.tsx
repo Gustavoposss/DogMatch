@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { breedService } from "@/lib/services/breedService";
 import { useQuery } from "@tanstack/react-query";
+import { Upload, X } from "lucide-react";
 
 const petSchema = z.object({
   name: z.string().min(2, 'Nome muito curto'),
@@ -22,14 +23,6 @@ const petSchema = z.object({
 
 const formSchema = petSchema.extend({
   photo: z.any().optional(),
-}).refine((data) => {
-  // Validar que há uma foto (ou file ou photoUrl)
-  const hasFile = data.photo instanceof FileList && data.photo.length > 0;
-  const hasPhotoUrl = data.photoUrl && data.photoUrl.trim() !== '';
-  return hasFile || hasPhotoUrl;
-}, {
-  message: 'Por favor, selecione uma foto para o pet',
-  path: ['photo'],
 });
 
 export type PetFormValues = z.infer<typeof formSchema>;
@@ -78,9 +71,21 @@ export function PetForm({ defaultValues, onSubmit, submitting }: PetFormProps) {
 
   const [preview, setPreview] = useState<string | null>(defaultValues?.photoUrl ?? null);
   const [fileInputKey, setFileInputKey] = useState(0);
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
   const onFormSubmit = async (values: PetFormValues) => {
+    // Validar que há uma foto
     const file = values.photo instanceof FileList ? values.photo[0] : undefined;
+    const hasFile = !!file;
+    const hasPhotoUrl = !!(values.photoUrl && values.photoUrl.trim() !== '');
+    const hasPreview = !!preview;
+
+    if (!hasFile && !hasPhotoUrl && !hasPreview) {
+      setPhotoError('Por favor, selecione uma foto para o pet');
+      return;
+    }
+
+    setPhotoError(null);
     await onSubmit(values, file);
   };
 
@@ -210,6 +215,7 @@ export function PetForm({ defaultValues, onSubmit, submitting }: PetFormProps) {
             onChange={(event) => {
               const file = event.target.files?.[0];
               if (file) {
+                setPhotoError(null); // Limpar erro quando arquivo for selecionado
                 const reader = new FileReader();
                 reader.onloadend = () => {
                   setPreview(reader.result as string);
@@ -219,27 +225,15 @@ export function PetForm({ defaultValues, onSubmit, submitting }: PetFormProps) {
             }}
             className="hidden"
           />
-          {errors.photo && (
-            <p className="mt-1 text-sm text-[var(--error)]">{errors.photo.message}</p>
+          {photoError && (
+            <p className="mt-1 text-sm text-[var(--error)]">{photoError}</p>
           )}
           <label
             htmlFor="photo-upload"
             className="flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-[var(--input-border)] bg-[var(--card-bg)] px-4 py-6 transition-colors hover:border-[var(--primary)] hover:bg-[var(--primary)]/10"
           >
             <div className="text-center">
-              <svg
-                className="mx-auto h-12 w-12 text-[var(--foreground-secondary)]"
-                stroke="currentColor"
-                fill="none"
-                viewBox="0 0 48 48"
-              >
-                <path
-                  d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              <Upload className="mx-auto h-12 w-12 text-[var(--foreground-secondary)]" />
               <p className="mt-2 text-sm text-[var(--foreground-secondary)]">
                 <span className="font-semibold text-[var(--primary)]">Clique para enviar</span> ou arraste e solte
               </p>
@@ -259,9 +253,7 @@ export function PetForm({ defaultValues, onSubmit, submitting }: PetFormProps) {
                 }}
                 className="absolute right-2 top-2 rounded-full bg-[var(--error)] p-2 text-white shadow-lg transition-colors hover:bg-[var(--error)]/80"
               >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X className="h-4 w-4" />
               </button>
             </div>
           )}

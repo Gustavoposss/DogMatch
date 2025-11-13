@@ -45,10 +45,6 @@ export default function RegisterPage() {
       <div className="w-full max-w-2xl">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-white mb-2">Complete seu cadastro e encontre um par para seu pet!</h1>
-          <div className="w-full bg-[var(--card-bg)] rounded-full h-2 mb-4">
-            <div className="bg-[var(--primary)] h-2 rounded-full" style={{ width: '17%' }}></div>
-          </div>
-          <p className="text-sm text-[var(--foreground-secondary)]">Progresso do cadastro: 17%</p>
         </div>
 
         <div className="bg-[var(--card-bg)] rounded-2xl border border-[var(--card-border)] p-8">

@@ -131,8 +131,11 @@ JWT_SECRET="sua-chave-secreta-aqui"
 PORT=3000
 ASAAS_API_KEY="sua-api-key-do-asaas"
 ASAAS_ENVIRONMENT="sandbox"
-SUPABASE_URL="sua-url-do-supabase"
-SUPABASE_ANON_KEY="sua-chave-anonima-do-supabase"
+SUPABASE_URL="https://seu-projeto.supabase.co"
+SUPABASE_SERVICE_KEY="sua-service-role-key-do-supabase"
+# OU
+SUPABASE_SERVICE_ROLE_KEY="sua-service-role-key-do-supabase"
+# ⚠️ IMPORTANTE: Use a Service Role Key (não a Anon Key) para ter acesso completo ao Storage
 ```
 
 **Mobile** - Crie um arquivo `.env` na pasta `mobile`:
