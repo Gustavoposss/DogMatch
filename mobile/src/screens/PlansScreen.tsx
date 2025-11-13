@@ -12,6 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Colors } from '../styles/colors';
 import { subscriptionService } from '../services/subscriptionService';
 import { paymentService } from '../services/paymentService';
+import { useAuth } from '../contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 
 interface Plan {
@@ -27,13 +28,21 @@ interface Plan {
 
 export default function PlansScreen() {
   const navigation = useNavigation();
+  const { state } = useAuth();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
 
   useEffect(() => {
-    loadPlans();
+    loadCurrentSubscription();
   }, []);
+
+  useEffect(() => {
+    if (currentPlan !== null) {
+      loadPlans();
+    }
+  }, [currentPlan]);
 
   const loadPlans = async () => {
     try {
@@ -47,17 +56,32 @@ export default function PlansScreen() {
         period: '/mês',
         features: p.features || [],
         popular: p.type === 'PREMIUM',
+        current: p.type === currentPlan,
       }));
       setPlans(mapped);
     } catch (error) {
       console.error('Erro ao carregar planos:', error);
       setPlans([
-        { id: 'FREE', type: 'FREE', name: 'FREE', price: 'R$ 0,00', period: '', features: ['Swipes limitados', 'Ver matches'] },
-        { id: 'PREMIUM', type: 'PREMIUM', name: 'PREMIUM', price: 'R$ 19,90', period: '/mês', features: ['Swipes ilimitados', 'Ver quem curtiu', '1 Boost/mês'], popular: true },
-        { id: 'VIP', type: 'VIP', name: 'VIP', price: 'R$ 39,90', period: '/mês', features: ['Tudo do Premium', '3 Boosts/mês', 'Desfazer Swipe'] },
+        { id: 'FREE', type: 'FREE', name: 'FREE', price: 'R$ 0,00', period: '', features: ['Swipes limitados', 'Ver matches'], current: currentPlan === 'FREE' },
+        { id: 'PREMIUM', type: 'PREMIUM', name: 'PREMIUM', price: 'R$ 19,90', period: '/mês', features: ['Swipes ilimitados', 'Ver quem curtiu', '1 Boost/mês'], popular: true, current: currentPlan === 'PREMIUM' },
+        { id: 'VIP', type: 'VIP', name: 'VIP', price: 'R$ 39,90', period: '/mês', features: ['Tudo do Premium', '3 Boosts/mês', 'Desfazer Swipe'], current: currentPlan === 'VIP' },
       ]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCurrentSubscription = async () => {
+    try {
+      const subscription = await subscriptionService.getMySubscription();
+      if (subscription && subscription.plan) {
+        setCurrentPlan(subscription.plan.type || subscription.plan);
+      } else {
+        setCurrentPlan('FREE');
+      }
+    } catch (error) {
+      console.error('Erro ao carregar assinatura atual:', error);
+      setCurrentPlan('FREE');
     }
   };
 
@@ -90,11 +114,17 @@ export default function PlansScreen() {
   const renderPlanCard = (plan: Plan) => (
     <View key={plan.id} style={[
       styles.planCard,
-      plan.popular && styles.popularCard
+      plan.popular && styles.popularCard,
+      plan.current && styles.currentCard
     ]}>
       {plan.popular && (
         <View style={styles.popularBadge}>
           <Text style={styles.popularText}>Mais Popular</Text>
+        </View>
+      )}
+      {plan.current && (
+        <View style={styles.currentBadge}>
+          <Text style={styles.currentText}>Plano Atual</Text>
         </View>
       )}
       
@@ -171,6 +201,11 @@ export default function PlansScreen() {
             A assinatura será renovada automaticamente. Você pode cancelar a qualquer momento. 
             Para mais informações, consulte nossos <Text style={styles.linkText}>Termos de Serviço</Text>.
           </Text>
+          {currentPlan && (
+            <Text style={styles.currentPlanText}>
+              Seu plano atual: <Text style={styles.currentPlanName}>{currentPlan}</Text>
+            </Text>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -378,5 +413,34 @@ const styles = StyleSheet.create({
   linkText: {
     fontWeight: 'bold',
     textDecorationLine: 'underline',
+  },
+  currentCard: {
+    borderColor: Colors.primary,
+    borderWidth: 2,
+  },
+  currentBadge: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderTopLeftRadius: 12,
+    borderBottomRightRadius: 12,
+  },
+  currentText: {
+    color: Colors.white,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  currentPlanText: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  currentPlanName: {
+    fontWeight: 'bold',
+    color: Colors.primary,
   },
 });

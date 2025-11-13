@@ -5,6 +5,7 @@ import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import helmet from 'helmet';
 import { logger } from './utils/logger';
+import prisma from './prismaClient';
 import './types/socket';
 import userRoutes from './routes/userRoutes';
 import petRoutes from './routes/petRoutes';
@@ -176,17 +177,55 @@ io.on('connection', (socket) => {
     try {
       const { matchId, content } = data;
       
-      // Emitir para todos na sala do match
+      if (!matchId || !content) {
+        socket.emit('error', { message: 'matchId e content são obrigatórios' });
+        return;
+      }
+
+      // Verificar se o usuário faz parte do match
+      const match = await prisma.match.findUnique({ where: { id: matchId } });
+      if (!match || (match.userAId !== socket.userId && match.userBId !== socket.userId)) {
+        socket.emit('error', { message: 'Você não tem permissão para enviar mensagem neste chat' });
+        return;
+      }
+
+      // Buscar ou criar o chat
+      let chat = await prisma.chat.findUnique({ where: { matchId } });
+      if (!chat) {
+        chat = await prisma.chat.create({ data: { matchId } });
+      }
+
+      // Salvar mensagem no banco de dados
+      const message = await prisma.message.create({
+        data: {
+          chatId: chat.id,
+          senderId: socket.userId,
+          content
+        },
+        include: {
+          chat: {
+            include: {
+              match: true
+            }
+          }
+        }
+      });
+
+      // Emitir para todos na sala do match (incluindo o remetente)
       io.to(`match_${matchId}`).emit('new_message', {
+        id: message.id,
         matchId,
         senderId: socket.userId,
-        content,
-        timestamp: new Date()
+        content: message.content,
+        chatId: chat.id,
+        createdAt: message.createdAt.toISOString(),
+        timestamp: message.createdAt
       });
       
-      console.log(`💬 Mensagem enviada no match ${matchId} por ${socket.userId}`);
-    } catch (error) {
-      socket.emit('error', { message: 'Erro ao enviar mensagem' });
+      console.log(`💬 Mensagem salva e enviada no match ${matchId} por ${socket.userId}`);
+    } catch (error: any) {
+      console.error('Erro ao enviar mensagem via Socket.IO:', error);
+      socket.emit('error', { message: 'Erro ao enviar mensagem: ' + (error.message || 'Erro desconhecido') });
     }
   });
   
@@ -198,14 +237,16 @@ io.on('connection', (socket) => {
 // Exportar io para uso em outros arquivos
 export { io };
 
-server.listen(Number(PORT), '0.0.0.0', () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
-  console.log(`📡 Socket.IO ativo para chat em tempo real`);
-  console.log(`🌐 Acessível em:`);
-  console.log(`   - http://localhost:${PORT} (local)`);
-  console.log(`   - http://192.168.101.5:${PORT} (rede local - use este IP no celular)`);
-  console.log(`\n💡 Para conectar o celular:`);
-  console.log(`   1. Certifique-se de que o celular está na mesma rede Wi-Fi`);
-  console.log(`   2. No app mobile, o IP 192.168.101.5 já está configurado no app.json`);
-  console.log(`   3. Reinicie o app mobile após alterar a configuração`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  server.listen(Number(PORT), '0.0.0.0', () => {
+    console.log(`🚀 Servidor rodando na porta ${PORT}`);
+    console.log(`📡 Socket.IO ativo para chat em tempo real`);
+    console.log(`🌐 Acessível em:`);
+    console.log(`   - http://localhost:${PORT} (local)`);
+    console.log(`   - http://192.168.101.5:${PORT} (rede local - use este IP no celular)`);
+    console.log(`\n💡 Para conectar o celular:`);
+    console.log(`   1. Certifique-se de que o celular está na mesma rede Wi-Fi`);
+    console.log(`   2. No app mobile, o IP 192.168.101.5 já está configurado no app.json`);
+    console.log(`   3. Reinicie o app mobile após alterar a configuração`);
+  });
+}

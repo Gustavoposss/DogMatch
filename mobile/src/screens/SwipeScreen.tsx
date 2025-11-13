@@ -9,6 +9,9 @@ import {
   Image,
   Dimensions,
   Animated,
+  ActivityIndicator,
+  Modal,
+  Alert,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Colors, Fonts, Spacing, BorderRadius, Shadows } from '../styles/colors';
@@ -28,28 +31,60 @@ export default function SwipeScreen() {
   const [loading, setLoading] = useState(true);
   const [showMatchModal, setShowMatchModal] = useState(false);
   const [matchedPet, setMatchedPet] = useState<Pet | null>(null);
+  const [liking, setLiking] = useState(false);
+  const [likedPetIds, setLikedPetIds] = useState<Set<string>>(new Set());
 
   useFocusEffect(
     React.useCallback(() => {
+      // Limpar lista de pets curtidos ao sair e voltar (opcional - pode manter para melhor UX)
+      // setLikedPetIds(new Set());
       loadPets();
-    }, [])
+    }, [state.user?.id])
   );
 
-  const loadPets = async () => {
+  const loadPets = async (forceReload = false) => {
     try {
       setLoading(true);
       console.log('=== LOAD PETS DEBUG ===');
       console.log('User ID:', state.user?.id);
       
       if (state.user && state.user.id) {
+        // Primeiro verificar se o usuário tem pelo menos um pet
+        const { petService } = await import('../services/petService');
+        const userPetsResponse = await petService.getPetsByUser(state.user.id);
+        
+        if (!userPetsResponse || !userPetsResponse.pets || userPetsResponse.pets.length === 0) {
+          console.log('Usuário não tem pets cadastrados');
+          setPets([]);
+          setLoading(false);
+          return;
+        }
+
+        // Se não for reload forçado e já temos pets suficientes, não recarregar
+        // Mas sempre recarregar se estiver no último pet ou não houver pets
+        if (!forceReload && pets.length > 0 && currentIndex < pets.length - 1) {
+          console.log('Já temos pets carregados, pulando reload');
+          setLoading(false);
+          return;
+        }
+
         const response = await swipeService.getPetsToSwipe(state.user.id);
         console.log('Resposta completa:', response);
         
         if (response && response.pets) {
           console.log('Pets encontrados:', response.pets.length);
           console.log('Primeiro pet:', response.pets[0]);
-          setPets(response.pets);
-          setCurrentIndex(0);
+          
+          // Filtrar pets já curtidos (o backend já deve filtrar, mas garantimos aqui também)
+          // Filtrar pets que já estão no set de likedPetIds
+          const filteredPets = response.pets.filter(pet => !likedPetIds.has(pet.id));
+          console.log('Pets após filtro local:', filteredPets.length);
+          
+          setPets(filteredPets);
+          // Ajustar índice se necessário
+          if (currentIndex >= filteredPets.length) {
+            setCurrentIndex(Math.max(0, filteredPets.length - 1));
+          }
         } else {
           console.log('Nenhum pet encontrado ou formato inválido');
           setPets([]);
@@ -67,23 +102,77 @@ export default function SwipeScreen() {
   };
 
   const handleLike = async () => {
-    if (currentIndex < pets.length) {
+    if (currentIndex < pets.length && !liking) {
       const pet = pets[currentIndex];
+      
+      // Prevenir like duplicado
+      if (likedPetIds.has(pet.id)) {
+        // Se já deu like, remover da lista e avançar
+        setPets(prev => prev.filter(p => p.id !== pet.id));
+        setCurrentIndex(prev => Math.min(prev, pets.length - 2));
+        return;
+      }
+      
       try {
+        setLiking(true);
+        
+        // Adicionar feedback visual imediato (otimistic update)
+        setLikedPetIds(prev => new Set(prev).add(pet.id));
+        
+        // Remover o pet da lista imediatamente para evitar que apareça novamente
+        setPets(prev => prev.filter(p => p.id !== pet.id));
+        
         const response = await swipeService.likePet(pet.id);
+        
+        // Feedback visual de sucesso
+        // O loading indicator já mostra que está processando
+        
         if (response && response.isMatch) {
           setMatchedPet(pet);
           setShowMatchModal(true);
+        } else {
+          // Mostrar feedback de like enviado (sem match)
+          // O usuário verá o próximo pet aparecer, indicando que o like foi processado
         }
-        setCurrentIndex(currentIndex + 1);
+        
+        // Ajustar índice se necessário (já removemos o pet da lista)
+        setCurrentIndex(prev => {
+          const newLength = pets.length - 1;
+          return Math.max(0, Math.min(prev, newLength - 1));
+        });
+        
+        // Se não há mais pets, recarregar lista após um pequeno delay
+        // para dar tempo do backend processar o like
+        if (pets.length <= 1) {
+          setTimeout(() => {
+            loadPets(true);
+          }, 500);
+        }
       } catch (error) {
         console.error('Erro ao dar like:', error);
+        Alert.alert('Erro', 'Não foi possível enviar o like. Tente novamente.');
+        // Remover do set de liked se der erro e restaurar o pet na lista
+        setLikedPetIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(pet.id);
+          return newSet;
+        });
+        // Não restaurar o pet na lista se o erro for de duplicação (já foi curtido)
+        // O backend retornará erro 409 se já foi curtido
+      } finally {
+        setLiking(false);
       }
     }
   };
 
   const handlePass = () => {
-    setCurrentIndex(currentIndex + 1);
+    if (currentIndex < pets.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    } else {
+      // Se passou do último pet, recarregar lista para buscar mais pets
+      // Forçar reload para buscar novos pets do backend
+      loadPets(true);
+    }
   };
 
 
@@ -155,7 +244,7 @@ export default function SwipeScreen() {
         <TouchableOpacity style={styles.headerButton}>
           <Ionicons name="person" size={24} color={Colors.white} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>pinder</Text>
+        <Text style={styles.headerTitle}>Par de Patas</Text>
         <TouchableOpacity style={styles.headerButton}>
           <Ionicons name="chatbubble" size={24} color={Colors.white} />
         </TouchableOpacity>
@@ -192,24 +281,41 @@ export default function SwipeScreen() {
 
       {/* Action Buttons - Simplified */}
       <View style={styles.actionBar}>
-        <TouchableOpacity style={styles.actionButton} onPress={handlePass}>
-          <View style={[styles.actionButtonInner, styles.passButton]}>
+        <TouchableOpacity 
+          style={styles.actionButton} 
+          onPress={handlePass}
+          disabled={liking}
+        >
+          <View style={[styles.actionButtonInner, styles.passButton, liking && styles.actionButtonDisabled]}>
             <Ionicons name="close" size={32} color={Colors.white} />
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
-          <View style={[styles.actionButtonInner, styles.likeButton]}>
-            <Ionicons name="heart" size={32} color={Colors.white} />
+        <TouchableOpacity 
+          style={styles.actionButton} 
+          onPress={handleLike}
+          disabled={liking || currentIndex >= pets.length}
+        >
+          <View style={[styles.actionButtonInner, styles.likeButton, liking && styles.actionButtonDisabled]}>
+            {liking ? (
+              <ActivityIndicator size="small" color={Colors.white} />
+            ) : (
+              <Ionicons name="heart" size={32} color={Colors.white} />
+            )}
           </View>
         </TouchableOpacity>
       </View>
 
       {/* Match Modal */}
-      {showMatchModal && (
+      <Modal
+        visible={showMatchModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleMatchModalClose}
+      >
         <View style={styles.matchModal}>
           <View style={styles.matchModalContent}>
-            <Text style={styles.matchTitle}>It's a Match!</Text>
+            <Text style={styles.matchTitle}>É um Match!</Text>
             
             <View style={styles.matchImages}>
               <Image
@@ -236,7 +342,7 @@ export default function SwipeScreen() {
             </View>
           </View>
         </View>
-      )}
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -419,16 +525,14 @@ const styles = StyleSheet.create({
   likeButton: {
     backgroundColor: Colors.primary,
   },
+  actionButtonDisabled: {
+    opacity: 0.5,
+  },
   matchModal: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 100,
   },
   matchModalContent: {
     backgroundColor: Colors.backgroundLight,

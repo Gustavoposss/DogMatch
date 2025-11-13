@@ -68,10 +68,73 @@ export const login = async (req: Request, res: Response) => {
 export const getUserById = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
-    const user = await prisma.user.findUnique({ where: { id } });
+    const user = await prisma.user.findUnique({ 
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        city: true,
+        phone: true,
+        cpf: false, // Não retornar CPF por segurança
+        password: false, // Nunca retornar senha
+        createdAt: true,
+      }
+    });
     if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
     res.json(user);
   } catch (error) {
     res.status(500).json({ error: 'Erro ao buscar usuário' });
+  }
+};
+
+export const updateUser = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId; // Do middleware de autenticação
+    const { name, city, phone } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Usuário não autenticado' });
+    }
+
+    // Validar campos
+    const updateData: any = {};
+    if (name !== undefined) {
+      if (!name || name.trim().length === 0) {
+        return res.status(400).json({ error: 'Nome não pode estar vazio' });
+      }
+      updateData.name = name.trim();
+    }
+    if (city !== undefined) {
+      if (!city || city.trim().length === 0) {
+        return res.status(400).json({ error: 'Cidade não pode estar vazia' });
+      }
+      updateData.city = city.trim();
+    }
+    if (phone !== undefined) {
+      updateData.phone = phone ? phone.trim() : null;
+    }
+
+    // Atualizar usuário
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        city: true,
+        phone: true,
+        createdAt: true,
+      }
+    });
+
+    res.json({ user: updatedUser, message: 'Perfil atualizado com sucesso' });
+  } catch (error: any) {
+    console.error('Erro ao atualizar usuário:', error);
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+    res.status(500).json({ error: 'Erro ao atualizar perfil' });
   }
 };

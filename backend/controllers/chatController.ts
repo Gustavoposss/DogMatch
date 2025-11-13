@@ -33,10 +33,33 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
         chatId: chat.id,
         senderId: userId!,
         content
+      },
+      include: {
+        chat: {
+          include: {
+            match: true
+          }
+        }
       }
     });
 
-    res.status(201).json({ message });
+    // Buscar informações do remetente
+    const sender = await prisma.user.findUnique({
+      where: { id: userId! },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      }
+    });
+
+    const messageWithSender = {
+      ...message,
+      sender: sender || null,
+      createdAt: message.createdAt.toISOString(),
+    };
+
+    res.status(201).json({ message: messageWithSender });
   } catch (error) {
     console.error('Erro ao enviar mensagem:', error);
     res.status(500).json({ error: 'Erro interno do servidor.' });
@@ -55,7 +78,7 @@ export const getChatMessages = async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ error: 'Você não tem permissão para ver este chat.' });
     }
 
-    // Busca o chat
+    // Busca o chat com mensagens
     const chat = await prisma.chat.findUnique({
       where: { matchId },
       include: {
@@ -69,7 +92,28 @@ export const getChatMessages = async (req: AuthRequest, res: Response) => {
       return res.json({ messages: [] });
     }
 
-    res.json({ messages: chat.messages });
+    // Buscar todos os remetentes de uma vez (otimização)
+    const senderIds = [...new Set(chat.messages.map(msg => msg.senderId))];
+    const senders = await prisma.user.findMany({
+      where: { id: { in: senderIds } },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      }
+    });
+
+    // Criar mapa de remetentes para acesso rápido
+    const senderMap = new Map(senders.map(s => [s.id, s]));
+
+    // Transformar mensagens para incluir informações do remetente
+    const messagesWithSender = chat.messages.map((message) => ({
+      ...message,
+      sender: senderMap.get(message.senderId) || null,
+      createdAt: message.createdAt.toISOString(),
+    }));
+
+    res.json({ messages: messagesWithSender });
   } catch (error) {
     console.error('Erro ao buscar mensagens:', error);
     res.status(500).json({ error: 'Erro interno do servidor.' });

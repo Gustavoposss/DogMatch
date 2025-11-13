@@ -9,7 +9,7 @@ import {
   Image,
   FlatList,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Colors, Fonts, Spacing, BorderRadius, Shadows } from '../styles/colors';
 import { LogoIcon } from '../components/Logo';
 import { Ionicons } from '@expo/vector-icons';
@@ -59,9 +59,11 @@ export default function MatchesScreen() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadMatches();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadMatches();
+    }, [state.user?.id])
+  );
 
   const loadMatches = async () => {
     try {

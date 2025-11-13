@@ -36,6 +36,11 @@ export const likePet = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Pet não encontrado.' });
     }
 
+    // Verificar se não está tentando dar like no próprio pet
+    if (fromPet.ownerId === toPet.ownerId) {
+      return res.status(400).json({ error: 'Você não pode dar like no seu próprio pet.' });
+    }
+
     // Buscar like existente e like recíproco em uma única query
     const [existingLike, reciprocalLike] = await Promise.all([
       prisma.like.findFirst({

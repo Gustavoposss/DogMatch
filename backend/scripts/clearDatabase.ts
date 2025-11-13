@@ -76,9 +76,20 @@ async function clearDatabase() {
 // Executar apenas se chamado diretamente
 if (require.main === module) {
   console.log('⚠️  ATENÇÃO: Você está prestes a DELETAR TODOS os dados do banco!');
-  console.log('⚠️  Esta ação é IRREVERSÍVEL!\n');
+  console.log('⚠️  Esta ação é IRREVERSÍVEL!');
+  console.log('⚠️  Certifique-se de que está no ambiente correto!\n');
   
-  // Executar após 3 segundos para dar tempo de cancelar (Ctrl+C)
+  // Verificar se está em produção
+  if (process.env.NODE_ENV === 'production') {
+    console.error('❌ ERRO: Não é possível limpar o banco em produção!');
+    console.error('❌ Defina NODE_ENV=development para executar este script.\n');
+    process.exit(1);
+  }
+  
+  console.log('⏳ Iniciando limpeza em 2 segundos...');
+  console.log('   (Pressione Ctrl+C para cancelar)\n');
+  
+  // Executar após 2 segundos para dar tempo de cancelar (Ctrl+C)
   setTimeout(() => {
     clearDatabase()
       .then(() => {
@@ -89,9 +100,7 @@ if (require.main === module) {
         console.error('\n❌ Erro:', error);
         process.exit(1);
       });
-  }, 3000);
-  
-  console.log('⏳ Aguardando 3 segundos... (Pressione Ctrl+C para cancelar)\n');
+  }, 2000);
 }
 
 export default clearDatabase;

@@ -164,7 +164,7 @@ export async function pickImage(): Promise<string | null> {
   const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
   
   if (permissionResult.granted === false) {
-    throw new Error('Permission to access camera roll is required!');
+    throw new Error('Permissão para acessar a galeria é necessária!');
   }
 
   const result = await ImagePicker.launchImageLibraryAsync({
@@ -187,7 +187,7 @@ export async function takePhoto(): Promise<string | null> {
   const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
   
   if (permissionResult.granted === false) {
-    throw new Error('Permission to access camera is required!');
+    throw new Error('Permissão para acessar a câmera é necessária!');
   }
 
   const result = await ImagePicker.launchCameraAsync({

@@ -13,12 +13,14 @@ import {
   Image,
   Modal,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Colors, Fonts, Spacing, BorderRadius, Shadows } from '../styles/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { userService } from '../services/userService';
 
 // Interfaces
 interface UserProfile {
@@ -186,10 +188,36 @@ export default function SettingsScreen() {
   const [loading, setLoading] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
 
-  // Carregar configurações salvas
+  // Carregar configurações salvas e perfil do usuário
   useEffect(() => {
     loadSettings();
+    loadUserProfile();
   }, []);
+
+  const loadUserProfile = async () => {
+    try {
+      const profile = await userService.getMyProfile();
+      if (profile) {
+        setUserProfile({
+          name: profile.name || state.user?.name || '',
+          email: profile.email || state.user?.email || '',
+          city: profile.city || state.user?.city || '',
+          phone: profile.phone || '',
+          avatar: profile.avatar,
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao carregar perfil:', error);
+      // Usar dados do contexto se falhar
+      setUserProfile({
+        name: state.user?.name || '',
+        email: state.user?.email || '',
+        city: state.user?.city || '',
+        phone: '',
+        avatar: state.user?.avatar,
+      });
+    }
+  };
 
   const loadSettings = async () => {
     try {
@@ -214,6 +242,22 @@ export default function SettingsScreen() {
   const saveSettings = async () => {
     try {
       setLoading(true);
+      
+      // Salvar perfil no backend se houver mudanças
+      if (hasChanges) {
+        try {
+          await userService.updateProfile({
+            name: userProfile.name,
+            city: userProfile.city,
+            phone: userProfile.phone,
+          });
+        } catch (error: any) {
+          Alert.alert('Erro', error.message || 'Não foi possível atualizar o perfil');
+          return;
+        }
+      }
+      
+      // Salvar configurações locais
       await AsyncStorage.setItem('notificationSettings', JSON.stringify(notifications));
       await AsyncStorage.setItem('privacySettings', JSON.stringify(privacy));
       await AsyncStorage.setItem('petPreferences', JSON.stringify(petPreferences));
@@ -308,203 +352,31 @@ export default function SettingsScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Profile Section */}
         {renderSection('Perfil', (
-          <>
-            <SettingItem
-              icon="person-circle"
-              title="Editar Perfil"
-              subtitle={`${userProfile.name} • ${userProfile.city}`}
-              onPress={() => setShowEditProfile(true)}
-            />
-            <SettingItem
-              icon="paw"
-              title="Meus Pets"
-              subtitle="Gerenciar pets cadastrados"
-              onPress={() => navigation.navigate('Pets' as never)}
-            />
-            <SettingItem
-              icon="heart"
-              title="Meus Matches"
-              subtitle="Ver todos os matches"
-              onPress={() => navigation.navigate('Matches' as never)}
-            />
-          </>
-        ))}
-
-        {/* Notifications Section */}
-        {renderSection('Notificações', (
-          <>
-            <SwitchItem
-              icon="notifications"
-              title="Notificações Push"
-              subtitle="Receber notificações no dispositivo"
-              value={notifications.pushNotifications}
-              onValueChange={(value) => handleNotificationChange('pushNotifications', value)}
-            />
-            <SwitchItem
-              icon="heart"
-              title="Novos Matches"
-              subtitle="Notificar quando houver novos matches"
-              value={notifications.newMatches}
-              onValueChange={(value) => handleNotificationChange('newMatches', value)}
-              disabled={!notifications.pushNotifications}
-            />
-            <SwitchItem
-              icon="chatbubble"
-              title="Novas Mensagens"
-              subtitle="Notificar quando receber mensagens"
-              value={notifications.newMessages}
-              onValueChange={(value) => handleNotificationChange('newMessages', value)}
-              disabled={!notifications.pushNotifications}
-            />
-            <SwitchItem
-              icon="mail"
-              title="Notificações por E-mail"
-              subtitle="Receber notificações por e-mail"
-              value={notifications.emailNotifications}
-              onValueChange={(value) => handleNotificationChange('emailNotifications', value)}
-            />
-            <SwitchItem
-              icon="megaphone"
-              title="Notícias e Promoções"
-              subtitle="Receber ofertas e novidades"
-              value={notifications.newsAndPromotions}
-              onValueChange={(value) => handleNotificationChange('newsAndPromotions', value)}
-            />
-          </>
-        ))}
-
-        {/* Privacy Section */}
-        {renderSection('Privacidade', (
-          <>
-            <SwitchItem
-              icon="eye"
-              title="Mostrar Status Online"
-              subtitle="Outros usuários podem ver quando você está online"
-              value={privacy.showOnlineStatus}
-              onValueChange={(value) => handlePrivacyChange('showOnlineStatus', value)}
-            />
-            <SwitchItem
-              icon="time"
-              title="Mostrar Última Vez Online"
-              subtitle="Mostrar quando você esteve online pela última vez"
-              value={privacy.showLastSeen}
-              onValueChange={(value) => handlePrivacyChange('showLastSeen', value)}
-            />
-            <SwitchItem
-              icon="chatbubbles"
-              title="Mensagens de Estranhos"
-              subtitle="Permitir mensagens de usuários não matchados"
-              value={privacy.allowMessagesFromStrangers}
-              onValueChange={(value) => handlePrivacyChange('allowMessagesFromStrangers', value)}
-            />
-            <SwitchItem
-              icon="location"
-              title="Compartilhar Localização"
-              subtitle="Mostrar sua cidade para outros usuários"
-              value={privacy.shareLocation}
-              onValueChange={(value) => handlePrivacyChange('shareLocation', value)}
-            />
-          </>
-        ))}
-
-        {/* Pet Preferences Section */}
-        {renderSection('Preferências de Pets', (
-          <>
-            <SettingItem
-              icon="location"
-              title="Distância Máxima"
-              subtitle={`${petPreferences.maxDistance} km`}
-              onPress={() => console.log('Ajustar distância')}
-            />
-            <SettingItem
-              icon="calendar"
-              title="Faixa Etária"
-              subtitle={`${petPreferences.ageRange.min} - ${petPreferences.ageRange.max} anos`}
-              onPress={() => console.log('Ajustar idade')}
-            />
-            <SettingItem
-              icon="paw"
-              title="Raças Preferidas"
-              subtitle={petPreferences.preferredBreeds.length > 0 ? `${petPreferences.preferredBreeds.length} raças selecionadas` : 'Todas as raças'}
-              onPress={() => console.log('Selecionar raças')}
-            />
-            <SwitchItem
-              icon="medical"
-              title="Apenas Castrados"
-              subtitle="Mostrar apenas pets castrados"
-              value={petPreferences.showOnlyNeutered}
-              onValueChange={(value) => handlePetPreferenceChange('showOnlyNeutered', value)}
-            />
-          </>
+          <SettingItem
+            icon="person-circle"
+            title="Editar Perfil"
+            subtitle={`${userProfile.name} • ${userProfile.city}`}
+            onPress={() => setShowEditProfile(true)}
+          />
         ))}
 
         {/* Support Section */}
         {renderSection('Suporte', (
-          <>
-            <SettingItem
-              icon="help-circle"
-              title="Central de Ajuda"
-              subtitle="Perguntas frequentes e tutoriais"
-              onPress={() => console.log('Central de ajuda')}
-            />
-            <SettingItem
-              icon="mail"
-              title="Fale Conosco"
-              subtitle="Envie sua dúvida ou sugestão"
-              onPress={() => console.log('Contato')}
-            />
-            <SettingItem
-              icon="star"
-              title="Avaliar App"
-              subtitle="Deixe sua avaliação na loja"
-              onPress={() => console.log('Avaliar app')}
-            />
-            <SettingItem
-              icon="information-circle"
-              title="Sobre o App"
-              subtitle="Versão 1.0.0"
-              onPress={() => console.log('Sobre')}
-            />
-          </>
-        ))}
-
-        {/* Legal Section */}
-        {renderSection('Legal', (
-          <>
-            <SettingItem
-              icon="shield-checkmark"
-              title="Política de Privacidade"
-              onPress={() => console.log('Política de privacidade')}
-            />
-            <SettingItem
-              icon="document-text"
-              title="Termos de Serviço"
-              onPress={() => console.log('Termos de serviço')}
-            />
-            <SettingItem
-              icon="lock-closed"
-              title="Alterar Senha"
-              onPress={() => console.log('Alterar senha')}
-            />
-          </>
+          <SettingItem
+            icon="help-circle"
+            title="Suporte"
+            subtitle="Entre em contato conosco"
+            onPress={() => navigation.navigate('Support' as never)}
+          />
         ))}
 
         {/* Account Management Section */}
         {renderSection('Gerenciar Conta', (
-          <>
-            <SettingItem
-              icon="log-out"
-              title="Sair da Conta"
-              onPress={handleLogout}
-            />
-            <SettingItem
-              icon="trash"
-              title="Excluir Conta"
-              subtitle="Esta ação não pode ser desfeita"
-              onPress={handleDeleteAccount}
-              destructive
-            />
-          </>
+          <SettingItem
+            icon="log-out"
+            title="Sair da Conta"
+            onPress={handleLogout}
+          />
         ))}
       </ScrollView>
 
@@ -530,19 +402,54 @@ export default function SettingsScreen() {
         visible={showEditProfile}
         animationType="slide"
         presentationStyle="pageSheet"
+        onRequestClose={() => setShowEditProfile(false)}
       >
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setShowEditProfile(false)}>
-              <Text style={styles.modalCancelText}>Cancelar</Text>
+            <TouchableOpacity 
+              onPress={() => setShowEditProfile(false)}
+              style={styles.modalBackButton}
+            >
+              <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
             </TouchableOpacity>
             <Text style={styles.modalTitle}>Editar Perfil</Text>
-            <TouchableOpacity onPress={() => setShowEditProfile(false)}>
-              <Text style={styles.modalSaveText}>Salvar</Text>
+            <TouchableOpacity 
+              onPress={async () => {
+                try {
+                  setLoading(true);
+                  await userService.updateProfile({
+                    name: userProfile.name,
+                    city: userProfile.city,
+                    phone: userProfile.phone,
+                  });
+                  setShowEditProfile(false);
+                  setHasChanges(false);
+                  Alert.alert('Sucesso', 'Perfil atualizado com sucesso!');
+                  // Recarregar perfil
+                  await loadUserProfile();
+                } catch (error: any) {
+                  Alert.alert('Erro', error.message || 'Não foi possível atualizar o perfil');
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              style={styles.modalSaveButton}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color={Colors.primary} size="small" />
+              ) : (
+                <Text style={styles.modalSaveText}>Salvar</Text>
+              )}
             </TouchableOpacity>
           </View>
           
-          <ScrollView style={styles.modalContent}>
+          <ScrollView 
+            style={styles.modalContent}
+            contentContainerStyle={styles.modalContentContainer}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
             <View style={styles.avatarContainer}>
               <Image
                 source={{ uri: userProfile.avatar || 'https://via.placeholder.com/100' }}
@@ -566,12 +473,14 @@ export default function SettingsScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>E-mail</Text>
               <TextInput
-                style={styles.modalInput}
+                style={[styles.modalInput, styles.modalInputDisabled]}
                 value={userProfile.email}
-                onChangeText={(text) => handleProfileChange('email', text)}
+                editable={false}
                 placeholder="Digite seu e-mail"
                 keyboardType="email-address"
+                placeholderTextColor={Colors.textLightSecondary}
               />
+              <Text style={styles.inputHint}>O e-mail não pode ser alterado</Text>
             </View>
             
             <View style={styles.inputGroup}>
@@ -744,15 +653,29 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0, 0, 0, 0.05)',
+    minHeight: 56,
   },
-  modalCancelText: {
-    fontSize: 16,
-    color: Colors.textLightSecondary,
+  modalBackButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalTitle: {
+    flex: 1,
     fontSize: 18,
     fontWeight: 'bold',
     color: Colors.textPrimary,
+    textAlign: 'center',
+    marginHorizontal: 16,
+  },
+  modalSaveButton: {
+    minWidth: 60,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalSaveText: {
     fontSize: 16,
@@ -761,7 +684,10 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     flex: 1,
+  },
+  modalContentContainer: {
     padding: 16,
+    paddingBottom: 32,
   },
   avatarContainer: {
     alignItems: 'center',
@@ -802,5 +728,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: Colors.surfaceLight,
+    minHeight: 48,
+  },
+  modalInputDisabled: {
+    backgroundColor: Colors.backgroundLight,
+    color: Colors.textLightSecondary,
+    opacity: 0.6,
+  },
+  inputHint: {
+    fontSize: 12,
+    color: Colors.textLightSecondary,
+    marginTop: 4,
+    fontStyle: 'italic',
   },
 });

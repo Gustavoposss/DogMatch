@@ -15,6 +15,7 @@ import { NavigationProps } from '../types';
 import { createPet } from '../services/petService';
 import { pickImage, takePhoto, uploadImage } from '../services/uploadService';
 import { useAuth } from '../contexts/AuthContext';
+import { Colors, Fonts, Spacing, BorderRadius, Shadows } from '../styles/colors';
 
 const DOG_BREEDS = [
   'Sem Raça Definida',
@@ -211,6 +212,7 @@ export default function AddPetScreen({ navigation }: NavigationProps) {
           <TextInput
             style={styles.input}
             placeholder="Idade (anos) *"
+            placeholderTextColor={Colors.textLightSecondary}
             value={formData.age}
             onChangeText={(value) => handleInputChange('age', value)}
             keyboardType="numeric"
@@ -303,6 +305,7 @@ export default function AddPetScreen({ navigation }: NavigationProps) {
           <TextInput
             style={[styles.input, styles.textArea]}
             placeholder="Descrição do pet (opcional)"
+            placeholderTextColor={Colors.textLightSecondary}
             value={formData.description}
             onChangeText={(value) => handleInputChange('description', value)}
             multiline
@@ -328,7 +331,7 @@ export default function AddPetScreen({ navigation }: NavigationProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: Colors.backgroundLight,
   },
   scrollContainer: {
     padding: 20,
@@ -340,7 +343,8 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: Colors.textPrimary,
+    fontFamily: Fonts.primary,
   },
   form: {
     flex: 1,
@@ -392,12 +396,14 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.md,
     padding: 15,
     marginBottom: 15,
     fontSize: 16,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.white,
+    color: Colors.textPrimary,
+    ...Shadows.sm,
   },
   textArea: {
     height: 80,
@@ -410,17 +416,18 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   breedButton: {
-    backgroundColor: '#fff',
+    backgroundColor: Colors.white,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 20,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.full,
     paddingHorizontal: 16,
     paddingVertical: 8,
     marginRight: 10,
+    ...Shadows.sm,
   },
   breedButtonSelected: {
-    backgroundColor: '#FF6B6B',
-    borderColor: '#FF6B6B',
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   breedButtonText: {
     color: '#333',
@@ -438,18 +445,19 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   optionButton: {
-    backgroundColor: '#fff',
+    backgroundColor: Colors.white,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 20,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.full,
     paddingHorizontal: 16,
     paddingVertical: 8,
     flex: 1,
     minWidth: 100,
+    ...Shadows.sm,
   },
   optionButtonSelected: {
-    backgroundColor: '#FF6B6B',
-    borderColor: '#FF6B6B',
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   optionButtonText: {
     color: '#333',
@@ -475,8 +483,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   checkboxSelected: {
-    backgroundColor: '#FF6B6B',
-    borderColor: '#FF6B6B',
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   checkmark: {
     color: '#fff',
@@ -488,11 +496,12 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   submitButton: {
-    backgroundColor: '#FF6B6B',
+    backgroundColor: Colors.primary,
     padding: 15,
-    borderRadius: 8,
+    borderRadius: BorderRadius.md,
     alignItems: 'center',
     marginTop: 20,
+    ...Shadows.md,
   },
   submitButtonDisabled: {
     backgroundColor: '#ccc',

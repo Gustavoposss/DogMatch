@@ -13,11 +13,12 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../styles/colors';
 import { chatService, Message } from '../services/chatService';
 import { useAuth } from '../contexts/AuthContext';
+import { useSocket } from '../hooks/useSocket';
 
 interface RouteParams {
   matchId: string;
@@ -37,6 +38,41 @@ export default function ChatScreen() {
   
   const { matchId, petName, petImage } = (route.params as RouteParams) || {};
 
+  // Socket.IO para mensagens em tempo real
+  const { isConnected, isConnecting, sendMessage: sendSocketMessage } = useSocket({
+    matchId: matchId || undefined,
+    onMessage: (socketMessage) => {
+      // Adicionar nova mensagem recebida via Socket.IO
+      const newMessage: Message = {
+        id: socketMessage.id || `socket_${Date.now()}`,
+        content: socketMessage.content,
+        senderId: socketMessage.senderId,
+        chatId: matchId || '',
+        createdAt: socketMessage.timestamp || new Date().toISOString(),
+        isFromUser: socketMessage.senderId === state.user?.id,
+        timestamp: new Date(socketMessage.timestamp || new Date()).toLocaleTimeString('pt-BR', {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+      };
+      
+      setMessages(prev => {
+        // Verificar se a mensagem já existe (evitar duplicatas)
+        const exists = prev.some(msg => msg.id === newMessage.id);
+        if (exists) return prev;
+        return [...prev, newMessage];
+      });
+      
+      // Scroll to bottom
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    },
+    onError: (error) => {
+      console.error('Erro no Socket.IO:', error);
+    },
+  });
+
   useEffect(() => {
     if (matchId) {
       loadMessages();
@@ -44,6 +80,15 @@ export default function ChatScreen() {
       setLoading(false);
     }
   }, [matchId]);
+
+  // Recarregar mensagens quando a tela ganhar foco (fallback se Socket.IO não estiver conectado)
+  useFocusEffect(
+    React.useCallback(() => {
+      if (matchId && !isConnected) {
+        loadMessages();
+      }
+    }, [matchId, isConnected])
+  );
 
   const loadMessages = async () => {
     try {
@@ -81,44 +126,57 @@ export default function ChatScreen() {
 
   const handleSendMessage = async () => {
     if (newMessage.trim() && matchId && !sending) {
+      const messageContent = newMessage.trim();
+      const tempId = `temp_${Date.now()}`;
+      
+      // Adicionar mensagem otimisticamente
+      const optimisticMessage: Message = {
+        id: tempId,
+        content: messageContent,
+        senderId: state.user?.id || '',
+        chatId: matchId,
+        createdAt: new Date().toISOString(),
+        isFromUser: true,
+        timestamp: new Date().toLocaleTimeString('pt-BR', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        }),
+      };
+      
+      setMessages(prev => [...prev, optimisticMessage]);
+      setNewMessage(''); // Limpar input imediatamente
+      
       try {
         setSending(true);
-        const messageContent = newMessage.trim();
-        setNewMessage(''); // Limpar input imediatamente
         
-        // Adicionar mensagem otimisticamente
-        const optimisticMessage: Message = {
-          id: `temp_${Date.now()}`,
-          content: messageContent,
-          senderId: state.user?.id || '',
-          chatId: '',
-          createdAt: new Date().toISOString(),
-          isFromUser: true,
-          timestamp: new Date().toLocaleTimeString('pt-BR', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-          }),
-        };
-        
-        setMessages(prev => [...prev, optimisticMessage]);
-        
-        // Enviar para o backend
-        const response = await chatService.sendMessage(matchId, messageContent);
-        
-        if (response && response.message) {
-          // Substituir mensagem temporária pela real
-          setMessages(prev => prev.map(msg => 
-            msg.id === optimisticMessage.id 
-              ? {
-                  ...response.message,
-                  isFromUser: true,
-                  timestamp: new Date(response.message.createdAt).toLocaleTimeString('pt-BR', { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                  }),
+        // Tentar enviar via Socket.IO primeiro (se conectado)
+        if (isConnected && matchId) {
+          try {
+            sendSocketMessage(matchId, messageContent);
+            // A mensagem será confirmada quando o backend responder via Socket.IO
+            // Por enquanto, manter a mensagem otimista
+            // Aguardar um pouco para ver se recebemos confirmação via Socket.IO
+            setTimeout(() => {
+              // Se após 2 segundos a mensagem ainda estiver como temporária, tentar REST API
+              setMessages(prev => {
+                const stillTemp = prev.find(msg => msg.id === tempId);
+                if (stillTemp) {
+                  console.warn('Mensagem ainda temporária, tentando REST API como fallback');
+                  sendViaRestAPI(matchId, messageContent, optimisticMessage).catch(err => {
+                    console.error('Erro no fallback REST API:', err);
+                  });
                 }
-              : msg
-          ));
+                return prev;
+              });
+            }, 2000);
+          } catch (socketError) {
+            console.warn('Erro ao enviar via Socket.IO, tentando REST API:', socketError);
+            // Fallback para REST API
+            await sendViaRestAPI(matchId, messageContent, optimisticMessage);
+          }
+        } else {
+          // Usar REST API se Socket.IO não estiver conectado
+          await sendViaRestAPI(matchId, messageContent, optimisticMessage);
         }
         
         // Scroll to bottom
@@ -131,11 +189,32 @@ export default function ChatScreen() {
         Alert.alert('Erro', 'Não foi possível enviar a mensagem');
         
         // Remover mensagem otimista em caso de erro
-        setMessages(prev => prev.filter(msg => msg.id !== `temp_${Date.now()}`));
+        setMessages(prev => prev.filter(msg => msg.id !== tempId));
         setNewMessage(messageContent); // Restaurar texto
       } finally {
         setSending(false);
       }
+    }
+  };
+
+  // Função auxiliar para enviar via REST API
+  const sendViaRestAPI = async (matchId: string, content: string, optimisticMessage: Message) => {
+    const response = await chatService.sendMessage(matchId, content);
+    
+    if (response && response.message) {
+      // Substituir mensagem temporária pela real
+      setMessages(prev => prev.map(msg => 
+        msg.id === optimisticMessage.id 
+          ? {
+              ...response.message,
+              isFromUser: true,
+              timestamp: new Date(response.message.createdAt).toLocaleTimeString('pt-BR', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+              }),
+            }
+          : msg
+      ));
     }
   };
 
@@ -199,7 +278,7 @@ export default function ChatScreen() {
         <View style={styles.headerInfo}>
           <Text style={styles.headerName}>{petName || 'Pet'}</Text>
           <Text style={styles.headerStatus}>
-            Online
+            {isConnecting ? 'Conectando...' : isConnected ? 'Online' : 'Offline'}
           </Text>
         </View>
       </View>

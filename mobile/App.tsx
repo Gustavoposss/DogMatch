@@ -24,6 +24,7 @@ import ChatScreen from './src/screens/ChatScreen';
 import ConversationsScreen from './src/screens/ConversationsScreen';
 import PetProfileScreen from './src/screens/PetProfileScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import SupportScreen from './src/screens/SupportScreen';
 
 // Importar contexto
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
@@ -130,6 +131,7 @@ function AppNavigator() {
             <Stack.Screen name="Conversations" component={ConversationsScreen} />
             <Stack.Screen name="PetProfile" component={PetProfileScreen} />
             <Stack.Screen name="Settings" component={SettingsScreen} />
+            <Stack.Screen name="Support" component={SupportScreen} />
           </>
         ) : (
           // Usuário não autenticado - Mostrar telas de autenticação

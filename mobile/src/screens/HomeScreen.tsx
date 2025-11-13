@@ -10,7 +10,7 @@ import {
   ScrollView,
   Dimensions,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { authService } from '../services/authService';
 import { petService } from '../services/petService';
@@ -27,10 +27,12 @@ export default function HomeScreen() {
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadUserData();
-    loadUserPets();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadUserData();
+      loadUserPets();
+    }, [state.user?.id])
+  );
 
   const loadUserData = async () => {
     // Os dados do usuário já estão disponíveis no contexto
@@ -124,10 +126,9 @@ export default function HomeScreen() {
         {/* Profile Header */}
         <View style={styles.profileHeader}>
           <View style={styles.profileInfo}>
-            <Image
-              source={{ uri: state.user?.avatar || 'https://via.placeholder.com/96' }}
-              style={styles.userAvatar}
-            />
+            <View style={styles.logoContainer}>
+              <LogoIcon width={64} height={64} />
+            </View>
             <View style={styles.userInfo}>
               <Text style={styles.greeting}>Olá, {state.user?.name || 'Usuário'}!</Text>
               <Text style={styles.welcomeText}>Bem-vindo de volta!</Text>
@@ -234,10 +235,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing.lg,
   },
-  userAvatar: {
+  logoContainer: {
     width: 80,
     height: 80,
-    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: Spacing.lg,
   },
   userInfo: {

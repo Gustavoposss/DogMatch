@@ -33,7 +33,7 @@ export default function MatchPopup({
     >
       <View style={styles.overlay}>
         <View style={styles.popup}>
-          <Text style={styles.title}>It's a Match!</Text>
+          <Text style={styles.title}>É um Match!</Text>
           
           <View style={styles.petsContainer}>
             <View style={styles.petContainer}>
