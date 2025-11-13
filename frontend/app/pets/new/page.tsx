@@ -22,17 +22,40 @@ export default function NewPetPage() {
       setSubmitting(true);
       setFeedback(null);
 
+      // Validar que há uma foto
+      if (!file && !values.photoUrl) {
+        setFeedback('Por favor, selecione uma foto para o pet.');
+        setSubmitting(false);
+        return;
+      }
+
       let photoUrl = values.photoUrl;
       if (file) {
-        const upload = await uploadService.uploadImage(file);
-        photoUrl = upload.url;
+        try {
+          const upload = await uploadService.uploadImage(file);
+          photoUrl = upload.url;
+          console.log('Upload concluído:', photoUrl);
+        } catch (uploadError: any) {
+          console.error('Erro no upload:', uploadError);
+          const uploadErrorMessage = uploadError?.response?.data?.error || uploadError?.message || 'Erro ao fazer upload da foto. Tente novamente.';
+          setFeedback(uploadErrorMessage);
+          setSubmitting(false);
+          return;
+        }
+      }
+
+      // Validar que photoUrl não está vazio após upload
+      if (!photoUrl || photoUrl.trim() === '') {
+        setFeedback('Erro ao fazer upload da foto. Tente novamente.');
+        setSubmitting(false);
+        return;
       }
 
       await petService.createPet({
         ownerId: user.id,
         name: values.name,
         breed: values.breed,
-        age: values.age,
+        age: Number(values.age), // Garantir que age seja número
         gender: values.gender === 'M' || values.gender === 'MACHO' ? 'MACHO' : 'FEMEA',
         size: values.size === 'PEQUENO' || values.size === 'pequeno' ? 'PEQUENO' : values.size === 'GRANDE' || values.size === 'grande' ? 'GRANDE' : 'MEDIO',
         isNeutered: values.isNeutered,
@@ -43,13 +66,15 @@ export default function NewPetPage() {
               ? 'CRUZAMENTO'
               : 'ADOCAO',
         description: values.description ?? '',
-        photoUrl: photoUrl ?? '',
+        photoUrl: photoUrl,
       });
 
       router.push('/pets');
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      setFeedback('Erro ao cadastrar pet. Verifique os dados e tente novamente.');
+      // Mostrar mensagem de erro específica do backend se disponível
+      const errorMessage = error?.response?.data?.error || error?.message || 'Erro ao cadastrar pet. Verifique os dados e tente novamente.';
+      setFeedback(errorMessage);
     } finally {
       setSubmitting(false);
     }

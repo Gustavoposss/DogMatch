@@ -9,11 +9,7 @@ export const uploadService = {
     const formData = new FormData();
     formData.append('image', file);
 
-    const response = await api.post<UploadResponse>('/upload/pet-photo', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await api.post<UploadResponse>('/upload/pet-photo', formData);
 
     return response.data;
   },

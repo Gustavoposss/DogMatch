@@ -22,6 +22,14 @@ const petSchema = z.object({
 
 const formSchema = petSchema.extend({
   photo: z.any().optional(),
+}).refine((data) => {
+  // Validar que há uma foto (ou file ou photoUrl)
+  const hasFile = data.photo instanceof FileList && data.photo.length > 0;
+  const hasPhotoUrl = data.photoUrl && data.photoUrl.trim() !== '';
+  return hasFile || hasPhotoUrl;
+}, {
+  message: 'Por favor, selecione uma foto para o pet',
+  path: ['photo'],
 });
 
 export type PetFormValues = z.infer<typeof formSchema>;
@@ -191,7 +199,7 @@ export function PetForm({ defaultValues, onSubmit, submitting }: PetFormProps) {
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-white">Foto</label>
+        <label className="mb-1 block text-sm font-medium text-white">Foto <span className="text-[var(--error)]">*</span></label>
         <div className="space-y-3">
           <input
             key={fileInputKey}
@@ -211,6 +219,9 @@ export function PetForm({ defaultValues, onSubmit, submitting }: PetFormProps) {
             }}
             className="hidden"
           />
+          {errors.photo && (
+            <p className="mt-1 text-sm text-[var(--error)]">{errors.photo.message}</p>
+          )}
           <label
             htmlFor="photo-upload"
             className="flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-[var(--input-border)] bg-[var(--card-bg)] px-4 py-6 transition-colors hover:border-[var(--primary)] hover:bg-[var(--primary)]/10"
