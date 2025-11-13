@@ -29,7 +29,8 @@ export default function PlansPage() {
   });
 
   const mutation = useMutation({
-    mutationFn: (planId: string) => paymentService.createPlanPayment({ planId, paymentMethod: 'PIX' }),
+    mutationFn: (planType: 'FREE' | 'PREMIUM' | 'VIP') => 
+      paymentService.createPlanPayment({ planType, billingType: 'PIX' }),
     onMutate: () => {
       setFeedback(null);
     },
@@ -37,8 +38,9 @@ export default function PlansPage() {
       setFeedback('Pagamento iniciado com sucesso! Utilize o QR Code PIX gerado no painel de pagamentos.');
       refetchSubscription();
     },
-    onError: () => {
-      setFeedback('Erro ao iniciar pagamento. Tente novamente.');
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || 'Erro ao iniciar pagamento. Tente novamente.';
+      setFeedback(errorMessage);
     },
   });
 
@@ -50,6 +52,39 @@ export default function PlansPage() {
             <h1 className="text-3xl font-bold text-white mb-2">Escolha o plano perfeito para seu pet</h1>
             <p className="text-[var(--foreground-secondary)]">Escolha o melhor plano para o seu momento.</p>
           </div>
+
+          {subscriptionData && (
+            <div className="mb-6 rounded-2xl border-2 border-[var(--primary)] bg-gradient-to-r from-[var(--primary)]/20 to-[var(--primary)]/10 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-1">Plano Atual</h3>
+                  <p className="text-2xl font-bold text-[var(--primary)]">
+                    {subscriptionData.planType === 'FREE' ? 'Gratuito' : 
+                     subscriptionData.planType === 'PREMIUM' ? 'Premium' : 'VIP'}
+                  </p>
+                  <p className="text-sm text-[var(--foreground-secondary)] mt-1">
+                    Status: <span className={`font-semibold ${
+                      subscriptionData.status === 'ACTIVE' ? 'text-green-400' : 
+                      subscriptionData.status === 'PENDING' ? 'text-yellow-400' : 
+                      'text-red-400'
+                    }`}>
+                      {subscriptionData.status === 'ACTIVE' ? 'Ativo' : 
+                       subscriptionData.status === 'PENDING' ? 'Pendente' : 
+                       subscriptionData.status === 'CANCELLED' ? 'Cancelado' : 'Expirado'}
+                    </span>
+                  </p>
+                </div>
+                {subscriptionData.endDate && (
+                  <div className="text-right">
+                    <p className="text-sm text-[var(--foreground-secondary)]">Válido até</p>
+                    <p className="text-lg font-semibold text-white">
+                      {new Date(subscriptionData.endDate).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {feedback && (
             <div className="mb-6 rounded-lg bg-[var(--primary)]/20 border border-[var(--primary)] px-4 py-3 text-sm text-[var(--primary)]">{feedback}</div>
@@ -73,15 +108,20 @@ export default function PlansPage() {
           )}
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {plansData?.map((plan, index) => (
-              <PlanCard
-                key={plan.type || plan.id || `plan-${index}`}
-                plan={plan}
-                isCurrent={subscriptionData?.planType === plan.name.toUpperCase()}
-                onSelect={(planId) => mutation.mutate(planId)}
-                selecting={mutation.isPending && mutation.variables === (plan.id || plan.type)}
-              />
-            ))}
+            {plansData?.map((plan, index) => {
+              const planType = (plan.type || plan.id || '').toUpperCase() as 'FREE' | 'PREMIUM' | 'VIP';
+              const isCurrent = subscriptionData?.planType === planType;
+              
+              return (
+                <PlanCard
+                  key={plan.type || plan.id || `plan-${index}`}
+                  plan={plan}
+                  isCurrent={isCurrent}
+                  onSelect={() => mutation.mutate(planType)}
+                  selecting={mutation.isPending && mutation.variables === planType}
+                />
+              );
+            })}
           </div>
         </div>
       </Layout>

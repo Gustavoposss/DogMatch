@@ -21,7 +21,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl">
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-white mb-2">
-              Olá, {user?.name ? `Tutor do ${petsData?.pets?.[0]?.name || 'Pet'}!` : 'Bem-vindo!'}
+              Olá, {user?.name ? `Bem-vindo!` : 'Bem-vindo!'}
             </h2>
             <p className="text-[var(--foreground-secondary)]">Gerencie seus pets e encontre novos amigos</p>
           </div>

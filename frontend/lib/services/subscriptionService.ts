@@ -8,8 +8,8 @@ export const subscriptionService = {
   },
 
   async getMySubscription(): Promise<Subscription> {
-    const response = await api.get<Subscription>('/subscriptions/my-subscription');
-    return response.data;
+    const response = await api.get<{ subscription: Subscription }>('/subscriptions/my-subscription');
+    return response.data.subscription;
   },
 
   async cancelSubscription(): Promise<void> {
@@ -27,7 +27,7 @@ export const subscriptionService = {
       swipesLimit: number;
       petsCount: number;
       maxPets: number;
-    } }>('/subscriptions/usage-stats');
+    } }>('/subscriptions/usage');
     return response.data.stats;
   },
 };

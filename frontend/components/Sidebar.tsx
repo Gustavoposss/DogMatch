@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -29,8 +30,21 @@ export function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-[var(--background-dark)] border-r border-[var(--card-border)] p-6">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[var(--primary)]">Par de Patas</h1>
-        <p className="text-sm text-[var(--foreground-secondary)]">Conexões Caninas</p>
+        <Link href="/home" className="flex items-center gap-3 mb-2">
+          <div className="relative w-12 h-12 flex-shrink-0">
+            <Image
+              src="/logopardepatas-clean.svg"
+              alt="Par de Patas"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-[var(--primary)]">Par de Patas</h1>
+            <p className="text-xs text-[var(--foreground-secondary)]">Conexões Caninas</p>
+          </div>
+        </Link>
       </div>
 
       <nav className="space-y-2">

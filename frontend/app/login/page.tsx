@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -30,11 +31,18 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen bg-[var(--background)]">
       {/* Lado esquerdo - Imagem e texto */}
-      <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-12 bg-gradient-to-br from-[var(--background-dark)] to-[var(--background)]">
-        <div className="max-w-md text-center">
-          <div className="mb-8">
-            <div className="w-64 h-64 mx-auto bg-gradient-to-br from-[var(--primary)] to-[var(--primary-light)] rounded-full flex items-center justify-center mb-6">
-              <span className="text-8xl">🐕</span>
+      <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-12 bg-gradient-to-br from-[var(--background-dark)] to-[var(--background)] relative overflow-hidden">
+        <div className="w-full max-w-xl text-center z-10">
+          <div className="mb-8 flex items-center justify-center">
+            <div className="w-full max-w-sm mx-auto overflow-hidden rounded-2xl">
+              <Image
+                src="/loginimage.svg"
+                alt="Par de Patas"
+                width={400}
+                height={400}
+                className="w-full h-auto object-cover drop-shadow-2xl"
+                priority
+              />
             </div>
           </div>
           <h2 className="text-3xl font-bold text-white mb-4">

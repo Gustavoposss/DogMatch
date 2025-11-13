@@ -6,7 +6,7 @@ import { Check } from "lucide-react";
 interface PlanCardProps {
   plan: Plan;
   isCurrent?: boolean;
-  onSelect?: (planId: string) => void;
+  onSelect?: () => void;
   selecting?: boolean;
 }
 
@@ -45,7 +45,7 @@ export function PlanCard({ plan, isCurrent, onSelect, selecting }: PlanCardProps
       <div className="mt-auto">
         {onSelect && (
           <button
-            onClick={() => onSelect(plan.id || plan.type || '')}
+            onClick={onSelect}
             disabled={isCurrent || selecting}
             className={`w-full rounded-lg px-4 py-2 font-semibold transition-all ${
               isCurrent
