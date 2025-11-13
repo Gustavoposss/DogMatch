@@ -32,9 +32,7 @@ if (process.env.NODE_ENV === 'production') {
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.NODE_ENV === 'production' 
-      ? (process.env.ALLOWED_ORIGINS?.split(',') || ['https://dogmatch.onrender.com'])
-      : true, // Em desenvolvimento, permite qualquer origem
+    origin: true, // Permite qualquer origem
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
@@ -43,13 +41,9 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3000;
 
-// Configuração do CORS - Restringir em produção, permissivo em desenvolvimento
-const allowedOrigins = process.env.NODE_ENV === 'production' 
-  ? (process.env.ALLOWED_ORIGINS?.split(',') || ['https://dogmatch.onrender.com'])
-  : true; // Em desenvolvimento, permite qualquer origem
-
+// Configuração do CORS - Permitir qualquer origem
 app.use(cors({
-  origin: allowedOrigins,
+  origin: true, // Permite qualquer origem
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: [
