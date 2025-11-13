@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Message } from "@/types";
+import { Send } from "lucide-react";
 
 interface ChatWindowProps {
   messages: Message[];
@@ -70,8 +71,9 @@ export function ChatWindow({ messages, currentUserId, onSend, sending, input, se
           <button
             type="submit"
             disabled={sending || !input.trim()}
-            className="rounded-lg bg-[var(--primary)] px-4 py-2 font-semibold text-white transition-all hover:bg-[var(--primary-dark)] hover:shadow-lg hover:shadow-[var(--primary-glow)] disabled:opacity-60"
+            className="flex items-center gap-2 rounded-lg bg-[var(--primary)] px-4 py-2 font-semibold text-white transition-all hover:bg-[var(--primary-dark)] hover:shadow-lg hover:shadow-[var(--primary-glow)] disabled:opacity-60"
           >
+            <Send className="h-4 w-4" />
             {sending ? 'Enviando...' : 'Enviar'}
           </button>
         </div>

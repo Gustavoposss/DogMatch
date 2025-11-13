@@ -235,10 +235,25 @@ export const getPetsToSwipe = async (req: Request, res: Response) => {
   try {
     console.log('Buscando pets para swipe do usuário:', userId);
     
-    // Busca todos os pets que NÃO são do usuário logado
+    // Buscar todos os pets do usuário autenticado
+    const myPets = await prisma.pet.findMany({
+      where: { ownerId: userId },
+      select: { id: true }
+    });
+    const myPetIds = myPets.map(pet => pet.id);
+
+    // Buscar pets já curtidos pelos meus pets
+    const likes = await prisma.like.findMany({
+      where: { fromPetId: { in: myPetIds } },
+      select: { toPetId: true }
+    });
+    const likedPetIds = likes.map(like => like.toPetId);
+
+    // Busca todos os pets que NÃO são do usuário logado E que NÃO foram curtidos
     const pets = await prisma.pet.findMany({
       where: {
-        ownerId: { not: userId }
+        ownerId: { not: userId },
+        id: { notIn: likedPetIds }
       },
       include: {
         owner: {
@@ -248,19 +263,20 @@ export const getPetsToSwipe = async (req: Request, res: Response) => {
             city: true
           }
         }
+      },
+      orderBy: {
+        createdAt: 'desc'
       }
     });
 
     console.log('Pets encontrados:', pets.length);
-    console.log('Primeiro pet:', pets[0]);
+    console.log('Pets já curtidos excluídos:', likedPetIds.length);
 
     // Transformar photoUrl em photos array para compatibilidade com frontend
     const petsWithPhotos = pets.map(pet => ({
       ...pet,
       photos: pet.photoUrl ? [pet.photoUrl] : []
     }));
-
-    console.log('Pets com photos:', petsWithPhotos[0]);
 
     res.json({ pets: petsWithPhotos });
   } catch (error) {

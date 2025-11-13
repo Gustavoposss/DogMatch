@@ -1,6 +1,7 @@
 "use client";
 
 import { Plan } from "@/types";
+import { Check } from "lucide-react";
 
 interface PlanCardProps {
   plan: Plan;
@@ -35,7 +36,7 @@ export function PlanCard({ plan, isCurrent, onSelect, selecting }: PlanCardProps
       <ul className="mb-6 space-y-2 text-sm text-[var(--foreground-secondary)]">
         {plan.features.map((feature) => (
           <li key={feature} className="flex items-center gap-2">
-            <span className="text-[var(--primary)]">✔</span>
+            <Check className="h-4 w-4 text-[var(--primary)] flex-shrink-0" />
             {feature}
           </li>
         ))}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Pet } from "@/types";
 import Image from "next/image";
+import { X, Heart, Star } from "lucide-react";
 
 interface SwipeDeckProps {
   pets: Pet[];
@@ -85,23 +86,23 @@ export function SwipeDeck({ pets, onLike, onPass, loading }: SwipeDeckProps) {
       <div className="flex items-center justify-center gap-6">
         <button
           onClick={handlePass}
-          className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-[var(--error)] bg-[var(--card-bg)] text-2xl text-[var(--error)] shadow-lg transition-all hover:bg-[var(--error)] hover:text-white hover:scale-110"
+          className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-[var(--error)] bg-[var(--card-bg)] text-[var(--error)] shadow-lg transition-all hover:bg-[var(--error)] hover:text-white hover:scale-110"
         >
-          ❌
+          <X className="h-6 w-6" />
         </button>
 
         <button
           onClick={handleLike}
           disabled={liking}
-          className="flex h-20 w-20 items-center justify-center rounded-full bg-[var(--primary)] text-3xl text-white shadow-xl shadow-[var(--primary-glow)] transition-all hover:scale-110 disabled:opacity-60"
+          className="flex h-20 w-20 items-center justify-center rounded-full bg-[var(--primary)] text-white shadow-xl shadow-[var(--primary-glow)] transition-all hover:scale-110 disabled:opacity-60"
         >
-          ❤️
+          <Heart className="h-8 w-8 fill-current" />
         </button>
 
         <button
-          className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-[var(--secondary)] bg-[var(--card-bg)] text-2xl text-[var(--secondary)] shadow-lg transition-all hover:bg-[var(--secondary)] hover:text-black hover:scale-110"
+          className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-[var(--secondary)] bg-[var(--card-bg)] text-[var(--secondary)] shadow-lg transition-all hover:bg-[var(--secondary)] hover:text-black hover:scale-110"
         >
-          ⭐
+          <Star className="h-6 w-6 fill-current" />
         </button>
       </div>
     </div>

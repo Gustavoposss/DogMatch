@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Pet } from "@/types";
+import { Edit, Trash2 } from "lucide-react";
 
 interface PetCardProps {
   pet: Pet;
@@ -38,8 +39,9 @@ export function PetCard({ pet, onDelete, deleting }: PetCardProps) {
         <div className="mt-auto flex items-center justify-between gap-2">
           <Link
             href={`/pets/${pet.id}/edit`}
-            className="inline-flex flex-1 items-center justify-center rounded-lg bg-[var(--primary)] px-3 py-2 text-sm font-semibold text-white transition-all hover:bg-[var(--primary-dark)] hover:shadow-lg hover:shadow-[var(--primary-glow)]"
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-[var(--primary)] px-3 py-2 text-sm font-semibold text-white transition-all hover:bg-[var(--primary-dark)] hover:shadow-lg hover:shadow-[var(--primary-glow)]"
           >
+            <Edit className="h-4 w-4" />
             Editar
           </Link>
 
@@ -47,8 +49,9 @@ export function PetCard({ pet, onDelete, deleting }: PetCardProps) {
             <button
               onClick={() => onDelete(pet.id)}
               disabled={deleting}
-              className="inline-flex items-center justify-center rounded-lg border border-[var(--error)] px-3 py-2 text-sm font-semibold text-[var(--error)] transition-colors hover:bg-[var(--error)]/20 disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--error)] px-3 py-2 text-sm font-semibold text-[var(--error)] transition-colors hover:bg-[var(--error)]/20 disabled:opacity-60"
             >
+              <Trash2 className="h-4 w-4" />
               {deleting ? 'Removendo...' : 'Remover'}
             </button>
           )}

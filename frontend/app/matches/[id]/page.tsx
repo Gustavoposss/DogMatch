@@ -10,27 +10,30 @@ import { useSocket } from "@/hooks/useSocket";
 import { Message } from "@/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { notFound } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, use } from "react";
 
 interface MatchChatPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function MatchChatPage({ params }: MatchChatPageProps) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
+  
+  // Unwrap params Promise usando React.use()
+  const { id } = use(params);
 
   const { data: matchData, isLoading: loadingMatch } = useQuery({
-    queryKey: ['match', params.id],
-    queryFn: () => matchService.getMatchById(params.id),
+    queryKey: ['match', id],
+    queryFn: () => matchService.getMatchById(id),
   });
 
   const { data: messagesData, isLoading: loadingMessages } = useQuery({
-    queryKey: ['match-messages', params.id],
-    queryFn: () => chatService.getChatMessages(params.id),
+    queryKey: ['match-messages', id],
+    queryFn: () => chatService.getChatMessages(id),
   });
 
   useEffect(() => {
@@ -40,7 +43,7 @@ export default function MatchChatPage({ params }: MatchChatPageProps) {
   }, [messagesData?.messages]);
 
   const mutation = useMutation({
-    mutationFn: (content: string) => chatService.sendMessage(params.id, content),
+    mutationFn: (content: string) => chatService.sendMessage(id, content),
     onError: () => {
       setMessages((prev) => prev.slice(0, -1));
     },
@@ -54,7 +57,7 @@ export default function MatchChatPage({ params }: MatchChatPageProps) {
   });
 
   useSocket({
-    matchId: params.id,
+    matchId: id,
     onMessage: (socketMessage) => {
       setMessages((prev) => {
         const exists = prev.some((msg) => msg.id === socketMessage.id);
@@ -78,7 +81,7 @@ export default function MatchChatPage({ params }: MatchChatPageProps) {
 
     const optimistic: Message = {
       id: `temp-${Date.now()}`,
-      chatId: params.id,
+      chatId: id,
       senderId: user.id,
       content,
       createdAt: new Date().toISOString(),

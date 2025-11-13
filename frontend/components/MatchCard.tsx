@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Match, Pet } from "@/types";
+import { PawPrint } from "lucide-react";
 
 interface MatchCardProps {
   match: Match;
@@ -20,7 +21,7 @@ export function MatchCard({ match, currentPet, otherPet }: MatchCardProps) {
           </div>
         ) : (
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--primary)]/20 text-[var(--primary)] border-2 border-[var(--primary)]">
-            🐾
+            <PawPrint className="h-8 w-8" />
           </div>
         )}
 

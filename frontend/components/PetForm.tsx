@@ -2,7 +2,7 @@
 
 import { Pet } from "@/types";
 import { z } from "zod";
-import { useForm, Resolver } from "react-hook-form";
+import { useForm, Resolver, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { breedService } from "@/lib/services/breedService";
@@ -39,6 +39,8 @@ export function PetForm({ defaultValues, onSubmit, submitting }: PetFormProps) {
     handleSubmit,
     formState: { errors },
     watch,
+    setValue,
+    control,
   } = useForm<PetFormValues>({
     resolver: zodResolver(formSchema) as Resolver<PetFormValues>,
     defaultValues: {
@@ -72,10 +74,18 @@ export function PetForm({ defaultValues, onSubmit, submitting }: PetFormProps) {
   const [preview, setPreview] = useState<string | null>(defaultValues?.photoUrl ?? null);
   const [fileInputKey, setFileInputKey] = useState(0);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const onFormSubmit = async (values: PetFormValues) => {
     // Validar que há uma foto
-    const file = values.photo instanceof FileList ? values.photo[0] : undefined;
+    // Primeiro tentar pegar do FileList do react-hook-form
+    let file = values.photo instanceof FileList ? values.photo[0] : undefined;
+    
+    // Se não tiver no FileList, usar o arquivo selecionado no estado
+    if (!file && selectedFile) {
+      file = selectedFile;
+    }
+    
     const hasFile = !!file;
     const hasPhotoUrl = !!(values.photoUrl && values.photoUrl.trim() !== '');
     const hasPreview = !!preview;
@@ -86,7 +96,7 @@ export function PetForm({ defaultValues, onSubmit, submitting }: PetFormProps) {
     }
 
     setPhotoError(null);
-    await onSubmit(values, file);
+    await onSubmit(values, file || selectedFile || undefined);
   };
 
   return (
@@ -206,24 +216,33 @@ export function PetForm({ defaultValues, onSubmit, submitting }: PetFormProps) {
       <div>
         <label className="mb-1 block text-sm font-medium text-white">Foto <span className="text-[var(--error)]">*</span></label>
         <div className="space-y-3">
-          <input
-            key={fileInputKey}
-            type="file"
-            accept="image/*"
-            id="photo-upload"
-            {...register('photo')}
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (file) {
-                setPhotoError(null); // Limpar erro quando arquivo for selecionado
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                  setPreview(reader.result as string);
-                };
-                reader.readAsDataURL(file);
-              }
-            }}
-            className="hidden"
+          <Controller
+            name="photo"
+            control={control}
+            render={({ field: { onChange, value, ...field } }) => (
+              <input
+                key={fileInputKey}
+                type="file"
+                accept="image/*"
+                id="photo-upload"
+                {...field}
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) {
+                    setPhotoError(null); // Limpar erro quando arquivo for selecionado
+                    setSelectedFile(file); // Guardar o arquivo no estado
+                    // Atualizar o valor no react-hook-form
+                    onChange(event.target.files);
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      setPreview(reader.result as string);
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+                className="hidden"
+              />
+            )}
           />
           {photoError && (
             <p className="mt-1 text-sm text-[var(--error)]">{photoError}</p>
@@ -249,6 +268,8 @@ export function PetForm({ defaultValues, onSubmit, submitting }: PetFormProps) {
                 type="button"
                 onClick={() => {
                   setPreview(null);
+                  setSelectedFile(null);
+                  setValue('photo', undefined);
                   setFileInputKey((prev) => prev + 1);
                 }}
                 className="absolute right-2 top-2 rounded-full bg-[var(--error)] p-2 text-white shadow-lg transition-colors hover:bg-[var(--error)]/80"

@@ -32,7 +32,7 @@ export default function HomePage() {
             </div>
           ) : petsData?.pets && petsData.pets.length > 0 ? (
             <div className="mb-8">
-              <div className="relative h-96 w-full rounded-2xl overflow-hidden bg-[var(--card-bg)] border border-[var(--card-border)]">
+              <div className="relative h-96 w-96 rounded-2xl overflow-hidden bg-[var(--card-bg)] border border-[var(--card-border)]">
                 <img
                   src={petsData.pets[0].photoUrl}
                   alt={petsData.pets[0].name}

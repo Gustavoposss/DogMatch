@@ -22,8 +22,9 @@ export default function NewPetPage() {
       setSubmitting(true);
       setFeedback(null);
 
-      // Validar que há uma foto
-      if (!file && !values.photoUrl) {
+      // Validar que há uma foto (arquivo ou URL)
+      // Se não tiver arquivo nem URL, não pode continuar
+      if (!file && (!values.photoUrl || values.photoUrl.trim() === '')) {
         setFeedback('Por favor, selecione uma foto para o pet.');
         setSubmitting(false);
         return;

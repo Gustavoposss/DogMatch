@@ -8,22 +8,25 @@ import { petService } from "@/lib/services/petService";
 import { uploadService } from "@/lib/services/uploadService";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { notFound, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, use } from "react";
 
 interface EditPetPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function EditPetPage({ params }: EditPetPageProps) {
   const { user } = useAuth();
   const router = useRouter();
   const [feedback, setFeedback] = useState<string | null>(null);
+  
+  // Unwrap params Promise usando React.use()
+  const { id } = use(params);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['pet', params.id],
-    queryFn: () => petService.getPet(params.id),
+    queryKey: ['pet', id],
+    queryFn: () => petService.getPet(id),
   });
 
   const mutation = useMutation({
@@ -36,7 +39,7 @@ export default function EditPetPage({ params }: EditPetPageProps) {
         photoUrl = upload.url;
       }
 
-      return petService.updatePet(params.id, {
+      return petService.updatePet(id, {
         name: form.name,
         breed: form.breed,
         age: form.age,

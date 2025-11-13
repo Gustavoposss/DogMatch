@@ -3,14 +3,25 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { 
+  Home, 
+  Sparkles, 
+  PawPrint, 
+  Heart, 
+  MessageCircle, 
+  Star, 
+  Settings,
+  LogOut
+} from 'lucide-react';
 
 const navigation = [
-  { name: 'Home', href: '/home', icon: '🏠' },
-  { name: 'Meus Pets', href: '/pets', icon: '🐾' },
-  { name: 'Matches', href: '/matches', icon: '💕' },
-  { name: 'Mensagens', href: '/matches', icon: '💬' },
-  { name: 'Planos', href: '/plans', icon: '⭐' },
-  { name: 'Configurações', href: '/settings', icon: '⚙️' },
+  { name: 'Home', href: '/home', icon: Home },
+  { name: 'Swipe', href: '/swipe', icon: Sparkles },
+  { name: 'Meus Pets', href: '/pets', icon: PawPrint },
+  { name: 'Matches', href: '/matches', icon: Heart },
+  { name: 'Mensagens', href: '/matches', icon: MessageCircle },
+  { name: 'Planos', href: '/plans', icon: Star },
+  { name: 'Configurações', href: '/settings', icon: Settings },
 ];
 
 export function Sidebar() {
@@ -37,7 +48,7 @@ export function Sidebar() {
                   : 'text-[var(--foreground-secondary)] hover:bg-[var(--card-bg)] hover:text-white'
               }`}
             >
-              <span className="text-xl">{item.icon}</span>
+              <item.icon className="h-5 w-5" />
               {item.name}
             </Link>
           );
@@ -47,8 +58,9 @@ export function Sidebar() {
       <div className="absolute bottom-6 left-6 right-6">
         <button
           onClick={logout}
-          className="w-full rounded-lg bg-[var(--card-bg)] px-4 py-3 text-sm font-medium text-[var(--foreground-secondary)] transition-colors hover:bg-[var(--error)] hover:text-white"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--card-bg)] px-4 py-3 text-sm font-medium text-[var(--foreground-secondary)] transition-colors hover:bg-[var(--error)] hover:text-white"
         >
+          <LogOut className="h-4 w-4" />
           Sair
         </button>
       </div>
