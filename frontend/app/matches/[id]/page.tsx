@@ -10,7 +10,7 @@ import { useSocket } from "@/hooks/useSocket";
 import { Message } from "@/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { notFound } from "next/navigation";
-import { useEffect, useMemo, useState, use } from "react";
+import { useEffect, useMemo, useState, use, useCallback } from "react";
 
 interface MatchChatPageProps {
   params: Promise<{
@@ -56,15 +56,54 @@ export default function MatchChatPage({ params }: MatchChatPageProps) {
     },
   });
 
+  const handleSocketMessage = useCallback((socketMessage: any) => {
+    console.log('📨 ===== CALLBACK ONMESSAGE CHAMADO =====');
+    console.log('📨 Nova mensagem recebida no chat (raw):', socketMessage);
+    console.log('📨 Tipo:', typeof socketMessage);
+    console.log('📨 Keys:', Object.keys(socketMessage || {}));
+    
+    // Normalizar a mensagem para o formato esperado
+    const normalizedMessage: Message = {
+      id: socketMessage.id,
+      senderId: socketMessage.senderId,
+      chatId: socketMessage.chatId || socketMessage.matchId || id,
+      content: socketMessage.content,
+      createdAt: socketMessage.createdAt || socketMessage.timestamp || new Date().toISOString(),
+    };
+    
+    console.log('📨 Mensagem normalizada:', normalizedMessage);
+    
+    // Usar função de atualização para garantir que o estado seja atualizado
+    setMessages((prev) => {
+      console.log('📨 setMessages callback executado. Mensagens anteriores:', prev.length);
+      
+      // Verificar se a mensagem já existe (evitar duplicatas)
+      const exists = prev.some((msg) => msg.id === normalizedMessage.id);
+      if (exists) {
+        console.log('⚠️ Mensagem duplicada ignorada:', normalizedMessage.id);
+        return prev;
+      }
+      
+      console.log('✅ Adicionando nova mensagem ao estado. Total de mensagens:', prev.length + 1);
+      const newMessages = [...prev, normalizedMessage];
+      console.log('📋 Todas as mensagens agora:', newMessages.map(m => ({ id: m.id, content: m.content.substring(0, 20) })));
+      
+      // Forçar re-render verificando se realmente mudou
+      console.log('🔄 Estado atualizado, React deve re-renderizar');
+      return newMessages;
+    });
+    
+    console.log('📨 ===== FIM DO CALLBACK ONMESSAGE =====');
+  }, [id]);
+
+  const handleSocketError = useCallback((error: Error) => {
+    console.error('❌ Erro no Socket.IO do chat:', error);
+  }, []);
+
   useSocket({
     matchId: id,
-    onMessage: (socketMessage) => {
-      setMessages((prev) => {
-        const exists = prev.some((msg) => msg.id === socketMessage.id);
-        if (exists) return prev;
-        return [...prev, socketMessage];
-      });
-    },
+    onMessage: handleSocketMessage,
+    onError: handleSocketError,
   });
 
   const otherPet = useMemo(() => {

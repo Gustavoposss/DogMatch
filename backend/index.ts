@@ -155,9 +155,14 @@ io.on('connection', (socket) => {
   console.log(`📱 Usuário ${socket.userId} entrou na sala de notificações`);
   
   // Entrar na sala do match para receber mensagens
-  socket.on('join_match', (matchId) => {
-    socket.join(`match_${matchId}`);
-    console.log(`📱 Usuário ${socket.userId} entrou no match ${matchId}`);
+  socket.on('join_match', async (matchId) => {
+    const roomName = `match_${matchId}`;
+    await socket.join(roomName);
+    console.log(`📱 Usuário ${socket.userId} (Socket ${socket.id}) entrou no match ${matchId} (sala: ${roomName})`);
+    
+    // Verificar se realmente entrou na sala
+    const socketsInRoom = await io.in(roomName).fetchSockets();
+    console.log(`📊 Total de sockets na sala ${roomName} agora:`, socketsInRoom.length);
   });
   
   // Sair da sala do match
@@ -205,8 +210,8 @@ io.on('connection', (socket) => {
         }
       });
 
-      // Emitir para todos na sala do match (incluindo o remetente)
-      io.to(`match_${matchId}`).emit('new_message', {
+      // Preparar dados da mensagem
+      const messageData = {
         id: message.id,
         matchId,
         senderId: socket.userId,
@@ -214,9 +219,21 @@ io.on('connection', (socket) => {
         chatId: chat.id,
         createdAt: message.createdAt.toISOString(),
         timestamp: message.createdAt
+      };
+      
+      // Verificar quantos sockets estão na sala
+      const roomName = `match_${matchId}`;
+      const socketsInRoom = await io.in(roomName).fetchSockets();
+      console.log(`📊 Sockets na sala ${roomName}:`, socketsInRoom.length);
+      socketsInRoom.forEach((s) => {
+        console.log(`  - Socket ID: ${s.id}, User ID: ${(s as any).userId}`);
       });
       
+      // Emitir para todos na sala do match (incluindo o remetente)
+      io.to(roomName).emit('new_message', messageData);
+      
       console.log(`💬 Mensagem salva e enviada no match ${matchId} por ${socket.userId}`);
+      console.log(`💬 Dados da mensagem emitida:`, JSON.stringify(messageData, null, 2));
     } catch (error: any) {
       console.error('Erro ao enviar mensagem via Socket.IO:', error);
       socket.emit('error', { message: 'Erro ao enviar mensagem: ' + (error.message || 'Erro desconhecido') });

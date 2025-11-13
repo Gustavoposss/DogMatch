@@ -17,6 +17,8 @@ export function ChatWindow({ messages, currentUserId, onSend, sending, input, se
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    console.log('📜 ChatWindow: messages mudaram, total:', messages.length);
+    console.log('📜 Última mensagem:', messages[messages.length - 1]);
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
