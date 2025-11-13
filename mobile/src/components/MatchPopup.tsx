@@ -38,14 +38,14 @@ export default function MatchPopup({
           <View style={styles.petsContainer}>
             <View style={styles.petContainer}>
               <Image
-                source={{ uri: pet1.photos?.[0] || 'https://via.placeholder.com/80' }}
+                source={{ uri: pet1.photoUrl || 'https://via.placeholder.com/80' }}
                 style={styles.petImage}
               />
             </View>
             
             <View style={styles.petContainer}>
               <Image
-                source={{ uri: pet2.photos?.[0] || 'https://via.placeholder.com/80' }}
+                source={{ uri: pet2.photoUrl || 'https://via.placeholder.com/80' }}
                 style={styles.petImage}
               />
             </View>

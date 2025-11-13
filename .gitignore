@@ -44,6 +44,16 @@ backend/prisma/migrations/*_migration/
 # Testing
 coverage/
 .nyc_output/
+**/tests/
+**/__tests__/
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+backend/tests/
+mobile/tests/
+TESTES.md
+TESTES_FRONTEND.md
 
 # Temporary files
 *.tmp

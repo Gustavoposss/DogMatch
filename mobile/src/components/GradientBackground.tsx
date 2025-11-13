@@ -4,13 +4,13 @@ import { Colors } from '../styles/colors';
 
 interface GradientBackgroundProps {
   children: React.ReactNode;
-  colors?: string[];
+  colors?: readonly [string, string, ...string[]];
   style?: any;
 }
 
 export default function GradientBackground({ 
   children, 
-  colors = Colors.gradient.primary,
+  colors = Colors.gradient.primary as unknown as readonly [string, string, ...string[]],
   style 
 }: GradientBackgroundProps) {
   return (

@@ -38,10 +38,9 @@ export default {
       favicon: "./assets/favicon.png"
     },
     extra: {
-      // Variáveis de ambiente
+      // Variáveis de ambiente - PRODUÇÃO
       apiUrl: process.env.EXPO_PUBLIC_API_URL || "https://dogmatch.onrender.com",
       environment: process.env.EXPO_PUBLIC_ENVIRONMENT || "production",
-      localIp: process.env.EXPO_PUBLIC_LOCAL_IP || "192.168.101.5",
       debug: process.env.EXPO_PUBLIC_DEBUG || "false",
       // EAS Project ID
       eas: {

@@ -94,7 +94,7 @@ export default function PetsScreen() {
   const renderPetItem = ({ item }: { item: Pet }) => (
     <View style={styles.petCard}>
       <Image
-        source={{ uri: item.photos?.[0] || 'https://via.placeholder.com/64' }}
+        source={{ uri: item.photoUrl || 'https://via.placeholder.com/64' }}
         style={styles.petImage}
         resizeMode="cover"
       />

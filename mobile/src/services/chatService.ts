@@ -79,3 +79,10 @@ export async function getMatchInfo(matchId: string) {
     throw error;
   }
 }
+
+// Exportar como objeto para facilitar importação
+export const chatService = {
+  sendMessage,
+  getChatMessages,
+  getMatchInfo
+};

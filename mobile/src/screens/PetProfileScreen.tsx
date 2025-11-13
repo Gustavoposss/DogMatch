@@ -11,64 +11,29 @@ import {
   Dimensions,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-// Cores inline para evitar problemas de importação
-const Colors = {
-  primary: '#ee7c2b',
-  backgroundLight: '#f8f7f6',
-  textLightPrimary: '#1b130d',
-  textLightSecondary: '#9a6c4c',
-  white: '#FFFFFF',
-  surfaceLight: '#ffffff',
-  border: '#E1E5E9',
-  success: '#4CAF50',
-  error: '#F44336',
-  like: '#4CAF50',
-  dislike: '#F44336',
-};
+import { Pet } from '../types';
+import { Colors } from '../styles/colors';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width: screenWidth } = Dimensions.get('window');
 
-interface Pet {
-  id: string;
-  name: string;
-  age: number;
-  breed: string;
-  gender: string;
-  description: string;
-  personality: string[];
-  interests: string[];
-  photos: string[];
-  distance?: string;
+interface RouteParams {
+  pet?: Pet;
 }
 
 export default function PetProfileScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const [pet, setPet] = useState<Pet | null>(null);
-  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  // Removido: Backend usa apenas photoUrl (string), não photos (array)
 
   useEffect(() => {
-    // Simular carregamento do pet
-    const mockPet: Pet = {
-      id: '1',
-      name: 'Max',
-      age: 2,
-      breed: 'Golden Retriever',
-      gender: 'Macho',
-      description: 'Sou um golden retriever super amigável que adora longas caminhadas no parque, buscar bolinhas e, claro, um bom cochilo no sofá. Estou procurando um amigo para brincar e explorar o mundo!',
-      personality: ['Brincalhão', 'Calmo', 'Bom com crianças', 'Sociável'],
-      interests: ['Amizades e encontros para brincar'],
-      photos: [
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuCvJ1nQi455KYGESWlA60Mn-LDbM5trg2eby1lMCcBewmKbV4I4EFk3A2JiTWQj6tqALxoi-wTEaF_0xGP9gfZ-ZlV3foq-7aPyIc1BSZsIchEypyMdvc7T1SA60WAW4dTZYMxt1vUCShffnRPahLMSMPYbmZWVXI7RGFh5TdnOknvOGUmREu76IXZ2mrQrneu4V2frHG-CceP5OU16zp3NeFOEKq2e5RK-kWFzcWaU6LdtuUWzOcMJMop1b7j0benscbydS2kLbRv_',
-        'https://via.placeholder.com/400',
-        'https://via.placeholder.com/400',
-        'https://via.placeholder.com/400',
-      ],
-      distance: '2km',
-    };
-    setPet(mockPet);
-  }, []);
+    // Obter pet dos parâmetros da rota
+    const params = route.params as RouteParams | undefined;
+    if (params?.pet) {
+      setPet(params.pet);
+    }
+  }, [route.params]);
 
   const handleLike = () => {
     // Implementar like
@@ -83,15 +48,13 @@ export default function PetProfileScreen() {
   };
 
   const nextPhoto = () => {
-    if (pet && currentPhotoIndex < pet.photos.length - 1) {
-      setCurrentPhotoIndex(currentPhotoIndex + 1);
-    }
+    // Backend usa apenas uma foto (photoUrl), não há múltiplas fotos
+    // Esta função não é mais necessária, mas mantida para compatibilidade
   };
 
   const prevPhoto = () => {
-    if (currentPhotoIndex > 0) {
-      setCurrentPhotoIndex(currentPhotoIndex - 1);
-    }
+    // Backend usa apenas uma foto (photoUrl), não há múltiplas fotos
+    // Esta função não é mais necessária, mas mantida para compatibilidade
   };
 
   if (!pet) {
@@ -123,46 +86,13 @@ export default function PetProfileScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Photo Gallery */}
+        {/* Photo */}
         <View style={styles.photoContainer}>
           <Image
-            source={{ uri: pet.photos[currentPhotoIndex] }}
+            source={{ uri: pet.photoUrl || 'https://via.placeholder.com/400' }}
             style={styles.mainPhoto}
             resizeMode="cover"
           />
-          
-          {/* Photo Indicators */}
-          <View style={styles.photoIndicators}>
-            {pet.photos.map((_, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.photoIndicator,
-                  index === currentPhotoIndex && styles.photoIndicatorActive
-                ]}
-              />
-            ))}
-          </View>
-
-          {/* Photo Navigation */}
-          {pet.photos.length > 1 && (
-            <>
-              <TouchableOpacity
-                style={[styles.photoNav, styles.photoNavLeft]}
-                onPress={prevPhoto}
-                disabled={currentPhotoIndex === 0}
-              >
-                <Ionicons name="chevron-back" size={24} color={Colors.white} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.photoNav, styles.photoNavRight]}
-                onPress={nextPhoto}
-                disabled={currentPhotoIndex === pet.photos.length - 1}
-              >
-                <Ionicons name="chevron-forward" size={24} color={Colors.white} />
-              </TouchableOpacity>
-            </>
-          )}
         </View>
 
         {/* Profile Content */}
@@ -171,47 +101,32 @@ export default function PetProfileScreen() {
           <View style={styles.basicInfo}>
             <Text style={styles.petName}>{pet.name}</Text>
             <Text style={styles.petDetails}>
-              {pet.age} anos, {pet.breed}, {pet.gender}
-            </Text>
-          </View>
-
-          {/* Location */}
-          <View style={styles.locationContainer}>
-            <View style={styles.locationIcon}>
-              <Ionicons name="location" size={24} color={Colors.primary} />
-            </View>
-            <Text style={styles.locationText}>
-              A {pet.distance} de distância
+              {pet.age} anos, {pet.breed}, {
+                pet.gender === 'M' || pet.gender === 'MACHO' ? 'Macho' :
+                pet.gender === 'F' || pet.gender === 'FEMEA' ? 'Fêmea' :
+                pet.gender
+              }
             </Text>
           </View>
 
           {/* About Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Sobre Mim</Text>
-            <Text style={styles.sectionText}>{pet.description}</Text>
+            <Text style={styles.sectionText}>{pet.description || 'Sem descrição disponível'}</Text>
           </View>
 
-          {/* Personality Tags */}
+          {/* Objective */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Personalidade</Text>
-            <View style={styles.tagsContainer}>
-              {pet.personality.map((trait, index) => (
-                <View key={index} style={styles.tag}>
-                  <Text style={styles.tagText}>{trait}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-
-          {/* Interests */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>O que procuramos?</Text>
+            <Text style={styles.sectionTitle}>Objetivo</Text>
             <View style={styles.interestsContainer}>
               <View style={styles.interestsIcon}>
                 <Ionicons name="paw" size={24} color={Colors.primary} />
               </View>
               <Text style={styles.interestsText}>
-                {pet.interests[0]}
+                {pet.objective === 'amizade' || pet.objective === 'AMIZADE' ? 'Amizade' :
+                 pet.objective === 'cruzamento' || pet.objective === 'CRUZAMENTO' ? 'Cruzamento' :
+                 pet.objective === 'adocao' || pet.objective === 'ADOCAO' ? 'Adoção' :
+                 pet.objective}
               </Text>
             </View>
           </View>
@@ -279,41 +194,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  photoIndicators: {
-    position: 'absolute',
-    top: 20,
-    left: 16,
-    right: 16,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  photoIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  photoIndicatorActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-  },
-  photoNav: {
-    position: 'absolute',
-    top: '50%',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transform: [{ translateY: -20 }],
-  },
-  photoNavLeft: {
-    left: 16,
-  },
-  photoNavRight: {
-    right: 16,
-  },
+  // Removido: photoIndicators e photoNav - backend usa apenas uma foto (photoUrl)
   profileContent: {
     padding: 16,
     paddingBottom: 100,
@@ -331,25 +212,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: Colors.textLightSecondary,
   },
-  locationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  locationIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: 'rgba(238, 124, 43, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  locationText: {
-    fontSize: 16,
-    color: Colors.textLightPrimary,
-    flex: 1,
-  },
+  // Removido: locationContainer - backend não fornece distância
   section: {
     marginBottom: 24,
   },
@@ -364,22 +227,7 @@ const styles = StyleSheet.create({
     color: Colors.textLightSecondary,
     lineHeight: 24,
   },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  tag: {
-    backgroundColor: 'rgba(238, 124, 43, 0.1)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  tagText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.primary,
-  },
+  // Removido: tagsContainer - backend não fornece personality tags
   interestsContainer: {
     flexDirection: 'row',
     alignItems: 'center',

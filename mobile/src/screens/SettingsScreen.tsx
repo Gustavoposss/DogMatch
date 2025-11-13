@@ -28,7 +28,6 @@ interface UserProfile {
   email: string;
   city: string;
   phone?: string;
-  avatar?: string;
 }
 
 interface NotificationSettings {
@@ -159,7 +158,6 @@ export default function SettingsScreen() {
     email: state.user?.email || '',
     city: state.user?.city || '',
     phone: '',
-    avatar: state.user?.avatar,
   });
   
   const [notifications, setNotifications] = useState<NotificationSettings>({
@@ -203,7 +201,6 @@ export default function SettingsScreen() {
           email: profile.email || state.user?.email || '',
           city: profile.city || state.user?.city || '',
           phone: profile.phone || '',
-          avatar: profile.avatar,
         });
       }
     } catch (error) {
@@ -214,7 +211,6 @@ export default function SettingsScreen() {
         email: state.user?.email || '',
         city: state.user?.city || '',
         phone: '',
-        avatar: state.user?.avatar,
       });
     }
   };
@@ -450,15 +446,7 @@ export default function SettingsScreen() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <View style={styles.avatarContainer}>
-              <Image
-                source={{ uri: userProfile.avatar || 'https://via.placeholder.com/100' }}
-                style={styles.avatar}
-              />
-              <TouchableOpacity style={styles.avatarEditButton}>
-                <Ionicons name="camera" size={20} color={Colors.white} />
-              </TouchableOpacity>
-            </View>
+            {/* Avatar removido - sistema não suporta avatar de usuário */}
             
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Nome</Text>

@@ -17,23 +17,25 @@ export interface Pet {
   name: string;
   breed: string;
   age: number;
-  size: 'PEQUENO' | 'MEDIO' | 'GRANDE';
-  gender: 'MACHO' | 'FEMEA';
+  size: 'pequeno' | 'medio' | 'grande' | 'PEQUENO' | 'MEDIO' | 'GRANDE';
+  gender: 'M' | 'F' | 'MACHO' | 'FEMEA';
   isNeutered: boolean;
-  objective: 'AMIZADE' | 'CRUZAMENTO' | 'ADOCAO';
-  description?: string;
-  photos: string[];
-  userId: string;
+  objective: 'amizade' | 'cruzamento' | 'adocao' | 'AMIZADE' | 'CRUZAMENTO' | 'ADOCAO';
+  description?: string | null;
+  photoUrl: string; // Backend usa photoUrl (string), não photos (array)
+  ownerId: string; // Backend usa ownerId
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 export interface Match {
   id: string;
-  pet1Id: string;
-  pet2Id: string;
-  pet1: Pet;
-  pet2: Pet;
+  petAId: string; // Backend usa petAId
+  petBId: string; // Backend usa petBId
+  userAId: string; // Backend usa userAId
+  userBId: string; // Backend usa userBId
+  petA?: Pet; // Opcional, pode não vir na resposta
+  petB?: Pet; // Opcional, pode não vir na resposta
   createdAt: string;
 }
 
@@ -94,11 +96,15 @@ export interface UsageStats {
 // Tipos para Chat
 export interface Message {
   id: string;
-  senderId: string;
-  receiverId: string;
+  senderId: string; // Backend usa apenas senderId
+  chatId: string; // Backend usa chatId, não matchId diretamente
   content: string;
-  timestamp: string;
-  matchId: string;
+  createdAt: string; // Backend usa createdAt, não timestamp
+  sender?: { // Opcional, pode vir na resposta
+    id: string;
+    name: string;
+    email?: string;
+  };
 }
 
 export interface ChatMatch {

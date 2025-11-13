@@ -49,11 +49,10 @@ export default function ChatScreen() {
         senderId: socketMessage.senderId,
         chatId: matchId || '',
         createdAt: socketMessage.timestamp || new Date().toISOString(),
-        isFromUser: socketMessage.senderId === state.user?.id,
-        timestamp: new Date(socketMessage.timestamp || new Date()).toLocaleTimeString('pt-BR', {
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
+        sender: socketMessage.sender || {
+          id: socketMessage.senderId,
+          name: petName || 'Usuário',
+        },
       };
       
       setMessages(prev => {
@@ -98,19 +97,16 @@ export default function ChatScreen() {
       
       if (response && response.messages) {
         // Transformar mensagens do backend para o formato do frontend
-        const transformedMessages = response.messages.map((msg: any) => ({
+        const transformedMessages: Message[] = response.messages.map((msg: any) => ({
           id: msg.id,
           content: msg.content,
           senderId: msg.senderId,
-          chatId: msg.chatId,
+          chatId: msg.chatId || matchId,
           createdAt: msg.createdAt,
-          isFromUser: msg.senderId === state.user?.id,
-          timestamp: new Date(msg.createdAt).toLocaleTimeString('pt-BR', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-          }),
-          senderName: msg.sender?.name || petName,
-          senderImage: msg.sender?.avatar || petImage,
+          sender: msg.sender || {
+            id: msg.senderId,
+            name: petName || 'Usuário',
+          },
         }));
         
         setMessages(transformedMessages);
@@ -136,11 +132,10 @@ export default function ChatScreen() {
         senderId: state.user?.id || '',
         chatId: matchId,
         createdAt: new Date().toISOString(),
-        isFromUser: true,
-        timestamp: new Date().toLocaleTimeString('pt-BR', { 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        }),
+        sender: {
+          id: state.user?.id || '',
+          name: state.user?.name || 'Você',
+        },
       };
       
       setMessages(prev => [...prev, optimisticMessage]);
@@ -205,57 +200,58 @@ export default function ChatScreen() {
       // Substituir mensagem temporária pela real
       setMessages(prev => prev.map(msg => 
         msg.id === optimisticMessage.id 
-          ? {
-              ...response.message,
-              isFromUser: true,
-              timestamp: new Date(response.message.createdAt).toLocaleTimeString('pt-BR', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-              }),
-            }
+          ? response.message
           : msg
       ));
     }
   };
 
-  const renderMessage = (message: Message) => (
-    <View key={message.id} style={[
-      styles.messageContainer,
-      message.isFromUser ? styles.userMessageContainer : styles.matchMessageContainer
-    ]}>
-      {!message.isFromUser && (
-        <Image
-          source={{ uri: message.senderImage || 'https://via.placeholder.com/40' }}
-          style={styles.senderAvatar}
-        />
-      )}
-      
-      <View style={[
-        styles.messageBubble,
-        message.isFromUser ? styles.userMessageBubble : styles.matchMessageBubble
+  const renderMessage = (message: Message) => {
+    const isFromUser = message.senderId === state.user?.id;
+    const timestamp = new Date(message.createdAt).toLocaleTimeString('pt-BR', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+    
+    return (
+      <View key={message.id} style={[
+        styles.messageContainer,
+        isFromUser ? styles.userMessageContainer : styles.matchMessageContainer
       ]}>
-        <Text style={[
-          styles.messageText,
-          message.isFromUser ? styles.userMessageText : styles.matchMessageText
+        {!isFromUser && (
+          <Image
+            source={{ uri: message.sender?.avatar || petImage || 'https://via.placeholder.com/40' }}
+            style={styles.senderAvatar}
+          />
+        )}
+        
+        <View style={[
+          styles.messageBubble,
+          isFromUser ? styles.userMessageBubble : styles.matchMessageBubble
         ]}>
-          {message.content}
-        </Text>
-        <Text style={[
-          styles.messageTime,
-          message.isFromUser ? styles.userMessageTime : styles.matchMessageTime
-        ]}>
-          {message.timestamp}
-        </Text>
-      </View>
+          <Text style={[
+            styles.messageText,
+            isFromUser ? styles.userMessageText : styles.matchMessageText
+          ]}>
+            {message.content}
+          </Text>
+          <Text style={[
+            styles.messageTime,
+            isFromUser ? styles.userMessageTime : styles.matchMessageTime
+          ]}>
+            {timestamp}
+          </Text>
+        </View>
 
-      {message.isFromUser && (
-        <Image
-          source={{ uri: 'https://via.placeholder.com/40' }} // Avatar do usuário
-          style={styles.userAvatar}
-        />
-      )}
-    </View>
-  );
+        {isFromUser && (
+          <Image
+            source={{ uri: 'https://via.placeholder.com/40' }} // Avatar do usuário
+            style={styles.userAvatar}
+          />
+        )}
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>

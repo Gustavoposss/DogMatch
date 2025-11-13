@@ -138,8 +138,10 @@
 - API de produção: `https://dogmatch.onrender.com`
 - E-mail de suporte: `pardepatasapp@gmail.com`
 - Versão do app: 1.0.0
+- Banco de dados limpo para lançamento em 13/11/2025
+- Testes automatizados removidos do repositório para build final (executar checklist manual antes do deploy)
 
 ---
 
-**Última atualização:** $(date)
+**Última atualização:** 13/11/2025
 

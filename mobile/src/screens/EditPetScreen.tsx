@@ -65,8 +65,8 @@ export default function EditPetScreen({ navigation, route }: NavigationProps) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (pet.photos && pet.photos.length > 0) {
-      setPhotoUri(pet.photos[0]);
+    if (pet.photoUrl) {
+      setPhotoUri(pet.photoUrl);
     }
   }, [pet]);
 
@@ -109,7 +109,7 @@ export default function EditPetScreen({ navigation, route }: NavigationProps) {
       let photoUrl = pet.photoUrl;
       
       // Se uma nova foto foi selecionada, fazer upload
-      if (photoUri && photoUri !== pet.photos?.[0]) {
+      if (photoUri && photoUri !== pet.photoUrl) {
         const uploadResult = await uploadImage(photoUri);
         photoUrl = uploadResult.url;
       }

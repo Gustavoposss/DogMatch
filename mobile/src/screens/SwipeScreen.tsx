@@ -77,7 +77,7 @@ export default function SwipeScreen() {
           
           // Filtrar pets já curtidos (o backend já deve filtrar, mas garantimos aqui também)
           // Filtrar pets que já estão no set de likedPetIds
-          const filteredPets = response.pets.filter(pet => !likedPetIds.has(pet.id));
+          const filteredPets = response.pets.filter((pet: Pet) => !likedPetIds.has(pet.id));
           console.log('Pets após filtro local:', filteredPets.length);
           
           setPets(filteredPets);
@@ -227,7 +227,7 @@ export default function SwipeScreen() {
           <Text style={styles.emptyMessage}>
             Você viu todos os pets disponíveis. Tente novamente mais tarde.
           </Text>
-          <TouchableOpacity style={styles.refreshButton} onPress={loadPets}>
+          <TouchableOpacity style={styles.refreshButton} onPress={() => loadPets(true)}>
             <Text style={styles.refreshButtonText}>Atualizar</Text>
           </TouchableOpacity>
         </View>
@@ -253,7 +253,7 @@ export default function SwipeScreen() {
       {/* Main Card */}
       <View style={styles.cardContainer}>
         <Image
-          source={{ uri: currentPet.photos?.[0] || 'https://via.placeholder.com/400' }}
+          source={{ uri: currentPet.photoUrl || 'https://via.placeholder.com/400' }}
           style={styles.petImage}
           resizeMode="cover"
         />
@@ -319,7 +319,7 @@ export default function SwipeScreen() {
             
             <View style={styles.matchImages}>
               <Image
-                source={{ uri: currentPet.photos?.[0] || 'https://via.placeholder.com/100' }}
+                source={{ uri: currentPet.photoUrl || 'https://via.placeholder.com/100' }}
                 style={[styles.matchImage, styles.matchImageLeft]}
               />
               <Image

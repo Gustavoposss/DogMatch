@@ -91,7 +91,7 @@ export default function HomeScreen() {
       onPress={() => handlePetPress(pet)}
     >
       <Image
-        source={{ uri: pet.photos?.[0] || 'https://via.placeholder.com/120' }}
+        source={{ uri: pet.photoUrl || 'https://via.placeholder.com/120' }}
         style={styles.petImage}
         resizeMode="cover"
       />

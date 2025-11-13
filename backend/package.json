@@ -23,17 +23,12 @@
     "@types/axios": "^0.9.36",
     "@types/bcryptjs": "^2.4.6",
     "@types/express": "^5.0.3",
-    "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.0.13",
-    "@types/supertest": "^6.0.2",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
-    "jest": "^29.7.0",
     "prisma": "^6.11.1",
-    "supertest": "^7.0.0",
-    "ts-jest": "^29.2.5",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.3"
   },
@@ -43,25 +38,6 @@
     "start": "node dist/index.js",
     "db:clear": "ts-node scripts/clearDatabase.ts",
     "db:reset": "prisma migrate reset --force",
-    "db:seed": "ts-node scripts/seedDatabase.ts",
-    "test": "jest --runInBand --detectOpenHandles",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "test:all": "ts-node tests/run-all-tests.ts",
-    "test:e2e": "jest --testPathPattern=e2e"
-  },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node",
-    "roots": ["<rootDir>/tests"],
-    "testMatch": ["**/*.test.ts"],
-    "collectCoverageFrom": [
-      "controllers/**/*.ts",
-      "services/**/*.ts",
-      "middlewares/**/*.ts",
-      "!**/*.d.ts"
-    ],
-    "coverageDirectory": "coverage",
-    "coverageReporters": ["text", "lcov", "html"]
+    "db:seed": "ts-node scripts/seedDatabase.ts"
   }
 }
