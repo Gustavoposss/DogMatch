@@ -23,12 +23,26 @@ export const subscriptionService = {
     maxPets: number;
   }> {
     const response = await api.get<{ stats: {
-      swipesUsed: number;
-      swipesLimit: number;
-      petsCount: number;
-      maxPets: number;
+      swipes: {
+        today: number;
+        max: number;
+        unlimited: boolean;
+      };
+      pets: {
+        current: number;
+        max: number;
+        unlimited: boolean;
+      };
     } }>('/subscriptions/usage');
-    return response.data.stats;
+    
+    const stats = response.data.stats;
+    
+    return {
+      swipesUsed: stats.swipes.today,
+      swipesLimit: stats.swipes.unlimited ? -1 : stats.swipes.max,
+      petsCount: stats.pets.current,
+      maxPets: stats.pets.unlimited ? -1 : stats.pets.max,
+    };
   },
 };
 

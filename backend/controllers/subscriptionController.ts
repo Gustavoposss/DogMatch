@@ -99,7 +99,17 @@ export const getUsageStats = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ error: 'Usuário não autenticado' });
     }
 
+    // Garantir que o usuário tem uma subscription antes de buscar stats
+    const subscription = await SubscriptionService.getUserSubscription(userId);
+    
     const stats = await UsageLimitService.getUsageStats(userId);
+
+    if (!stats) {
+      // Se não retornou stats, criar uma subscription gratuita e tentar novamente
+      await SubscriptionService.createFreeSubscription(userId);
+      const newStats = await UsageLimitService.getUsageStats(userId);
+      return res.json({ stats: newStats });
+    }
 
     res.json({ stats });
   } catch (error) {

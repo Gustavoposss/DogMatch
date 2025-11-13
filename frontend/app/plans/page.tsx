@@ -23,9 +23,10 @@ export default function PlansPage() {
     queryFn: () => subscriptionService.getMySubscription(),
   });
 
-  const { data: usageStats } = useQuery({
+  const { data: usageStats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['usage-stats'],
     queryFn: () => subscriptionService.getUsageStats(),
+    retry: 2,
   });
 
   const mutation = useMutation({
@@ -90,22 +91,33 @@ export default function PlansPage() {
             <div className="mb-6 rounded-lg bg-[var(--primary)]/20 border border-[var(--primary)] px-4 py-3 text-sm text-[var(--primary)]">{feedback}</div>
           )}
 
-          {usageStats && (
+          {isLoadingStats ? (
             <div className="mb-8 grid grid-cols-1 gap-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-6 sm:grid-cols-2">
               <div>
-                <h3 className="text-sm font-semibold text-[var(--foreground-secondary)]">Swipes disponíveis</h3>
+                <h3 className="text-sm font-semibold text-[var(--foreground-secondary)] mb-2">Swipes disponíveis</h3>
+                <p className="text-2xl font-bold text-white">Carregando...</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-[var(--foreground-secondary)] mb-2">Pets cadastrados</h3>
+                <p className="text-2xl font-bold text-white">Carregando...</p>
+              </div>
+            </div>
+          ) : usageStats ? (
+            <div className="mb-8 grid grid-cols-1 gap-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-6 sm:grid-cols-2">
+              <div>
+                <h3 className="text-sm font-semibold text-[var(--foreground-secondary)] mb-2">Swipes disponíveis</h3>
                 <p className="text-2xl font-bold text-white">
-                  {usageStats.swipesUsed} / {usageStats.swipesLimit === -1 ? '∞' : usageStats.swipesLimit}
+                  {usageStats.swipesUsed ?? 0} / {usageStats.swipesLimit === -1 ? '∞' : (usageStats.swipesLimit ?? 0)}
                 </p>
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-[var(--foreground-secondary)]">Pets cadastrados</h3>
+                <h3 className="text-sm font-semibold text-[var(--foreground-secondary)] mb-2">Pets cadastrados</h3>
                 <p className="text-2xl font-bold text-white">
-                  {usageStats.petsCount} / {usageStats.maxPets === -1 ? '∞' : usageStats.maxPets}
+                  {usageStats.petsCount ?? 0} / {usageStats.maxPets === -1 ? '∞' : (usageStats.maxPets ?? 0)}
                 </p>
               </div>
             </div>
-          )}
+          ) : null}
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             {plansData?.map((plan, index) => {
