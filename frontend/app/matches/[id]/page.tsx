@@ -92,17 +92,17 @@ export default function MatchChatPage({ params }: MatchChatPageProps) {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="mx-auto flex h-[calc(100vh-120px)] max-w-4xl flex-col px-4 py-6">
+        <div className="mx-auto flex h-[calc(100vh-120px)] max-w-4xl flex-col">
           <div className="mb-4">
-            <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
-            <p className="mt-1 text-sm text-gray-600">
+            <h1 className="text-2xl font-bold text-white">{title}</h1>
+            <p className="mt-1 text-sm text-[var(--foreground-secondary)]">
               Conversem para combinar o melhor encontro para os pets.
             </p>
           </div>
 
           {loadingMatch || loadingMessages ? (
-            <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-white">
-              <p className="text-gray-600">Carregando conversa...</p>
+            <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-[var(--card-border)] bg-[var(--card-bg)]">
+              <p className="text-[var(--foreground-secondary)]">Carregando conversa...</p>
             </div>
           ) : (
             <ChatWindow

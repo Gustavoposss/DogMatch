@@ -18,81 +18,66 @@ export default function HomePage() {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900">Minha Matilha</h2>
-          <p className="mt-1 text-gray-600">Gerencie seus pets cadastrados</p>
-        </div>
-
-        {isLoading ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600">Carregando pets...</p>
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-white mb-2">
+              Olá, {user?.name ? `Tutor do ${petsData?.pets?.[0]?.name || 'Pet'}!` : 'Bem-vindo!'}
+            </h2>
+            <p className="text-[var(--foreground-secondary)]">Gerencie seus pets e encontre novos amigos</p>
           </div>
-        ) : petsData?.pets && petsData.pets.length > 0 ? (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {petsData.pets.map((pet) => (
-              <div
-                key={pet.id}
-                className="overflow-hidden rounded-xl bg-white shadow-md transition-shadow hover:shadow-lg"
-              >
+
+          {isLoading ? (
+            <div className="text-center py-12">
+              <p className="text-[var(--foreground-secondary)]">Carregando pets...</p>
+            </div>
+          ) : petsData?.pets && petsData.pets.length > 0 ? (
+            <div className="mb-8">
+              <div className="relative h-96 w-full rounded-2xl overflow-hidden bg-[var(--card-bg)] border border-[var(--card-border)]">
                 <img
-                  src={pet.photoUrl}
-                  alt={pet.name}
-                  className="h-48 w-full object-cover"
+                  src={petsData.pets[0].photoUrl}
+                  alt={petsData.pets[0].name}
+                  className="h-full w-full object-cover"
                 />
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold text-gray-900">{pet.name}</h3>
-                  <p className="text-sm text-gray-600">{pet.breed}</p>
-                  <p className="text-sm text-gray-600">{pet.age} anos</p>
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
+                  <h3 className="text-2xl font-bold text-white">{petsData.pets[0].name}</h3>
+                  <p className="text-white/80">{petsData.pets[0].breed} • {petsData.pets[0].age} anos</p>
                 </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-lg bg-white p-12 text-center shadow-sm">
-            <p className="text-gray-600">Você ainda não tem pets cadastrados.</p>
-            <Link
-              href="/pets/new"
-              className="mt-4 inline-block rounded-lg bg-primary px-6 py-3 font-semibold text-white transition-colors hover:bg-primary-dark"
-            >
-              Cadastrar Primeiro Pet
-            </Link>
-          </div>
-        )}
-
-        <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <Link
-            href="/pets"
-            className="rounded-xl bg-white p-6 shadow-md transition-shadow hover:shadow-lg"
-          >
-            <h3 className="text-lg font-semibold text-gray-900">Meus Pets</h3>
-            <p className="mt-2 text-sm text-gray-600">Gerenciar pets</p>
-          </Link>
-
-          <Link
-            href="/swipe"
-            className="rounded-xl bg-white p-6 shadow-md transition-shadow hover:shadow-lg"
-          >
-            <h3 className="text-lg font-semibold text-gray-900">Descobrir</h3>
-            <p className="mt-2 text-sm text-gray-600">Encontrar matches</p>
-          </Link>
-
-          <Link
-            href="/matches"
-            className="rounded-xl bg-white p-6 shadow-md transition-shadow hover:shadow-lg"
-          >
-            <h3 className="text-lg font-semibold text-gray-900">Matches</h3>
-            <p className="mt-2 text-sm text-gray-600">Ver conexões</p>
-          </Link>
-
-          <Link
-            href="/plans"
-            className="rounded-xl bg-white p-6 shadow-md transition-shadow hover:shadow-lg"
-          >
-            <h3 className="text-lg font-semibold text-gray-900">Planos</h3>
-            <p className="mt-2 text-sm text-gray-600">Assinaturas</p>
-          </Link>
-        </div>
+              
+              <div className="mt-6">
+                <h3 className="text-xl font-semibold text-white mb-4">Sugestões para você</h3>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {petsData.pets.slice(1, 4).map((pet) => (
+                    <div
+                      key={pet.id}
+                      className="overflow-hidden rounded-xl bg-[var(--card-bg)] border border-[var(--card-border)] transition-all hover:border-[var(--primary)] hover:shadow-lg hover:shadow-[var(--primary-glow)]"
+                    >
+                      <img
+                        src={pet.photoUrl}
+                        alt={pet.name}
+                        className="h-48 w-full object-cover"
+                      />
+                      <div className="p-4">
+                        <h3 className="text-lg font-semibold text-white">{pet.name}</h3>
+                        <p className="text-sm text-[var(--foreground-secondary)]">{pet.breed}</p>
+                        <p className="text-sm text-[var(--foreground-secondary)]">{pet.age} anos</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl bg-[var(--card-bg)] border border-[var(--card-border)] p-12 text-center">
+              <p className="text-[var(--foreground-secondary)] mb-4">Você ainda não tem pets cadastrados.</p>
+              <Link
+                href="/pets/new"
+                className="inline-block rounded-lg bg-[var(--primary)] px-6 py-3 font-semibold text-white transition-all hover:bg-[var(--primary-dark)] hover:shadow-lg hover:shadow-[var(--primary-glow)]"
+              >
+                Cadastrar Primeiro Pet
+              </Link>
+            </div>
+          )}
         </div>
       </Layout>
     </ProtectedRoute>

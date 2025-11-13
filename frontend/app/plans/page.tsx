@@ -45,27 +45,27 @@ export default function PlansPage() {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="mx-auto max-w-5xl px-4 py-8">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Planos e Assinaturas</h1>
-            <p className="mt-1 text-gray-600">Escolha o melhor plano para o seu momento.</p>
+        <div className="mx-auto max-w-5xl">
+          <div className="mb-6 text-center">
+            <h1 className="text-3xl font-bold text-white mb-2">Escolha o plano perfeito para seu pet</h1>
+            <p className="text-[var(--foreground-secondary)]">Escolha o melhor plano para o seu momento.</p>
           </div>
 
           {feedback && (
-            <div className="mb-6 rounded-lg bg-primary/10 px-4 py-3 text-sm text-primary">{feedback}</div>
+            <div className="mb-6 rounded-lg bg-[var(--primary)]/20 border border-[var(--primary)] px-4 py-3 text-sm text-[var(--primary)]">{feedback}</div>
           )}
 
           {usageStats && (
-            <div className="mb-8 grid grid-cols-1 gap-4 rounded-2xl border border-gray-200 bg-white p-6 sm:grid-cols-2">
+            <div className="mb-8 grid grid-cols-1 gap-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-6 sm:grid-cols-2">
               <div>
-                <h3 className="text-sm font-semibold text-gray-500">Swipes disponíveis</h3>
-                <p className="text-2xl font-bold text-gray-900">
+                <h3 className="text-sm font-semibold text-[var(--foreground-secondary)]">Swipes disponíveis</h3>
+                <p className="text-2xl font-bold text-white">
                   {usageStats.swipesUsed} / {usageStats.swipesLimit === -1 ? '∞' : usageStats.swipesLimit}
                 </p>
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-gray-500">Pets cadastrados</h3>
-                <p className="text-2xl font-bold text-gray-900">
+                <h3 className="text-sm font-semibold text-[var(--foreground-secondary)]">Pets cadastrados</h3>
+                <p className="text-2xl font-bold text-white">
                   {usageStats.petsCount} / {usageStats.maxPets === -1 ? '∞' : usageStats.maxPets}
                 </p>
               </div>
@@ -73,13 +73,13 @@ export default function PlansPage() {
           )}
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {plansData?.map((plan) => (
+            {plansData?.map((plan, index) => (
               <PlanCard
-                key={plan.id}
+                key={plan.type || plan.id || `plan-${index}`}
                 plan={plan}
                 isCurrent={subscriptionData?.planType === plan.name.toUpperCase()}
                 onSelect={(planId) => mutation.mutate(planId)}
-                selecting={mutation.isPending && mutation.variables === plan.id}
+                selecting={mutation.isPending && mutation.variables === (plan.id || plan.type)}
               />
             ))}
           </div>

@@ -268,3 +268,14 @@ export const getPetsToSwipe = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Erro ao buscar pets para swipe.' });
   }
 };
+
+// Buscar raças disponíveis
+export const getBreeds = async (req: Request, res: Response) => {
+  try {
+    const { DOG_BREEDS } = require('../constants/breeds');
+    res.json({ breeds: DOG_BREEDS });
+  } catch (error) {
+    console.error('Erro ao buscar raças:', error);
+    res.status(500).json({ error: 'Erro ao buscar raças.' });
+  }
+};

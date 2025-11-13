@@ -58,19 +58,21 @@ export default function NewPetPage() {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="mx-auto max-w-3xl px-4 py-8">
+        <div className="mx-auto max-w-3xl">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Cadastrar novo pet</h1>
-            <p className="mt-2 text-gray-600">Informe os dados do seu pet para começar a conectar.</p>
+            <h1 className="text-3xl font-bold text-white">Cadastrar novo pet</h1>
+            <p className="mt-2 text-[var(--foreground-secondary)]">Informe os dados do seu pet para começar a conectar.</p>
           </div>
 
           {feedback && (
-            <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+            <div className="mb-6 rounded-lg bg-[var(--error)]/20 border border-[var(--error)] px-4 py-3 text-sm text-[var(--error)]">
               {feedback}
             </div>
           )}
 
-          <PetForm onSubmit={handleSubmit} submitting={submitting} />
+          <div className="bg-[var(--card-bg)] rounded-2xl border border-[var(--card-border)] p-8">
+            <PetForm onSubmit={handleSubmit} submitting={submitting} />
+          </div>
         </div>
       </Layout>
     </ProtectedRoute>

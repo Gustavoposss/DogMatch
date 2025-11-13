@@ -3,8 +3,8 @@ import { Plan, Subscription, Payment } from '@/types';
 
 export const subscriptionService = {
   async getPlans(): Promise<Plan[]> {
-    const response = await api.get<Plan[]>('/subscriptions/plans');
-    return response.data;
+    const response = await api.get<{ plans: Plan[] }>('/subscriptions/plans');
+    return response.data.plans;
   },
 
   async getMySubscription(): Promise<Subscription> {
@@ -22,8 +22,13 @@ export const subscriptionService = {
     petsCount: number;
     maxPets: number;
   }> {
-    const response = await api.get('/subscriptions/usage-stats');
-    return response.data;
+    const response = await api.get<{ stats: {
+      swipesUsed: number;
+      swipesLimit: number;
+      petsCount: number;
+      maxPets: number;
+    } }>('/subscriptions/usage-stats');
+    return response.data.stats;
   },
 };
 

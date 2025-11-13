@@ -5,11 +5,15 @@ import {
   getPet, 
   updatePet, 
   deletePet,
-  getPetsToSwipe
+  getPetsToSwipe,
+  getBreeds
 } from '../controllers/petController';
 import { authenticateToken } from '../middlewares/authMiddleware';
 
 const router = express.Router();
+
+// Rota pública para buscar raças
+router.get('/breeds', getBreeds);
 
 router.post('/', authenticateToken, createPet);
 router.get('/user/:userId', authenticateToken, getUserPets);

@@ -19,10 +19,10 @@ export default function Home() {
   }, [isAuthenticated, loading, router]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center bg-[var(--background)]">
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-primary">Par de Patas</h1>
-        <p className="mt-2 text-gray-600">Carregando...</p>
+        <h1 className="text-2xl font-bold text-[var(--primary)]">Par de Patas</h1>
+        <p className="mt-2 text-[var(--foreground-secondary)]">Carregando...</p>
       </div>
     </div>
   );

@@ -68,30 +68,32 @@ export default function EditPetPage({ params }: EditPetPageProps) {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="mx-auto max-w-3xl px-4 py-8">
+        <div className="mx-auto max-w-3xl">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Editar pet</h1>
-            <p className="mt-2 text-gray-600">Atualize os dados do seu pet.</p>
+            <h1 className="text-3xl font-bold text-white">Editar pet</h1>
+            <p className="mt-2 text-[var(--foreground-secondary)]">Atualize os dados do seu pet.</p>
           </div>
 
           {feedback && (
-            <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+            <div className="mb-6 rounded-lg bg-[var(--error)]/20 border border-[var(--error)] px-4 py-3 text-sm text-[var(--error)]">
               {feedback}
             </div>
           )}
 
           {isLoading || !data ? (
-            <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-12 text-center text-gray-600">
+            <div className="rounded-2xl border border-dashed border-[var(--card-border)] bg-[var(--card-bg)] p-12 text-center text-[var(--foreground-secondary)]">
               Carregando dados do pet...
             </div>
           ) : (
-            <PetForm
-              defaultValues={data}
-              submitting={mutation.isPending}
-              onSubmit={async (form, file) => {
-                await mutation.mutateAsync({ form, file });
-              }}
-            />
+            <div className="bg-[var(--card-bg)] rounded-2xl border border-[var(--card-border)] p-8">
+              <PetForm
+                defaultValues={data}
+                submitting={mutation.isPending}
+                onSubmit={async (form, file) => {
+                  await mutation.mutateAsync({ form, file });
+                }}
+              />
+            </div>
           )}
         </div>
       </Layout>

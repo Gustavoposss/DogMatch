@@ -12,27 +12,27 @@ interface MatchCardProps {
 
 export function MatchCard({ match, currentPet, otherPet }: MatchCardProps) {
   return (
-    <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+    <div className="flex items-center justify-between rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] p-4 transition-all hover:border-[var(--primary)] hover:shadow-lg hover:shadow-[var(--primary-glow)]">
       <div className="flex items-center gap-4">
         {otherPet?.photoUrl ? (
-          <div className="relative h-16 w-16 overflow-hidden rounded-full">
+          <div className="relative h-16 w-16 overflow-hidden rounded-full border-2 border-[var(--primary)]">
             <Image src={otherPet.photoUrl} alt={otherPet.name} fill className="object-cover" />
           </div>
         ) : (
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--primary)]/20 text-[var(--primary)] border-2 border-[var(--primary)]">
             🐾
           </div>
         )}
 
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">{otherPet?.name ?? 'Pet'}</h3>
-          <p className="text-sm text-gray-600">Conectado em {new Date(match.createdAt).toLocaleDateString('pt-BR')}</p>
+          <h3 className="text-lg font-semibold text-white">{otherPet?.name ?? 'Pet'}</h3>
+          <p className="text-sm text-[var(--foreground-secondary)]">Conectado em {new Date(match.createdAt).toLocaleDateString('pt-BR')}</p>
         </div>
       </div>
 
       <Link
         href={`/matches/${match.id}`}
-        className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-dark"
+        className="rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[var(--primary-dark)] hover:shadow-lg hover:shadow-[var(--primary-glow)]"
       >
         Abrir chat
       </Link>

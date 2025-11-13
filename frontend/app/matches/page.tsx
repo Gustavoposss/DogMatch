@@ -18,14 +18,14 @@ export default function MatchesPage() {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="mx-auto max-w-5xl px-4 py-8">
+        <div className="mx-auto max-w-5xl">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Matches</h1>
-            <p className="mt-1 text-gray-600">Converse com os tutores que também curtiram seu pet.</p>
+            <h1 className="text-3xl font-bold text-white">Seus Matches</h1>
+            <p className="mt-1 text-[var(--foreground-secondary)]">Converse com os tutores que também curtiram seu pet.</p>
           </div>
 
           {isLoading ? (
-            <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-12 text-center text-gray-600">
+            <div className="rounded-2xl border border-dashed border-[var(--card-border)] bg-[var(--card-bg)] p-12 text-center text-[var(--foreground-secondary)]">
               Carregando matches...
             </div>
           ) : data && data.length > 0 ? (
@@ -44,9 +44,9 @@ export default function MatchesPage() {
               })}
             </div>
           ) : (
-            <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-12 text-center">
-              <h2 className="text-lg font-semibold text-gray-700">Você ainda não tem matches.</h2>
-              <p className="mt-2 text-sm text-gray-500">Continue dando likes para encontrar conexões.</p>
+            <div className="rounded-2xl border border-dashed border-[var(--card-border)] bg-[var(--card-bg)] p-12 text-center">
+              <h2 className="text-lg font-semibold text-white">Você ainda não tem matches.</h2>
+              <p className="mt-2 text-sm text-[var(--foreground-secondary)]">Continue dando likes para encontrar conexões.</p>
             </div>
           )}
         </div>

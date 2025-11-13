@@ -27,7 +27,7 @@ export function ChatWindow({ messages, currentUserId, onSend, sending, input, se
   };
 
   return (
-    <div className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white">
+    <div className="flex h-full flex-col rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
         {messages.map((message) => {
           const isFromUser = message.senderId === currentUserId;
@@ -43,11 +43,13 @@ export function ChatWindow({ messages, currentUserId, onSend, sending, input, se
             >
               <div
                 className={`max-w-xs rounded-2xl px-4 py-2 text-sm shadow-sm sm:max-w-md ${
-                  isFromUser ? 'bg-primary text-white' : 'bg-gray-100 text-gray-800'
+                  isFromUser 
+                    ? 'bg-[var(--primary)] text-white shadow-lg shadow-[var(--primary-glow)]' 
+                    : 'bg-[var(--input-bg)] text-white border border-[var(--input-border)]'
                 }`}
               >
                 <p>{message.content}</p>
-                <span className={`mt-1 block text-xs ${isFromUser ? 'text-white/80' : 'text-gray-500'}`}>
+                <span className={`mt-1 block text-xs ${isFromUser ? 'text-white/80' : 'text-[var(--foreground-secondary)]'}`}>
                   {timestamp}
                 </span>
               </div>
@@ -57,18 +59,18 @@ export function ChatWindow({ messages, currentUserId, onSend, sending, input, se
         <div ref={bottomRef} />
       </div>
 
-      <form onSubmit={handleSubmit} className="border-t border-gray-200 p-4">
+      <form onSubmit={handleSubmit} className="border-t border-[var(--card-border)] p-4">
         <div className="flex items-center gap-3">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Escreva uma mensagem..."
-            className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-light"
+            placeholder="Envie uma mensagem..."
+            className="flex-1 rounded-lg border border-[var(--input-border)] bg-[var(--input-bg)] px-4 py-2 text-white placeholder:text-[var(--foreground-secondary)] focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-glow)]"
           />
           <button
             type="submit"
             disabled={sending || !input.trim()}
-            className="rounded-lg bg-primary px-4 py-2 font-semibold text-white transition-colors hover:bg-primary-dark disabled:opacity-60"
+            className="rounded-lg bg-[var(--primary)] px-4 py-2 font-semibold text-white transition-all hover:bg-[var(--primary-dark)] hover:shadow-lg hover:shadow-[var(--primary-glow)] disabled:opacity-60"
           >
             {sending ? 'Enviando...' : 'Enviar'}
           </button>

@@ -51,23 +51,23 @@ export default function SwipePage() {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-8">
+        <div className="mx-auto flex max-w-3xl flex-col gap-6">
           <div className="flex flex-col gap-2 text-center">
-            <h1 className="text-3xl font-bold text-gray-900">Descobrir novos amigos</h1>
-            <p className="text-sm text-gray-600">
+            <h1 className="text-3xl font-bold text-white">Descobrir novos amigos</h1>
+            <p className="text-sm text-[var(--foreground-secondary)]">
               Dê like para conectar ou pule para ver outros pets. Se rolar match, vocês poderão conversar no chat.
             </p>
           </div>
 
           {feedback && (
-            <div className="rounded-lg bg-primary/10 px-4 py-3 text-sm text-primary">{feedback}</div>
+            <div className="rounded-lg bg-[var(--primary)]/20 border border-[var(--primary)] px-4 py-3 text-sm text-[var(--primary)]">{feedback}</div>
           )}
 
           <SwipeDeck pets={queue} onLike={handleLike} onPass={handlePass} loading={isLoading} />
 
           <button
             onClick={handleReload}
-            className="mx-auto inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:border-primary hover:text-primary"
+            className="mx-auto inline-flex items-center justify-center rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-4 py-2 text-sm font-semibold text-white transition-all hover:border-[var(--primary)] hover:text-[var(--primary)]"
           >
             Atualizar lista
           </button>

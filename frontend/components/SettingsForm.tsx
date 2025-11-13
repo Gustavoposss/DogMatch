@@ -38,51 +38,51 @@ export function SettingsForm({ defaultValues, onSubmit, submitting }: SettingsFo
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">Nome</label>
+        <label className="mb-1 block text-sm font-medium text-white">Nome</label>
         <input
           type="text"
           {...register('name')}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-light"
+          className="w-full rounded-lg border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-white placeholder:text-[var(--foreground-secondary)] focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-glow)]"
         />
-        {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
+        {errors.name && <p className="mt-1 text-sm text-[var(--error)]">{errors.name.message}</p>}
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">E-mail</label>
+        <label className="mb-1 block text-sm font-medium text-white">E-mail</label>
         <input
           type="email"
           {...register('email')}
           disabled
-          className="w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-gray-500"
+          className="w-full rounded-lg border border-[var(--input-border)] bg-[var(--card-bg)] px-3 py-2 text-[var(--foreground-secondary)]"
         />
-        <p className="mt-1 text-sm text-gray-500">O e-mail não pode ser alterado.</p>
+        <p className="mt-1 text-sm text-[var(--foreground-secondary)]">O e-mail não pode ser alterado.</p>
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">Cidade</label>
+        <label className="mb-1 block text-sm font-medium text-white">Cidade</label>
         <input
           type="text"
           {...register('city')}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-light"
+          className="w-full rounded-lg border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-white placeholder:text-[var(--foreground-secondary)] focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-glow)]"
         />
-        {errors.city && <p className="mt-1 text-sm text-red-600">{errors.city.message}</p>}
+        {errors.city && <p className="mt-1 text-sm text-[var(--error)]">{errors.city.message}</p>}
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">Telefone</label>
+        <label className="mb-1 block text-sm font-medium text-white">Telefone</label>
         <input
           type="tel"
           {...register('phone')}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-light"
+          className="w-full rounded-lg border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-white placeholder:text-[var(--foreground-secondary)] focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-glow)]"
           placeholder="(11) 99999-9999"
         />
-        {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>}
+        {errors.phone && <p className="mt-1 text-sm text-[var(--error)]">{errors.phone.message}</p>}
       </div>
 
       <button
         type="submit"
         disabled={submitting}
-        className="rounded-lg bg-primary px-4 py-3 font-semibold text-white transition-colors hover:bg-primary-dark disabled:opacity-60"
+        className="rounded-lg bg-[var(--primary)] px-4 py-3 font-semibold text-white transition-all hover:bg-[var(--primary-dark)] hover:shadow-lg hover:shadow-[var(--primary-glow)] disabled:opacity-60"
       >
         {submitting ? 'Salvando...' : 'Salvar alterações'}
       </button>

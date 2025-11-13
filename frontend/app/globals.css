@@ -1,13 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #1E293B;
+  /* Tema escuro baseado na referência */
+  --background: #1a1a2e;
+  --background-dark: #0f0f1e;
+  --foreground: #ffffff;
+  --foreground-secondary: #e0e0e0;
   
   /* Cores da marca Par de Patas */
   --primary: #B952EB;
-  --primary-dark: #AF68D1;
-  --primary-light: #F7DFFD;
+  --primary-dark: #9d3fd1;
+  --primary-light: #d17ef5;
+  --primary-glow: rgba(185, 82, 235, 0.3);
   
   --secondary: #FDED11;
   --secondary-dark: #F59E0B;
@@ -20,14 +24,23 @@
   --error: #EF4444;
   --warning: #FDED11;
   --info: #B952EB;
+  
+  /* Cores de card/container */
+  --card-bg: #252540;
+  --card-border: #3a3a5c;
+  --input-bg: #2a2a45;
+  --input-border: #3a3a5c;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-background-dark: var(--background-dark);
   --color-foreground: var(--foreground);
+  --color-foreground-secondary: var(--foreground-secondary);
   --color-primary: var(--primary);
   --color-primary-dark: var(--primary-dark);
   --color-primary-light: var(--primary-light);
+  --color-primary-glow: var(--primary-glow);
   --color-secondary: var(--secondary);
   --color-secondary-dark: var(--secondary-dark);
   --color-secondary-light: var(--secondary-light);
@@ -37,20 +50,18 @@
   --color-error: var(--error);
   --color-warning: var(--warning);
   --color-info: var(--info);
+  --color-card-bg: var(--card-bg);
+  --color-card-border: var(--card-border);
+  --color-input-bg: var(--input-bg);
+  --color-input-border: var(--input-border);
   --font-sans: var(--font-inter);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-inter), system-ui, sans-serif;
+  min-height: 100vh;
 }
 
 /* Scrollbar personalizada */

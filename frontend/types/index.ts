@@ -74,7 +74,8 @@ export interface Payment {
 }
 
 export interface Plan {
-  id: string;
+  id?: string;
+  type?: string;
   name: string;
   price: number;
   features: string[];
