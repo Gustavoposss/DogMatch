@@ -26,6 +26,19 @@ export default function MatchChatPage({ params }: MatchChatPageProps) {
   // Unwrap params Promise usando React.use()
   const { id } = use(params);
 
+  // Função helper para remover duplicatas (usando useCallback para estabilidade)
+  const deduplicateMessages = useCallback((msgs: Message[]): Message[] => {
+    const seen = new Set<string>();
+    return msgs.filter((msg) => {
+      if (seen.has(msg.id)) {
+        console.warn('⚠️ Mensagem duplicada removida:', msg.id);
+        return false;
+      }
+      seen.add(msg.id);
+      return true;
+    });
+  }, []);
+
   const { data: matchData, isLoading: loadingMatch } = useQuery({
     queryKey: ['match', id],
     queryFn: () => matchService.getMatchById(id),
@@ -38,7 +51,9 @@ export default function MatchChatPage({ params }: MatchChatPageProps) {
 
   useEffect(() => {
     if (messagesData?.messages) {
-      setMessages(messagesData.messages);
+      // Remover duplicatas ao carregar mensagens iniciais
+      const uniqueMessages = deduplicateMessages(messagesData.messages);
+      setMessages(uniqueMessages);
     }
   }, [messagesData?.messages]);
 
@@ -48,11 +63,21 @@ export default function MatchChatPage({ params }: MatchChatPageProps) {
       setMessages((prev) => prev.slice(0, -1));
     },
     onSuccess: (response) => {
-      setMessages((prev) =>
-        prev.map((message) =>
-          message.id.startsWith('temp-') ? (response.message ?? message) : message
-        )
-      );
+      // Remover mensagem temporária e garantir que a real não seja duplicada
+      setMessages((prev) => {
+        // Remover mensagens temporárias
+        const withoutTemp = prev.filter((msg) => !msg.id.startsWith('temp-'));
+        
+        // Verificar se a mensagem real já existe (pode ter chegado via Socket.IO)
+        const exists = withoutTemp.some((msg) => msg.id === response.message.id);
+        if (exists) {
+          console.log('⚠️ Mensagem já existe (chegou via Socket.IO), não adicionando novamente');
+          return withoutTemp; // Já existe, não adicionar
+        }
+        
+        // Adicionar a mensagem real e remover duplicatas
+        return deduplicateMessages([...withoutTemp, response.message]);
+      });
     },
   });
 
@@ -77,15 +102,25 @@ export default function MatchChatPage({ params }: MatchChatPageProps) {
     setMessages((prev) => {
       console.log('📨 setMessages callback executado. Mensagens anteriores:', prev.length);
       
+      // Remover mensagens temporárias com mesmo conteúdo (se houver)
+      const withoutTemp = prev.filter((msg) => {
+        // Se for temporária e tiver mesmo conteúdo, remover
+        if (msg.id.startsWith('temp-') && msg.content === normalizedMessage.content) {
+          console.log('🗑️ Removendo mensagem temporária:', msg.id);
+          return false;
+        }
+        return true;
+      });
+      
       // Verificar se a mensagem já existe (evitar duplicatas)
-      const exists = prev.some((msg) => msg.id === normalizedMessage.id);
+      const exists = withoutTemp.some((msg) => msg.id === normalizedMessage.id);
       if (exists) {
         console.log('⚠️ Mensagem duplicada ignorada:', normalizedMessage.id);
-        return prev;
+        return withoutTemp;
       }
       
-      console.log('✅ Adicionando nova mensagem ao estado. Total de mensagens:', prev.length + 1);
-      const newMessages = [...prev, normalizedMessage];
+      console.log('✅ Adicionando nova mensagem ao estado. Total de mensagens:', withoutTemp.length + 1);
+      const newMessages = deduplicateMessages([...withoutTemp, normalizedMessage]);
       console.log('📋 Todas as mensagens agora:', newMessages.map(m => ({ id: m.id, content: m.content.substring(0, 20) })));
       
       // Forçar re-render verificando se realmente mudou
@@ -118,15 +153,26 @@ export default function MatchChatPage({ params }: MatchChatPageProps) {
   const handleSend = async (content: string) => {
     if (!user) return;
 
+    // Criar ID temporário único baseado em timestamp e conteúdo
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).substring(7)}`;
     const optimistic: Message = {
-      id: `temp-${Date.now()}`,
+      id: tempId,
       chatId: id,
       senderId: user.id,
       content,
       createdAt: new Date().toISOString(),
     };
+    
+    console.log('📤 Enviando mensagem otimista com ID:', tempId);
     setMessages((prev) => [...prev, optimistic]);
-    await mutation.mutateAsync(content);
+    
+    try {
+      await mutation.mutateAsync(content);
+    } catch (error) {
+      // Em caso de erro, remover a mensagem otimista
+      console.error('❌ Erro ao enviar mensagem, removendo otimista:', error);
+      setMessages((prev) => prev.filter((msg) => msg.id !== tempId));
+    }
   };
 
   const title = otherPet?.name ? `Chat com ${otherPet.name}` : 'Chat';

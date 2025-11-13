@@ -8,7 +8,6 @@ import {
   Sparkles, 
   PawPrint, 
   Heart, 
-  MessageCircle, 
   Star, 
   Settings,
   LogOut
@@ -19,7 +18,6 @@ const navigation = [
   { name: 'Swipe', href: '/swipe', icon: Sparkles },
   { name: 'Meus Pets', href: '/pets', icon: PawPrint },
   { name: 'Matches', href: '/matches', icon: Heart },
-  { name: 'Mensagens', href: '/matches', icon: MessageCircle },
   { name: 'Planos', href: '/plans', icon: Star },
   { name: 'Configurações', href: '/settings', icon: Settings },
 ];

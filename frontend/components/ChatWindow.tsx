@@ -32,16 +32,19 @@ export function ChatWindow({ messages, currentUserId, onSend, sending, input, se
   return (
     <div className="flex h-full flex-col rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)]">
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
-        {messages.map((message) => {
+        {messages.map((message, index) => {
           const isFromUser = message.senderId === currentUserId;
           const timestamp = new Date(message.createdAt).toLocaleTimeString('pt-BR', {
             hour: '2-digit',
             minute: '2-digit',
           });
 
+          // Usar ID como chave, mas com fallback para índice + timestamp para garantir unicidade
+          const uniqueKey = `${message.id}-${index}-${message.createdAt}`;
+
           return (
             <div
-              key={message.id}
+              key={uniqueKey}
               className={`flex ${isFromUser ? 'justify-end' : 'justify-start'}`}
             >
               <div
