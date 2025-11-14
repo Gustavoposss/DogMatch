@@ -140,3 +140,39 @@ export const register = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const resetPassword = async (req: Request, res: Response) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    if (!email || !newPassword) {
+      return res.status(400).json({ error: 'E-mail e nova senha são obrigatórios.' });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ error: 'E-mail inválido.' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'A senha deve ter no mínimo 6 caracteres.' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { email },
+      data: { password: hashedPassword },
+    });
+
+    res.json({ message: 'Senha redefinida com sucesso.' });
+  } catch (error) {
+    console.error('❌ Erro ao redefinir senha:', error);
+    res.status(500).json({ error: 'Erro ao redefinir senha.' });
+  }
+};
