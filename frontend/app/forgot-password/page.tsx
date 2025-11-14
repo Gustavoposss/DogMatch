@@ -6,16 +6,50 @@ import { authService } from '@/lib/auth';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [requestFeedback, setRequestFeedback] = useState('');
   const [success, setSuccess] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [requestLoading, setRequestLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleRequestCode = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
     setSuccess('');
+    setRequestFeedback('');
+
+    if (!email) {
+      setError('Informe seu e-mail para receber o código.');
+      return;
+    }
+
+    setRequestLoading(true);
+    try {
+      const response = await authService.requestPasswordReset({ email });
+      setRequestFeedback(response.message);
+      setCodeSent(true);
+    } catch (err: any) {
+      const message =
+        err.response?.data?.error || 'Erro ao enviar o código. Tente novamente em instantes.';
+      setError(message);
+    } finally {
+      setRequestLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setError('');
+    setSuccess('');
+
+    if (!code || code.length < 4) {
+      setError('Informe o código recebido por e-mail.');
+      return;
+    }
 
     if (newPassword !== confirmPassword) {
       setError('As senhas não coincidem.');
@@ -27,18 +61,18 @@ export default function ForgotPasswordPage() {
       return;
     }
 
-    setLoading(true);
+    setResetLoading(true);
     try {
-      await authService.resetPassword({ email, newPassword });
-      setSuccess('Senha redefinida com sucesso! Você já pode fazer login.');
-      setEmail('');
+      const response = await authService.resetPassword({ email, code, newPassword });
+      setSuccess(response.message || 'Senha redefinida com sucesso! Você já pode fazer login.');
+      setCode('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err: any) {
-      const message = err.response?.data?.error || 'Erro ao redefinir senha. Tente novamente.';
+      const message = err.response?.data?.error || 'Erro ao redefinir senha. Verifique o código.';
       setError(message);
     } finally {
-      setLoading(false);
+      setResetLoading(false);
     }
   };
 
@@ -52,10 +86,16 @@ export default function ForgotPasswordPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="space-y-8">
           {error && (
             <div className="rounded-lg bg-[var(--error)]/20 border border-[var(--error)] p-3 text-sm text-[var(--error)]">
               {error}
+            </div>
+          )}
+
+          {requestFeedback && (
+            <div className="rounded-lg bg-[var(--info-bg,#1d4ed8)]/10 border border-[var(--primary)]/40 p-3 text-sm text-[var(--primary)]">
+              {requestFeedback}
             </div>
           )}
 
@@ -65,59 +105,88 @@ export default function ForgotPasswordPage() {
             </div>
           )}
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-white mb-2">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full rounded-lg bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-3 text-white placeholder:text-[var(--foreground-secondary)] focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-glow)]"
-              placeholder="seu@email.com"
-            />
-          </div>
+          <form onSubmit={handleRequestCode} className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-white mb-2">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full rounded-lg bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-3 text-white placeholder:text-[var(--foreground-secondary)] focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-glow)]"
+                placeholder="seu@email.com"
+              />
+            </div>
 
-          <div>
-            <label htmlFor="new-password" className="block text-sm font-medium text-white mb-2">
-              Nova senha
-            </label>
-            <input
-              id="new-password"
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-              className="w-full rounded-lg bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-3 text-white placeholder:text-[var(--foreground-secondary)] focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-glow)]"
-              placeholder="••••••••"
-            />
-          </div>
+            <button
+              type="submit"
+              disabled={requestLoading}
+              className="w-full rounded-lg bg-[var(--primary)] px-4 py-3 font-semibold text-white transition-all hover:bg-[var(--primary-dark)] hover:shadow-lg hover:shadow-[var(--primary-glow)] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {requestLoading ? 'Enviando código...' : 'Enviar código'}
+            </button>
+          </form>
 
-          <div>
-            <label htmlFor="confirm-password" className="block text-sm font-medium text-white mb-2">
-              Confirmar nova senha
-            </label>
-            <input
-              id="confirm-password"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              className="w-full rounded-lg bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-3 text-white placeholder:text-[var(--foreground-secondary)] focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-glow)]"
-              placeholder="••••••••"
-            />
-          </div>
+          {codeSent && (
+            <form onSubmit={handleResetPassword} className="space-y-4 border-t border-[var(--card-border)] pt-6">
+              <div>
+                <label htmlFor="code" className="block text-sm font-medium text-white mb-2">
+                  Código recebido
+                </label>
+                <input
+                  id="code"
+                  type="text"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  required
+                  className="w-full rounded-lg bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-3 text-white placeholder:text-[var(--foreground-secondary)] focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-glow)] tracking-[0.3em]"
+                  placeholder="000000"
+                />
+              </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-[var(--primary)] px-4 py-3 font-semibold text-white transition-all hover:bg-[var(--primary-dark)] hover:shadow-lg hover:shadow-[var(--primary-glow)] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Atualizando...' : 'Redefinir senha'}
-          </button>
-        </form>
+              <div>
+                <label htmlFor="new-password" className="block text-sm font-medium text-white mb-2">
+                  Nova senha
+                </label>
+                <input
+                  id="new-password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  className="w-full rounded-lg bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-3 text-white placeholder:text-[var(--foreground-secondary)] focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-glow)]"
+                  placeholder="••••••••"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="confirm-password" className="block text-sm font-medium text-white mb-2">
+                  Confirmar nova senha
+                </label>
+                <input
+                  id="confirm-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="w-full rounded-lg bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-3 text-white placeholder:text-[var(--foreground-secondary)] focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-glow)]"
+                  placeholder="••••••••"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={resetLoading}
+                className="w-full rounded-lg bg-white/10 px-4 py-3 font-semibold text-white transition-all hover:bg-white/20 hover:shadow-lg hover:shadow-[var(--primary-glow)] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {resetLoading ? 'Atualizando...' : 'Redefinir senha'}
+              </button>
+            </form>
+          )}
+        </div>
 
         <p className="mt-6 text-center text-sm text-[var(--foreground-secondary)]">
           Lembrou sua senha?{' '}

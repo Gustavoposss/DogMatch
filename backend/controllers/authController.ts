@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { SubscriptionService } from '../services/subscriptionService';
 import { isValidCPF, cleanCPF, isValidEmail } from '../utils/validators';
+import { sendPasswordResetCode } from '../services/emailService';
 
 // JWT_SECRET é obrigatório
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -141,12 +142,61 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
-export const resetPassword = async (req: Request, res: Response) => {
-  try {
-    const { email, newPassword } = req.body;
+const RESET_CODE_EXPIRATION_MINUTES = 10;
 
-    if (!email || !newPassword) {
-      return res.status(400).json({ error: 'E-mail e nova senha são obrigatórios.' });
+const generateResetCode = () => Math.floor(100000 + Math.random() * 900000).toString();
+
+export const requestPasswordReset = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'E-mail é obrigatório.' });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ error: 'E-mail inválido.' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    // Responde com sucesso mesmo se usuário não existir para evitar enumeração
+    if (!user) {
+      return res.json({ message: 'Se o e-mail existir, enviaremos um código para redefinição.' });
+    }
+
+    // Invalida tokens anteriores
+    await prisma.passwordResetToken.updateMany({
+      where: { email, usedAt: null },
+      data: { usedAt: new Date() },
+    });
+
+    const code = generateResetCode();
+    const codeHash = await bcrypt.hash(code, 10);
+
+    await prisma.passwordResetToken.create({
+      data: {
+        email,
+        codeHash,
+        expiresAt: new Date(Date.now() + RESET_CODE_EXPIRATION_MINUTES * 60 * 1000),
+      },
+    });
+
+    await sendPasswordResetCode(email, code);
+
+    res.json({ message: 'Se o e-mail existir, enviaremos um código para redefinição.' });
+  } catch (error) {
+    console.error('❌ Erro ao solicitar redefinição de senha:', error);
+    res.status(500).json({ error: 'Erro ao solicitar redefinição de senha.' });
+  }
+};
+
+export const resetPasswordWithCode = async (req: Request, res: Response) => {
+  try {
+    const { email, code, newPassword } = req.body;
+
+    if (!email || !code || !newPassword) {
+      return res.status(400).json({ error: 'E-mail, código e nova senha são obrigatórios.' });
     }
 
     if (!isValidEmail(email)) {
@@ -157,6 +207,25 @@ export const resetPassword = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'A senha deve ter no mínimo 6 caracteres.' });
     }
 
+    const token = await prisma.passwordResetToken.findFirst({
+      where: {
+        email,
+        usedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!token) {
+      return res.status(400).json({ error: 'Código inválido ou expirado.' });
+    }
+
+    const isValidCode = await bcrypt.compare(code, token.codeHash);
+
+    if (!isValidCode) {
+      return res.status(400).json({ error: 'Código inválido ou expirado.' });
+    }
+
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
@@ -165,10 +234,16 @@ export const resetPassword = async (req: Request, res: Response) => {
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    await prisma.user.update({
-      where: { email },
-      data: { password: hashedPassword },
-    });
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { email },
+        data: { password: hashedPassword },
+      }),
+      prisma.passwordResetToken.update({
+        where: { id: token.id },
+        data: { usedAt: new Date() },
+      }),
+    ]);
 
     res.json({ message: 'Senha redefinida com sucesso.' });
   } catch (error) {

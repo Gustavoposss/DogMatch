@@ -168,3 +168,14 @@ model Boost {
   isActive        Boolean      @default(true)
   createdAt       DateTime     @default(now())
 }
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  email     String
+  codeHash  String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}

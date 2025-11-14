@@ -20,8 +20,13 @@ export interface LoginData {
   password: string;
 }
 
+export interface ResetPasswordRequestData {
+  email: string;
+}
+
 export interface ResetPasswordData {
   email: string;
+  code: string;
   newPassword: string;
 }
 
@@ -42,6 +47,11 @@ export const authService = {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
     }
+    return response.data;
+  },
+
+  async requestPasswordReset(data: ResetPasswordRequestData): Promise<{ message: string }> {
+    const response = await api.post<{ message: string }>('/auth/forgot-password', data);
     return response.data;
   },
 
