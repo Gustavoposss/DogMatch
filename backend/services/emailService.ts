@@ -1,30 +1,34 @@
-import nodemailer from 'nodemailer';
+import SibApiV3Sdk from '@sendinblue/client';
 
 const {
-  SMTP_HOST,
-  SMTP_PORT,
-  SMTP_USER,
-  SMTP_PASS,
+  BREVO_API_KEY,
+  BREVO_SENDER_EMAIL,
+  BREVO_SENDER_NAME,
   SMTP_FROM,
 } = process.env;
 
-if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS || !SMTP_FROM) {
-  console.warn('⚠️ Variáveis de ambiente SMTP não configuradas completamente. Envio de e-mails poderá falhar.');
+if (!BREVO_API_KEY) {
+  console.warn('⚠️ BREVO_API_KEY não configurada. Envio de e-mails não funcionará no ambiente atual.');
 }
 
-const transporter = nodemailer.createTransport({
-  host: SMTP_HOST,
-  port: Number(SMTP_PORT) || 587,
-  secure: Number(SMTP_PORT) === 465,
-  auth: {
-    user: SMTP_USER,
-    pass: SMTP_PASS,
-  },
-});
+const senderEmail = BREVO_SENDER_EMAIL || SMTP_FROM;
+const senderName = BREVO_SENDER_NAME || 'Par de Patas';
+
+const transactionalClient = new SibApiV3Sdk.TransactionalEmailsApi();
+if (BREVO_API_KEY) {
+  transactionalClient.setApiKey(
+    SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey,
+    BREVO_API_KEY
+  );
+}
 
 export async function sendPasswordResetCode(email: string, code: string) {
-  if (!SMTP_FROM) {
-    throw new Error('Remetente SMTP não configurado.');
+  if (!BREVO_API_KEY) {
+    throw new Error('BREVO_API_KEY não configurada.');
+  }
+
+  if (!senderEmail) {
+    throw new Error('Remetente Brevo não configurado (BREVO_SENDER_EMAIL ou SMTP_FROM).');
   }
 
   const html = `
@@ -45,11 +49,14 @@ export async function sendPasswordResetCode(email: string, code: string) {
     </div>
   `;
 
-  await transporter.sendMail({
-    from: SMTP_FROM,
-    to: email,
+  await transactionalClient.sendTransacEmail({
+    sender: {
+      email: senderEmail,
+      name: senderName,
+    },
+    to: [{ email }],
     subject: 'Seu código de verificação - Par de Patas',
-    html,
+    htmlContent: html,
   });
 }
 
