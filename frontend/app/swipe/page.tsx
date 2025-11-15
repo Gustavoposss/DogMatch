@@ -9,6 +9,7 @@ import { swipeService } from "@/lib/services/swipeService";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Pet } from "@/types";
+import Link from "next/link";
 
 export default function SwipePage() {
   const { user } = useAuth();
@@ -16,17 +17,39 @@ export default function SwipePage() {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [matchPet, setMatchPet] = useState<Pet | null>(null);
 
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['swipe-pets', user?.id],
-    queryFn: () => user?.id ? petService.getPetsToSwipe(user.id) : Promise.resolve({ pets: [] }),
+  const {
+    data: myPetsData,
+    isLoading: isLoadingMyPets,
+    refetch: refetchMyPets,
+  } = useQuery({
+    queryKey: ['my-pets', user?.id],
+    queryFn: () => user?.id ? petService.getPetsByUser(user.id) : Promise.resolve({ pets: [] }),
     enabled: !!user?.id,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const hasAnyPet = (myPetsData?.pets?.length ?? 0) > 0;
+
+  const {
+    data,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ['swipe-pets', user?.id, hasAnyPet],
+    queryFn: () => (user?.id && hasAnyPet) ? petService.getPetsToSwipe(user.id) : Promise.resolve({ pets: [] }),
+    enabled: !!user?.id && hasAnyPet,
   });
 
   useEffect(() => {
+    if (!hasAnyPet) {
+      setQueue([]);
+      return;
+    }
+
     if (data?.pets) {
       setQueue(data.pets);
     }
-  }, [data?.pets]);
+  }, [data?.pets, hasAnyPet]);
 
   const handleLike = async (pet: Pet) => {
     setFeedback(null);
@@ -45,6 +68,10 @@ export default function SwipePage() {
   };
 
   const handleReload = async () => {
+    if (!hasAnyPet) {
+      await refetchMyPets();
+      return;
+    }
     await refetch();
   };
 
@@ -63,7 +90,22 @@ export default function SwipePage() {
             <div className="rounded-lg bg-[var(--primary)]/20 border border-[var(--primary)] px-4 py-3 text-sm text-[var(--primary)]">{feedback}</div>
           )}
 
-          <SwipeDeck pets={queue} onLike={handleLike} onPass={handlePass} loading={isLoading} />
+          {!hasAnyPet && !isLoadingMyPets ? (
+            <div className="rounded-2xl border border-dashed border-[var(--card-border)] bg-[var(--card-bg)] p-10 text-center">
+              <h2 className="text-xl font-semibold text-white">Cadastre um pet para começar</h2>
+              <p className="mt-2 text-sm text-[var(--foreground-secondary)]">
+                Você precisa ter ao menos um pet cadastrado para descobrir novos amigos.
+              </p>
+              <Link
+                href="/pets/new"
+                className="mt-6 inline-flex items-center justify-center rounded-lg bg-[var(--primary)] px-4 py-2 font-semibold text-white transition-all hover:bg-[var(--primary-dark)] hover:shadow-lg hover:shadow-[var(--primary-glow)]"
+              >
+                Cadastrar pet
+              </Link>
+            </div>
+          ) : (
+            <SwipeDeck pets={queue} onLike={handleLike} onPass={handlePass} loading={isLoading || isLoadingMyPets} />
+          )}
 
           <button
             onClick={handleReload}

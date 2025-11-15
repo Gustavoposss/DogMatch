@@ -8,6 +8,7 @@ import { petService } from "@/lib/services/petService";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
+import { Pet } from "@/types";
 
 export default function PetsPage() {
   const { user } = useAuth();
@@ -29,9 +30,14 @@ export default function PetsPage() {
     },
   });
 
-  const handleDelete = async (petId: string) => {
+  const handleDelete = async (pet: Pet) => {
+    const confirmed = window.confirm(`Tem certeza que deseja remover o pet ${pet.name}? Esta ação não pode ser desfeita.`);
+    if (!confirmed) {
+      return;
+    }
+
     setFeedback(null);
-    await deleteMutation.mutateAsync(petId);
+    await deleteMutation.mutateAsync(pet.id);
   };
 
   return (

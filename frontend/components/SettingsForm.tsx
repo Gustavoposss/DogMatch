@@ -1,9 +1,10 @@
 "use client";
 
 import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { User } from "@/types";
+import { CityAutocomplete } from "./CityAutocomplete";
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Nome muito curto'),
@@ -23,6 +24,7 @@ interface SettingsFormProps {
 export function SettingsForm({ defaultValues, onSubmit, submitting }: SettingsFormProps) {
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm<SettingsFormValues>({
@@ -58,15 +60,22 @@ export function SettingsForm({ defaultValues, onSubmit, submitting }: SettingsFo
         <p className="mt-1 text-sm text-[var(--foreground-secondary)]">O e-mail não pode ser alterado.</p>
       </div>
 
-      <div>
-        <label className="mb-1 block text-sm font-medium text-white">Cidade</label>
-        <input
-          type="text"
-          {...register('city')}
-          className="w-full rounded-lg border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-white placeholder:text-[var(--foreground-secondary)] focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-glow)]"
-        />
-        {errors.city && <p className="mt-1 text-sm text-[var(--error)]">{errors.city.message}</p>}
-      </div>
+      <Controller
+        name="city"
+        control={control}
+        render={({ field }) => (
+          <CityAutocomplete
+            label="Cidade"
+            value={field.value ?? ""}
+            onChange={(value) => {
+              field.onChange(value);
+            }}
+            onBlur={field.onBlur}
+            required
+            error={errors.city?.message}
+          />
+        )}
+      />
 
       <div>
         <label className="mb-1 block text-sm font-medium text-white">Telefone</label>

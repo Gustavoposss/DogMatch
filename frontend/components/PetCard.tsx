@@ -7,7 +7,7 @@ import { Edit, Trash2 } from "lucide-react";
 
 interface PetCardProps {
   pet: Pet;
-  onDelete?: (petId: string) => void;
+  onDelete?: (pet: Pet) => void;
   deleting?: boolean;
 }
 
@@ -47,7 +47,7 @@ export function PetCard({ pet, onDelete, deleting }: PetCardProps) {
 
           {onDelete && (
             <button
-              onClick={() => onDelete(pet.id)}
+              onClick={() => onDelete(pet)}
               disabled={deleting}
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--error)] px-3 py-2 text-sm font-semibold text-[var(--error)] transition-colors hover:bg-[var(--error)]/20 disabled:opacity-60"
             >

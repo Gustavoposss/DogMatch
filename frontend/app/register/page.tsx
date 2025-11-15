@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { CityAutocomplete } from '@/components/CityAutocomplete';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -105,21 +106,14 @@ export default function RegisterPage() {
                 />
               </div>
 
-              <div>
-                <label htmlFor="city" className="block text-sm font-medium text-white mb-2">
-                  Cidade
-                </label>
-                <input
-                  id="city"
-                  name="city"
-                  type="text"
-                  value={formData.city}
-                  onChange={handleChange}
-                  required
-                  className="w-full rounded-lg bg-[var(--input-bg)] border border-[var(--input-border)] px-4 py-3 text-white placeholder:text-[var(--foreground-secondary)] focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-glow)]"
-                  placeholder="Sua cidade"
-                />
-              </div>
+              <CityAutocomplete
+                id="city"
+                name="city"
+                label="Cidade"
+                value={formData.city}
+                onChange={(city) => setFormData((prev) => ({ ...prev, city }))}
+                required
+              />
 
               <div>
                 <label htmlFor="cpf" className="block text-sm font-medium text-white mb-2">
