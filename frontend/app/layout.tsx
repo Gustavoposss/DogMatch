@@ -12,6 +12,20 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Par de Patas - Conexões Caninas",
   description: "Plataforma de conexões para pets - amizade, cruzamento e adoção",
+  icons: {
+    icon: [
+      {
+        url: "/logopardepatas-clean.svg",
+        type: "image/svg+xml",
+      },
+    ],
+    apple: [
+      {
+        url: "/logopardepatas-clean.svg",
+        type: "image/svg+xml",
+      },
+    ],
+  },
 };
 
 export default function RootLayout({
