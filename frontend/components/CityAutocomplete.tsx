@@ -125,6 +125,18 @@ export function CityAutocomplete({
     error ||
     (showInvalidValue ? invalidMessage : null);
 
+  const handleBlur = () => {
+    setTouched(true);
+    onBlur?.();
+
+    if (!isValueValid) {
+      setFilter('');
+      if (value) {
+        onChange('');
+      }
+    }
+  };
+
   return (
     <div>
       {label && (
@@ -140,10 +152,7 @@ export function CityAutocomplete({
         list={datalistId}
         value={value}
         onChange={handleChange}
-        onBlur={() => {
-          setTouched(true);
-          onBlur?.();
-        }}
+        onBlur={handleBlur}
         onFocus={loadCitiesIfNeeded}
         onClick={loadCitiesIfNeeded}
         required={required}

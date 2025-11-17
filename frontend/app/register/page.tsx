@@ -120,6 +120,7 @@ export default function RegisterPage() {
                 label="Cidade"
                 value={formData.city}
                 onChange={(city) => setFormData((prev) => ({ ...prev, city }))}
+                onValidityChange={setIsCityValid}
                 required
               />
 
@@ -158,7 +159,7 @@ export default function RegisterPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !isCityValid}
               className="w-full rounded-lg bg-[var(--primary)] px-4 py-3 font-semibold text-white transition-all hover:bg-[var(--primary-dark)] hover:shadow-lg hover:shadow-[var(--primary-glow)] disabled:opacity-50 disabled:cursor-not-allowed mt-6"
             >
               {loading ? 'Criando conta...' : 'Cadastrar'}

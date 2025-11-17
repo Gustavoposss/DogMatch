@@ -65,26 +65,48 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
+const userPublicSelect = {
+  id: true,
+  email: true,
+  name: true,
+  city: true,
+  phone: true,
+  createdAt: true,
+};
+
 export const getUserById = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
-    const user = await prisma.user.findUnique({ 
+    const user = await prisma.user.findUnique({
       where: { id },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        city: true,
-        phone: true,
-        cpf: false, // Não retornar CPF por segurança
-        password: false, // Nunca retornar senha
-        createdAt: true,
-      }
+      select: userPublicSelect,
     });
     if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
     res.json(user);
   } catch (error) {
     res.status(500).json({ error: 'Erro ao buscar usuário' });
+  }
+};
+
+export const getCurrentUser = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'Usuário não autenticado' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: userPublicSelect,
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao buscar perfil' });
   }
 };
 
@@ -119,17 +141,10 @@ export const updateUser = async (req: Request, res: Response) => {
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: updateData,
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        city: true,
-        phone: true,
-        createdAt: true,
-      }
+      select: userPublicSelect,
     });
 
-    res.json({ user: updatedUser, message: 'Perfil atualizado com sucesso' });
+    res.json(updatedUser);
   } catch (error: any) {
     console.error('Erro ao atualizar usuário:', error);
     if (error.code === 'P2025') {
