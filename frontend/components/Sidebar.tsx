@@ -11,7 +11,8 @@ import {
   Heart, 
   Star, 
   Settings,
-  LogOut
+  LogOut,
+  LifeBuoy
 } from 'lucide-react';
 
 const navigation = [
@@ -21,6 +22,7 @@ const navigation = [
   { name: 'Matches', href: '/matches', icon: Heart },
   { name: 'Planos', href: '/plans', icon: Star },
   { name: 'Configurações', href: '/settings', icon: Settings },
+  { name: 'Suporte', href: '/support', icon: LifeBuoy },
 ];
 
 export function Sidebar() {
