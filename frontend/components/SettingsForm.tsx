@@ -27,6 +27,8 @@ export function SettingsForm({ defaultValues, onSubmit, submitting }: SettingsFo
     control,
     handleSubmit,
     formState: { errors },
+    setError,
+    clearErrors,
   } = useForm<SettingsFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -73,6 +75,18 @@ export function SettingsForm({ defaultValues, onSubmit, submitting }: SettingsFo
             onBlur={field.onBlur}
             required
             error={errors.city?.message}
+            onValidityChange={(isValid) => {
+              if (!field.value) {
+                clearErrors('city');
+                return;
+              }
+
+              if (isValid) {
+                clearErrors('city');
+              } else {
+                setError('city', { type: 'manual', message: 'Selecione uma cidade válida na lista.' });
+              }
+            }}
           />
         )}
       />

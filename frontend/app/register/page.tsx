@@ -17,16 +17,24 @@ export default function RegisterPage() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isCityValid, setIsCityValid] = useState(false);
   const { register } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!isCityValid) {
+      setError('Selecione uma cidade válida da lista.');
+      return;
+    }
+
     setLoading(true);
 
     try {
       await register(formData);
+      router.push('/home');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erro ao criar conta');
     } finally {

@@ -1,6 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
+import {
+  CityOption,
+  ensureCitiesLoaded,
+  getCachedCities,
+  normalizeCityName,
+} from "@/lib/cities";
 
 interface CityAutocompleteProps {
   label?: string;
@@ -13,56 +19,11 @@ interface CityAutocompleteProps {
   id?: string;
   disabled?: boolean;
   error?: string;
+  onValidityChange?: (isValid: boolean) => void;
+  invalidMessage?: string;
 }
 
-interface CityOption {
-  display: string;
-  normalized: string;
-}
-
-const IBGE_CITIES_ENDPOINT = "https://servicodados.ibge.gov.br/api/v1/localidades/municipios?orderBy=nome";
-
-let cachedCities: CityOption[] | null = null;
-let loadingPromise: Promise<CityOption[]> | null = null;
-
-const normalize = (value: string) =>
-  value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-
-async function fetchBrazilianCities(): Promise<CityOption[]> {
-  if (cachedCities) {
-    return cachedCities;
-  }
-
-  if (!loadingPromise) {
-    loadingPromise = fetch(IBGE_CITIES_ENDPOINT)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Não foi possível carregar a lista de cidades.");
-        }
-        return response.json();
-      })
-      .then((data: any[]) => {
-        const list: CityOption[] = data.map((city) => {
-          const state = city?.microrregiao?.mesorregiao?.UF?.sigla ?? "";
-          const display = state ? `${city.nome} - ${state}` : city.nome;
-          return {
-            display,
-            normalized: normalize(display),
-          };
-        });
-        cachedCities = list;
-        return list;
-      })
-      .finally(() => {
-        loadingPromise = null;
-      });
-  }
-
-  return loadingPromise;
-}
+const DEFAULT_INVALID_MESSAGE = "Selecione uma cidade válida na lista.";
 
 export function CityAutocomplete({
   label,
@@ -75,24 +36,24 @@ export function CityAutocomplete({
   id,
   disabled,
   error,
+  onValidityChange,
+  invalidMessage = DEFAULT_INVALID_MESSAGE,
 }: CityAutocompleteProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const datalistId = `${inputId}-cities`;
 
-  const [cities, setCities] = useState<CityOption[]>(cachedCities ?? []);
-  const [loading, setLoading] = useState(!cachedCities);
+  const [cities, setCities] = useState<CityOption[]>(getCachedCities());
+  const [loading, setLoading] = useState(cities.length === 0);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [filter, setFilter] = useState("");
+  const [filter, setFilter] = useState(value);
+  const [touched, setTouched] = useState(false);
 
-  const ensureCitiesLoaded = useCallback(async () => {
-    if (cities.length > 0 || loadingPromise) {
-      return;
-    }
-
+  const loadCitiesIfNeeded = useCallback(async () => {
+    if (cities.length > 0) return;
     try {
       setLoading(true);
-      const list = await fetchBrazilianCities();
+      const list = await ensureCitiesLoaded();
       setCities(list);
       setLoadError(null);
     } catch (err) {
@@ -104,17 +65,48 @@ export function CityAutocomplete({
   }, [cities.length]);
 
   useEffect(() => {
-    if (!cachedCities) {
-      ensureCitiesLoaded();
+    if (cities.length === 0) {
+      loadCitiesIfNeeded();
     }
-  }, [ensureCitiesLoaded]);
+  }, [cities.length, loadCitiesIfNeeded]);
+
+  useEffect(() => {
+    setFilter(value);
+  }, [value]);
+
+  const normalizedCurrentValue = useMemo(() => normalizeCityName(value), [value]);
+
+  const canValidate = !loading && cities.length > 0;
+
+  const isValueValid = useMemo(() => {
+    if (!value) {
+      return !required;
+    }
+    if (!canValidate) {
+      return false;
+    }
+    return cities.some((city) => city.normalized === normalizedCurrentValue);
+  }, [value, required, canValidate, cities, normalizedCurrentValue]);
+
+  useEffect(() => {
+    if (!onValidityChange) return;
+    if (!value) {
+      onValidityChange(!required);
+      return;
+    }
+    if (!canValidate) {
+      onValidityChange(false);
+      return;
+    }
+    onValidityChange(isValueValid);
+  }, [onValidityChange, value, required, canValidate, isValueValid]);
 
   const visibleCities = useMemo(() => {
     if (!filter) {
       return cities.slice(0, 50);
     }
 
-    const normalizedFilter = normalize(filter);
+    const normalizedFilter = normalizeCityName(filter);
     return cities
       .filter((city) => city.normalized.includes(normalizedFilter))
       .slice(0, 50);
@@ -124,6 +116,14 @@ export function CityAutocomplete({
     setFilter(event.target.value);
     onChange(event.target.value);
   };
+
+  const showInvalidValue =
+    canValidate && touched && value !== "" && !isValueValid;
+
+  const derivedError =
+    loadError ||
+    error ||
+    (showInvalidValue ? invalidMessage : null);
 
   return (
     <div>
@@ -140,9 +140,12 @@ export function CityAutocomplete({
         list={datalistId}
         value={value}
         onChange={handleChange}
-        onBlur={onBlur}
-        onFocus={ensureCitiesLoaded}
-        onClick={ensureCitiesLoaded}
+        onBlur={() => {
+          setTouched(true);
+          onBlur?.();
+        }}
+        onFocus={loadCitiesIfNeeded}
+        onClick={loadCitiesIfNeeded}
         required={required}
         disabled={disabled}
         autoComplete="off"
@@ -157,21 +160,19 @@ export function CityAutocomplete({
       </datalist>
 
       {loading && (
-        <p className="mt-1 text-xs text-[var(--foreground-secondary)]">Carregando cidades...</p>
-      )}
-
-      {loadError && (
-        <p className="mt-1 text-xs text-[var(--error)]">{loadError}</p>
-      )}
-
-      {!error && !loadError && (
         <p className="mt-1 text-xs text-[var(--foreground-secondary)]">
-          Digite para filtrar. Dados fornecidos pelo IBGE.
+          Carregando cidades...
         </p>
       )}
 
-      {error && (
-        <p className="mt-1 text-sm text-[var(--error)]">{error}</p>
+      {derivedError && (
+        <p className="mt-1 text-sm text-[var(--error)]">{derivedError}</p>
+      )}
+
+      {!derivedError && !loading && (
+        <p className="mt-1 text-xs text-[var(--foreground-secondary)]">
+          Digite para filtrar. Dados fornecidos pelo IBGE.
+        </p>
       )}
     </div>
   );
