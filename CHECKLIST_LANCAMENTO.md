@@ -1,13 +1,13 @@
 # ✅ Checklist de Lançamento - Par de Patas
 
-## 📱 Mobile App
+## 🌐 Plataforma Web
 
-### Configurações de Ambiente
-- [x] API URL configurada para produção: `https://dogmatch.onrender.com`
-- [x] Variáveis de ambiente configuradas no `app.config.js`
-- [x] Build de produção configurado no `eas.json`
-- [ ] Testar build de produção localmente
-- [ ] Verificar se todas as imagens/assets estão corretos
+### Configuração e Ambiente
+- [x] API de produção configurada: `https://dogmatch.onrender.com`
+- [x] Variáveis de ambiente revisadas (frontend + backend)
+- [x] Deploy contínuo habilitado no Render
+- [ ] Validar build local com `npm run build && npm start`
+- [ ] Revisar assets/páginas após cada deploy
 
 ### Funcionalidades Core
 - [x] Autenticação (Login/Registro) funcionando
@@ -22,13 +22,11 @@
 
 ### UI/UX
 - [x] Modal de match corrigido (não sobrepõe mais)
-- [x] Navegação funcionando corretamente
-- [x] Safe area insets configurados para Android
-- [x] Todos os textos em português
+- [x] Navegação e estados de carregamento validados
+- [x] Textos revisados em português
 - [x] Feedback visual para ações do usuário
 - [x] Inputs de cidade com autocomplete/validação IBGE
-- [ ] Testar em diferentes tamanhos de tela
-- [ ] Testar em iOS e Android
+- [ ] Responsividade revisada em múltiplas resoluções
 
 ### Performance
 - [x] Otimistic updates implementados
@@ -67,7 +65,7 @@
 ### Integrações
 - [x] Supabase Storage configurado
 - [x] Asaas Payment Gateway configurado
-- [ ] Testar webhook do Asaas em produção
+- [ ] Testar webhook do Asaas em produção *(aguardando saldo para pagamento real)*
 - [ ] Verificar credenciais de produção
 
 ## 📧 Suporte
@@ -88,34 +86,30 @@
 ## 🧪 Testes
 
 ### Testes Manuais
-- [ ] Testar fluxo completo de registro
-- [ ] Testar cadastro de pet
-- [ ] Testar sistema de swipe
-- [ ] Testar chat em tempo real
-- [ ] Testar compra de plano
-- [ ] Testar atualização de perfil
-- [ ] Testar tela de suporte
-- [ ] Testar logout
+- [x] Testar fluxo completo de registro
+- [x] Testar cadastro de pet
+- [x] Testar sistema de swipe
+- [x] Testar chat em tempo real
+- [ ] Testar compra de plano *(aguardando saldo para concluir pagamento Asaas)*
+- [x] Testar atualização de perfil
+- [x] Testar tela de suporte
+- [x] Testar logout
 
 ### Testes de Integração
-- [ ] Testar comunicação mobile-backend
+- [ ] Testar comunicação frontend-backend
 - [ ] Testar Socket.IO em produção
 - [ ] Testar upload de imagens
-- [ ] Testar pagamentos
+- [ ] Testar pagamentos *(webhook Asaas)*
 
 ## 🚀 Deploy
-
-### Mobile
-- [ ] Build de produção criado
-- [ ] Testar APK/AAB em dispositivo físico
-- [ ] Preparar para publicação nas lojas (se aplicável)
-- [ ] Verificar versão do app
 
 ### Backend
 - [x] Backend rodando em produção
 - [ ] Verificar variáveis de ambiente em produção
 - [ ] Verificar logs de produção
 - [ ] Configurar monitoramento (opcional)
+
+> **Nota:** o app mobile foi adiado e não faz parte deste lançamento.
 
 ## 📊 Monitoramento
 

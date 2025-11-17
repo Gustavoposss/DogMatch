@@ -1,368 +1,143 @@
-# 🐾 Par de Patas - Conexões Caninas Mobile
+# 🐾 Par de Patas - Plataforma Web
 
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
-[![React Native](https://img.shields.io/badge/React%20Native-0.75+-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-51+-purple.svg)](https://expo.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-blue.svg)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15+-black.svg)](https://nextjs.org/)
+[![Express.js](https://img.shields.io/badge/Express.js-4+-lightgrey.svg)](https://expressjs.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.6+-blue.svg)](https://www.typescriptlang.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue.svg)](https://www.postgresql.org/)
-[![Prisma](https://img.shields.io/badge/Prisma-6.11.1-purple.svg)](https://www.prisma.io/)
+[![Prisma](https://img.shields.io/badge/Prisma-6+-purple.svg)](https://www.prisma.io/)
 
-> **Par de Patas** é uma plataforma mobile de conexões para pets que une tutores e seus cães de forma leve, moderna e divertida. Mais que encontros, conexões caninas. Focado em conectar cachorros para amizade, cruzamento ou adoção. Desenvolvido com React Native + Expo e uma API robusta.
+> **Par de Patas** é uma plataforma web que conecta tutores e seus cães para amizade, socialização e encontros guiados. O MVP atual engloba frontend em Next.js + backend Express/Prisma com pagamentos via Asaas.
 
 ## 📋 Índice
 
 - [✨ Funcionalidades](#-funcionalidades)
 - [🛠️ Tecnologias](#️-tecnologias)
-- [🚀 Instalação](#-instalação)
-- [📁 Estrutura do Projeto](#-estrutura-do-projeto)
-- [🔧 Configuração](#-configuração)
-- [📖 API Documentation](#-api-documentation)
-- [🎯 Como Usar](#-como-usar)
-- [📱 Mobile App](#-mobile-app)
+- [🚀 Como rodar](#-como-rodar)
+- [📁 Estrutura do repositório](#-estrutura-do-repositório)
+- [⚙️ Variáveis de ambiente](#️-variáveis-de-ambiente)
+- [📖 Endpoints principais](#-endpoints-principais)
+- [🧪 Fluxo recomendado de testes](#-fluxo-recomendado-de-testes)
+- [📝 Status do MVP](#-status-do-mvp)
 - [🤝 Contribuindo](#-contribuindo)
-- [📄 Licença](#-licença)
 
 ## ✨ Funcionalidades
 
-### 🔐 Autenticação
-- ✅ Registro e login de usuários
-- ✅ Autenticação JWT
-- ✅ Rotas protegidas
-- ✅ Context API para gerenciamento de estado
-
-### 🐕 Gestão de Pets
-- ✅ Cadastro de pets com fotos
-- ✅ Upload de imagens via Supabase Storage
-- ✅ Perfis detalhados (raça, idade, tamanho, etc.)
-- ✅ Gestão de múltiplos pets por usuário
-- ✅ Edição e exclusão de pets
-
-### 💕 Sistema de Matches
-- ✅ Swipe like/dislike com animações
-- ✅ Sistema de matches automático
-- ✅ Visualização de matches realizados
-- ✅ Histórico de interações
-- ✅ Chat em tempo real
-
-### 🔍 Filtros Avançados
-- ✅ Filtro por cidade/localização
-- ✅ Filtro por raça (busca parcial)
-- ✅ Filtro por tamanho (pequeno, médio, grande)
-- ✅ Filtro por gênero (macho/fêmea)
-- ✅ Filtro por idade (faixa etária)
-- ✅ Filtro por objetivo (amizade, cruzamento, adoção)
-- ✅ Filtro por castração
-- ✅ Filtros combináveis e removíveis
-
-### 💳 Sistema de Pagamentos
-- ✅ Planos de assinatura (FREE, PREMIUM, VIP)
-- ✅ Pagamento via PIX com QR Code
-- ✅ Gateway de pagamentos (Asaas)
-- ✅ Assinaturas recorrentes
-- ✅ Gestão de limites por plano
-
-### 📱 Interface Mobile
-- ✅ Design responsivo e moderno
-- ✅ Navegação por tabs
-- ✅ Componentes reutilizáveis
-- ✅ Loading states e feedback visual
-- ✅ Animações suaves
-- ✅ Identidade visual consistente
+- Autenticação completa (registro, login, recuperação de senha via OTP)
+- Dashboard web com:
+  - Home com resumo do plano
+  - Swipe de pets, matches e chat em tempo real
+  - Gestão de pets e configurações
+  - Planos/assinaturas com limites por tier
+  - Página de suporte e landing page pública
+- Pagamentos:
+  - Integração com Asaas (PIX) com tela dedicada para QR Code
+  - Monitoramento de status e redirecionamento após pagamento
+- Validação de cidade via catálogo oficial (IBGE)
+- Upload seguro de fotos no Supabase Storage
 
 ## 🛠️ Tecnologias
 
-### Mobile App
-- **React Native** - Framework mobile
-- **Expo** - Plataforma de desenvolvimento
-- **TypeScript** - Linguagem tipada
-- **React Navigation** - Navegação
-- **Context API** - Gerenciamento de estado
-- **Axios** - Cliente HTTP
-- **AsyncStorage** - Armazenamento local
-- **Expo Linear Gradient** - Gradientes
-- **React Native SVG** - Ícones vetoriais
+| Camada     | Principais libs |
+|------------|-----------------|
+| Frontend   | Next.js 15, React 19, TypeScript, Tailwind 4, TanStack Query, React Hook Form + Zod |
+| Backend    | Node 20, Express, Prisma, PostgreSQL, Socket.IO, Multer, Brevo (SMTP/API), Asaas |
+| Infra      | Render (frontend + backend), Supabase Storage |
 
-### Backend API
-- **Node.js** - Runtime JavaScript
-- **Express.js** - Framework web
-- **TypeScript** - Linguagem tipada
-- **PostgreSQL** - Banco de dados
-- **Prisma** - ORM moderno
-- **JWT** - Autenticação
-- **Multer** - Upload de arquivos
-- **Socket.IO** - Chat em tempo real
-- **Asaas** - Gateway de pagamentos
-- **Supabase Storage** - Armazenamento de imagens
+## 🚀 Como rodar
 
-## 🚀 Instalação
-
-### Pré-requisitos
-- Node.js 18+ 
-- PostgreSQL 15+
-- npm ou yarn
-- Expo CLI (`npm install -g @expo/cli`)
-- Expo Go app no seu dispositivo móvel
-
-### 1. Clone o repositório
+### 1. Clonar o repositório
 ```bash
-git clone https://github.com/seu-usuario/par-de-patas.git
+git clone https://github.com/Gustavoposss/par-de-patas.git
 cd par-de-patas
 ```
 
-### 2. Configure o Backend
+### 2. Backend
 ```bash
 cd backend
 npm install
-```
-
-### 3. Configure o Mobile App
-```bash
-cd mobile
-npm install
-```
-
-### 4. Configure as Variáveis de Ambiente
-
-**Backend** - Crie um arquivo `.env` na pasta `backend`:
-```env
-DATABASE_URL="postgresql://usuario:senha@localhost:5432/par_de_patas"
-DIRECT_URL="postgresql://usuario:senha@localhost:5432/par_de_patas"
-JWT_SECRET="sua-chave-secreta-aqui"
-PORT=3000
-ASAAS_API_KEY="sua-api-key-do-asaas"
-ASAAS_ENVIRONMENT="sandbox"
-SUPABASE_URL="https://seu-projeto.supabase.co"
-SUPABASE_SERVICE_KEY="sua-service-role-key-do-supabase"
-# OU
-SUPABASE_SERVICE_ROLE_KEY="sua-service-role-key-do-supabase"
-# ⚠️ IMPORTANTE: Use a Service Role Key (não a Anon Key) para ter acesso completo ao Storage
-```
-
-**Mobile** - Crie um arquivo `.env` na pasta `mobile`:
-```env
-EXPO_PUBLIC_API_URL=http://192.168.1.100:3000
-```
-
-### 5. Configure o Banco de Dados
-```bash
-cd backend
+# crie um arquivo .env com suas chaves (ver seção abaixo)
 npx prisma migrate dev
-npx prisma generate
-```
-
-### 6. Execute o Projeto
-
-**Backend:**
-```bash
-cd backend
 npm run dev
 ```
 
-**Mobile (em outro terminal):**
+### 3. Frontend
 ```bash
-cd mobile
-npx expo start
+cd frontend
+npm install
+# crie um arquivo .env.local apontando para o backend
+npm run dev
 ```
 
-## 📁 Estrutura do Projeto
+O frontend roda em `http://localhost:3001` (ou porta livre) consumindo a API em `http://localhost:3000`.
+
+## 📁 Estrutura do repositório
 
 ```
-ParDePatas/
-├── backend/                    # API Backend
-│   ├── controllers/           # Controladores da API
-│   ├── middlewares/          # Middlewares (auth, etc.)
-│   ├── routes/               # Rotas da API
-│   ├── services/             # Lógica de negócio
-│   ├── prisma/               # Schema e migrações
-│   ├── index.ts              # Servidor principal
-│   └── package.json
-├── mobile/                    # App Mobile React Native
-│   ├── src/
-│   │   ├── components/       # Componentes reutilizáveis
-│   │   ├── screens/          # Telas da aplicação
-│   │   ├── services/         # Serviços de API
-│   │   ├── contexts/         # Context API
-│   │   ├── styles/           # Estilos e temas
-│   │   └── types/            # Tipos TypeScript
-│   ├── App.tsx               # Componente principal
-│   └── package.json
-├── docs/                     # Documentação
-└── README.md
+par-de-patas/
+├── backend/        # API Express + Prisma
+├── frontend/       # Next.js (App Router)
+├── docs/           # Documentação de apoio
+├── CHECKLIST_LANCAMENTO.md
+├── README.md
+└── ...
 ```
 
-## 🔧 Configuração
+## ⚙️ Variáveis de ambiente
 
-### Banco de Dados
-O projeto usa PostgreSQL com Prisma. Certifique-se de:
-1. Ter PostgreSQL instalado e rodando
-2. Criar um banco de dados chamado `par_de_patas`
-3. Configurar as variáveis de ambiente corretamente
+### Backend
+Principais chaves:
+- `DATABASE_URL`, `DIRECT_URL`
+- `JWT_SECRET`
+- `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+- `ASAAS_API_KEY`, `ASAAS_ENVIRONMENT`
+- `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, `BREVO_SENDER_NAME`
 
-### Upload de Imagens
-O sistema utiliza **Supabase Storage** para upload de imagens dos pets.
+### Frontend
+- `NEXT_PUBLIC_API_URL`
+- `NEXT_PUBLIC_SOCKET_URL`
 
-### Sistema de Pagamentos
-O projeto utiliza **Asaas** como gateway de pagamentos, suportando:
-- **PIX** - Pagamento instantâneo com QR Code
-- **Boleto Bancário** - Pagamento tradicional
-- **Cartão de Crédito** - Pagamento parcelado
+Use este README como referência para montar os arquivos `.env` (backend) e `.env.local` (frontend).
 
-**Configuração do Asaas:**
-1. Crie uma conta em [https://www.asaas.com/](https://www.asaas.com/)
-2. Para testes, use [https://sandbox.asaas.com/](https://sandbox.asaas.com/)
-3. Obtenha sua API Key em: **Integrações → API Key**
-4. Configure no `.env`: `ASAAS_API_KEY` e `ASAAS_ENVIRONMENT`
+## 📖 Endpoints principais
 
-### CORS
-O backend está configurado para aceitar requisições dos seguintes domínios:
-- `http://localhost:3000`
-- `http://192.168.1.100:3000` (IP local para mobile)
-- `exp://192.168.1.100:8081` (Expo development)
+- `POST /auth/login`, `POST /auth/register`
+- `POST /auth/forgot-password`, `POST /auth/reset-password`
+- `GET /users/me`, `PUT /users/me`
+- `GET /pets/user/:userId`, `POST /pets`, `PUT /pets/:id`, `DELETE /pets/:id`
+- `GET /pets/swipe/:userId`, `POST /swipe/like`
+- `GET /matches/user/:userId`, `GET /chat/:matchId`, `POST /chat/send`
+- `GET /subscriptions/my-subscription`, `GET /subscriptions/usage`
+- `POST /payments/create-plan-payment`, `GET /payments/status/:id`, `POST /payments/webhook`
 
-## 📖 API Documentation
+## 🧪 Fluxo recomendado de testes
 
-A documentação da API está disponível em:
-```
-http://localhost:3000/api-docs
-```
+1. Registro de usuário
+2. Cadastro de pet (com upload)
+3. Swipe/match + chat
+4. Atualização de perfil e cidade
+5. Upgrade de plano (inicia pagamento PIX)
+6. Acesso à tela de suporte e logout
 
-### Principais Endpoints
+> Pagamentos reais via Asaas permanecem pendentes até haver saldo para testes. O fluxo já está pronto e pode ser validado via sandbox/simulação quando possível.
 
-#### Autenticação
-- `POST /auth/register` - Registrar usuário
-- `POST /auth/login` - Login
+## 📝 Status do MVP
 
-#### Pets
-- `GET /pets/user/:userId` - Pets do usuário
-- `POST /pets` - Criar pet
-- `PUT /pets/:id` - Atualizar pet
-- `DELETE /pets/:id` - Deletar pet
+- ✅ Todos os fluxos web foram testados manualmente
+- ✅ Landing page pronta para divulgar o app
+- ⏳ Pagamento real no Asaas aguardando saldo (risco conhecido)
+- 🔍 Acompanhamento diário de logs/monitoramento recomendado durante o soft launch
 
-#### Swipe
-- `GET /pets/swipe/:userId` - Pets disponíveis para swipe
-- `GET /swipe/filters` - Opções de filtros
-- `POST /swipe/like` - Curtir pet
-
-#### Matches
-- `GET /matches/user/:userId` - Matches do usuário
-
-#### Chat
-- `GET /chat/conversations/:userId` - Conversas do usuário
-- `GET /chat/messages/:matchId` - Mensagens de um match
-- `POST /chat/send` - Enviar mensagem
-
-#### Pagamentos (Asaas)
-- `GET /payments/test` - Testar conexão com Asaas
-- `POST /payments/create-plan-payment` - Criar pagamento de plano
-- `POST /payments/webhook` - Receber webhooks do Asaas
-
-## 📱 Mobile App
-
-### Funcionalidades Mobile
-- **Swipe Interface** - Interface intuitiva de swipe
-- **Chat em Tempo Real** - Chat com Socket.IO
-- **Upload de Fotos** - Upload direto para Supabase
-- **Notificações** - Notificações push (futuro)
-- **Geolocalização** - Filtros por proximidade (futuro)
-
-### Desenvolvimento
-```bash
-# Iniciar o servidor de desenvolvimento
-npx expo start
-
-# Executar no dispositivo físico
-npx expo start --tunnel
-
-# Executar no emulador Android
-npx expo start --android
-
-# Executar no simulador iOS
-npx expo start --ios
-```
-
-### Build para Produção
-```bash
-# Build para Android
-npx expo build:android
-
-# Build para iOS
-npx expo build:ios
-```
-
-## 🎯 Como Usar
-
-### 1. Registro e Login
-- Abra o app no seu dispositivo
-- Registre-se com email, senha e dados pessoais
-- Faça login com suas credenciais
-
-### 2. Cadastro de Pets
-- Vá para a aba "Pets"
-- Adicione fotos e informações do seu pet
-- Configure objetivo (amizade, cruzamento, adoção)
-
-### 3. Encontrar Matches
-- Vá para a aba "Swipe"
-- Selecione qual pet seu vai fazer o swipe
-- Use os filtros para refinar a busca
-- Faça swipe right (❤️) ou left (❌)
-
-### 4. Gerenciar Matches
-- Vá para a aba "Matches"
-- Veja todos os seus matches
-- Inicie conversas com outros usuários
-
-### 5. Assinaturas
-- Vá para a aba "Planos"
-- Escolha seu plano (FREE, PREMIUM, VIP)
-- Faça o pagamento via PIX
+Detalhes completos em `docs/MVP_STATUS.md` e `CHECKLIST_LANCAMENTO.md`.
 
 ## 🤝 Contribuindo
 
-1. Fork o projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
+1. Crie uma branch (`git checkout -b feature/nome-da-feature`)
+2. Faça commits descritivos
+3. Abra um PR explicando a motivação/escopo
 
-### Padrões de Código
-- Use TypeScript em todo o projeto
-- Siga as convenções do ESLint
-- Escreva testes para novas funcionalidades
-- Documente APIs com Swagger
-- Use componentes reutilizáveis no mobile
-
-## 🚧 Próximas Funcionalidades
-
-- [x] Sistema de monetização (FREE, PREMIUM, VIP)
-- [x] Gateway de pagamentos (Asaas)
-- [x] Pagamento via PIX com QR Code
-- [x] App mobile (React Native + Expo)
-- [x] Chat em tempo real
-- [ ] Notificações push
-- [ ] Geolocalização avançada
-- [ ] Sistema de denúncias
-- [ ] Verificação de perfis
-- [ ] Analytics e métricas
-- [ ] Assinaturas recorrentes automáticas
-- [ ] Modo offline
-
-## 📄 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
-## 👥 Autores
-
-- Gustavo de Sousa Possidonio - *Desenvolvimento inicial* - [Gustavoposss](https://github.com/Gustavoposss)
-
-## 🙏 Agradecimentos
-
-- Comunidade React Native
-- Comunidade Expo
-- Comunidade Node.js
-- Prisma team
-- Todos os contribuidores
+Siga os padrões de lint e mantenha os arquivos `.md` atualizados após mudanças relevantes.
 
 ---
 
-**🐾 Feito com ❤️ para conectar pets e seus tutores!**
+**🐾 Par de Patas — Conectando cães e tutores com segurança.**

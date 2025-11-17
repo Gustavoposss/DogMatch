@@ -3,34 +3,37 @@
 > Atualizado em **17/11/2025**
 
 ## ✅ O que já está pronto
-- Autenticação (login, registro e recuperação com OTP via Brevo)
-- Dashboard web (Home, Swipe, Meus Pets, Matches, Chat em tempo real, Planos, Configurações)
+- Autenticação completa (login, registro e recuperação com OTP via Brevo)
+- Dashboard web (Home, Swipe, Meus Pets, Matches, Chat, Planos, Configurações, Suporte)
 - Pagamentos PIX via Asaas (checkout + tela de QR Code)
-- Fluxo de suporte (novo menu e página com instruções de contato)
-- Validação de cidade com base no catálogo IBGE (cadastro e perfil)
-- Deploy contínuo no Render (backend + frontend)
+- Validação de cidade com base no catálogo IBGE
+- Deploy contínuo no Render (frontend + backend)
+
+## 🧪 Testes manuais concluídos
+- Registro → cadastro/edição de pet → swipe/match → chat em tempo real
+- Ajustes de perfil e validação de cidade
+- Landing page, suporte e logout
+- Fluxo de pagamento até a geração do QR Code (sem liquidar o PIX real)
 
 ## ⚠️ Pendências antes do lançamento
-1. **Testes manuais completos**
-   - Registro → cadastro de pet → swipe/match → chat → upgrade de plano → suporte
-2. **Pagamentos**
-   - Confirmar webhook do Asaas em produção (status pago/cancelado)
-   - Verificar atualização de plano após confirmação
-3. **Monitoramento/Logs**
-   - Revisar erros do Render e definir rotina (mínimo: inspeção diária)
-   - Opcional: configurar alerta ou ferramenta de observabilidade simples
-4. **Documentação operacional**
-   - Passo a passo de deploy/rollback
-   - Como ajustar variáveis de ambiente e reiniciar serviços
-5. **Checklist de lançamento**
-   - Itens ainda abertos (backup do DB, testes em diferentes dispositivos, etc.)
-6. **Mobile (caso faça parte do MVP)**
-   - Validar build, dispositivos e publicação (item ainda pendente no checklist)
+1. **Pagamento real no Asaas**
+   - Aguardando saldo para efetivar um pagamento completo.
+   - Após viabilizar, validar webhook em produção e atualização automática do plano.
+2. **Monitoramento e logs**
+   - Definir rotina mínima (ex.: checagem diária no Render).
+   - Opcional: alerta simples (email ou ferramenta leve).
+3. **Documentação operacional**
+   - Passo a passo de deploy/rollback.
+   - Como ajustar variáveis de ambiente e reiniciar serviços.
+4. **Checklist de lançamento**
+   - Preencher itens remanescentes (backup do banco, revisão de textos/links, política de suporte).
 
-## ✅ Decisões tomadas agora
-- MVP **não será lançado** até finalizar a lista acima
-- Vamos retomar dessa etapa após a pausa e fechar cada item com evidências (testes, logs, screenshots)
+## ✅ Decisões atuais
+- Lançamento inicial será **somente web**; app mobile foi adiado.
+- Pagamentos reais serão testados assim que houver crédito disponível.
+- Logs, documentação e checklist precisam estar 100% antes do anúncio público.
 
 ---
-Quando voltarmos, sugerido começar pelos testes ponta a ponta (item 1) para detectar qualquer regressão antes de mexer no restante. Em seguida avançamos em pagamentos/monitoramento/documentação.
+
+Próximos passos: finalizar documentação + monitoramento, e preparar o procedimento de validação do Asaas assim que houver saldo para o teste real.
 
