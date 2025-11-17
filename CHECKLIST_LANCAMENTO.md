@@ -26,6 +26,7 @@
 - [x] Safe area insets configurados para Android
 - [x] Todos os textos em português
 - [x] Feedback visual para ações do usuário
+- [x] Inputs de cidade com autocomplete/validação IBGE
 - [ ] Testar em diferentes tamanhos de tela
 - [ ] Testar em iOS e Android
 
@@ -42,6 +43,7 @@
 - [x] API rodando em produção: `https://dogmatch.onrender.com`
 - [x] Endpoint de atualização de perfil implementado (`PUT /users/me`)
 - [x] Endpoint de busca de perfil implementado (`GET /users/me`)
+- [x] Fluxo `/users/me` validado em produção (17/11/2025)
 - [x] Socket.IO configurado para chat em tempo real
 - [x] CORS configurado para produção
 - [x] Helmet configurado para segurança
@@ -143,5 +145,5 @@
 
 ---
 
-**Última atualização:** 13/11/2025
+**Última atualização:** 17/11/2025
 
